@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MTR Next Train</title>
+
+<style>
+body{
+    margin:0;
+    background:#111;
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.board{
+    width:380px;
+    background:#000;
+    border:4px solid #666;
+    border-radius:12px;
+    padding:25px;
+}
+
+.title{
+    text-align:center;
+    font-size:30px;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+.station{
+    font-size:24px;
+    margin-bottom:25px;
+}
+
+.train{
+    margin-bottom:20px;
+}
+
+.dest{
+    font-size:22px;
+}
+
+.time{
+    font-size:42px;
+    color:#00ff66;
+    font-weight:bold;
+}
+
+.update{
+    margin-top:30px;
+    color:#aaa;
+    font-size:16px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="board">
+
+<div class="title">港鐵 下一班車</div>
+
+<div class="station">
+🚉 旺角（荃灣綫）
+</div>
+
+<div class="train">
+<div class="dest">→ 往 中環</div>
+<div class="time" id="down">--</div>
+</div>
+
+<div class="train">
+<div class="dest">→ 往 荃灣</div>
+<div class="time" id="up">--</div>
+</div>
+
+<div class="update">
+更新時間：
+<span id="update">--</span>
+</div>
+
+</div>
+
+<script>
+
+// 換成你的車站
+const station="MOK";
+const line="TWL";
+
+// API網址（示意）
+const url=`https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=${line}&sta=${station}`;
+
+async function load(){
+
+    try{
+
+        const res=await fetch(url);
+
+        const json=await res.json();
+
+        const data=json.data[line+"-"+station];
+
+        if(data.DOWN && data.DOWN.length)
+            document.getElementById("down").innerHTML=data.DOWN[0].ttnt+" 分鐘";
+
+        if(data.UP && data.UP.length)
+            document.getElementById("up").innerHTML=data.UP[0].ttnt+" 分鐘";
+
+        document.getElementById("update").innerHTML=
+            new Date().toLocaleTimeString('zh-HK');
+
+    }catch(e){
+        console.log(e);
+    }
+
+}
+
+load();
+
+setInterval(load,30000);
+
+</script>
+
+</body>
+</html>
