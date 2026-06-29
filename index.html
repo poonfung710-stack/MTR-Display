@@ -3,22 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>港鐵乘客資訊顯示系統 (PIDS)</title>
+<title>港鐵乘客資訊顯示系統 (PIDS) - 天水圍站</title>
 
 <style>
-/* 模擬港鐵月台 LED 屏幕風格 */
-@font-face {
-    /* 這裡使用系統內建的無襯線字體，並透過 CSS 模擬點陣/LED 感 */
-    font-family: 'MTR-LED';
-    src: local('Arial Black'), local('Impact');
-}
-
 body {
     margin: 0;
     padding: 0;
     background-color: #000000;
-    color: #00FF33; /* 經典港鐵 LED 綠字 */
-    font-family: "PingFang HK", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #00FF33; /* 經典港鐵 LED 鮮綠字 */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
     height: 100vh;
     width: 100vw;
     display: flex;
@@ -29,66 +22,64 @@ body {
     padding: 3vh 4vw;
 }
 
-/* 頂部資訊列：左邊真實時間，右邊車站名稱 */
+/* 頂部資訊列：左邊 24小時制真實時間，右邊車站名稱 */
 .header-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 4px solid #947A4D; /* 屯馬綫代表色線條 */
-    padding-bottom: 2vh;
-    margin-bottom: 2vh;
+    padding-bottom: 1.5vh;
 }
 
 .real-time {
     font-size: 5vh;
     font-weight: bold;
     color: #00FF33;
-    font-family: monospace; /* 讓時間數字對齊 */
+    font-family: monospace; /* 確保時間數字對齊不抖動 */
     text-shadow: 0 0 12px rgba(0, 255, 51, 0.7);
 }
 
 .station-title {
     font-size: 5vh;
     font-weight: bold;
-    color: #FFFFFF; /* 車站名用白色，突出重點 */
+    color: #FFFFFF; /* 車站名用白色，還原真實車站設計 */
 }
 
-/* 轉向/路線區塊 */
+/* 班次顯示主要區域 */
 .main-content {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-around; /* 均分上下行空間 */
+    justify-content: space-around; /* 均分上下行路線空間 */
+    margin: 2vh 0;
 }
 
 .direction-group {
     background: #050505;
-    border: 2px solid #222;
-    border-radius: 10px;
+    border: 2px solid #111;
+    border-radius: 12px;
     padding: 2vh 3vw;
-    margin-bottom: 2vh;
 }
 
 .direction-title {
-    font-size: 4.5vh;
+    font-size: 4vh;
     font-weight: bold;
-    color: #FFCC00; /* 目的地通常用耀眼的黃色 */
+    color: #FFCC00; /* 目的地路綫提示使用經典耀眼黃色 */
     margin-bottom: 1.5vh;
     border-left: 8px solid #947A4D;
     padding-left: 15px;
 }
 
-/* 列車班次表格 */
+/* 列車班次列表 */
 .train-table {
     width: 100%;
-    border-collapse: collapse;
 }
 
 .train-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5vh 0;
+    padding: 1vh 0;
     border-bottom: 1px dashed #222;
 }
 
@@ -96,36 +87,37 @@ body {
     border-bottom: none;
 }
 
-/* 班次序號 */
+/* 班次序號 (1, 2, 3) */
 .seq {
     font-size: 3.5vh;
-    color: #888888;
+    color: #666666;
     width: 10%;
 }
 
-/* 目的地 */
+/* 目的地文字 */
 .dest {
     font-size: 4vh;
     color: #FFFFFF;
-    width: 45%;
+    font-weight: bold;
+    width: 50%;
 }
 
 /* 24小時制到達時間 */
 .arrival-time {
-    font-size: 5vh;
+    font-size: 4.5vh;
     font-weight: bold;
     font-family: monospace;
     color: #00FF33;
     text-shadow: 0 0 10px rgba(0, 255, 51, 0.8);
     text-align: right;
-    width: 45%;
+    width: 40%;
 }
 
-/* 特殊狀態：正在駛入 / 即將抵達 */
+/* 特殊狀態：正在駛入 / 即將抵達 改為紅色閃爍 */
 .status-flash {
-    color: #FF3333; /* 警示紅或金黃 */
+    color: #FF3333; 
     text-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
-    animation: blink 1s infinite playback-state;
+    animation: blink 1s infinite;
 }
 
 @keyframes blink {
@@ -134,10 +126,10 @@ body {
     100% { opacity: 1.0; }
 }
 
-/* 底部防錯/更新提示 */
+/* 底部狀態列 */
 .footer-bar {
     text-align: right;
-    font-size: 2.2vh;
+    font-size: 2vh;
     color: #444;
 }
 </style>
@@ -173,14 +165,14 @@ body {
     </div>
 
     <div class="footer-bar">
-        System Active | Refreshing every 10s
+        PIDS Active | Auto-refresh: 10s
     </div>
 
 <script>
 const line = "TML";
 const station = "TIS";
 
-// 1. 左上角實時時鐘 (24小時制，包含秒)
+// 1. 左上角 24 小時制真實時間 (包含秒)
 function updateClock() {
     const now = new Date();
     const hours = String(now.getHours()).padStart(2, '0');
@@ -189,30 +181,30 @@ function updateClock() {
     document.getElementById('clock').innerText = `${hours}:${minutes}:${seconds}`;
 }
 setInterval(updateClock, 1000);
-updateClock();
+updateClock(); // 初始化時鐘
 
 // 2. 格式化 API 回傳的時間數據
 function formatMtrTime(trainObj) {
-    if (!trainObj) return `<div class="train-row"><div class="seq">-</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>`;
+    if (!trainObj) return null;
     
     const ttnt = parseInt(trainObj.ttnt, 10);
     let timeDisplay = "";
     
-    // 如果剩下 0 或 1 分鐘，模擬車站顯示「正在駛入」或「即將抵達」
+    // 如果剩下 0 或 1 分鐘，還原月台顯示「正在駛入」或「即將抵達」的紅字閃爍效果
     if (ttnt === 0) {
         timeDisplay = `<span class="status-flash">正在駛入 Arriving</span>`;
     } else if (ttnt === 1) {
         timeDisplay = `<span class="status-flash">即將抵達 Dept</span>`;
     } else {
-        // 提取 API 中的 time 欄位 (格式通常為 "YYYY-MM-DD HH:MM:SS")
+        // 從 API 傳回的 "YYYY-MM-DD HH:MM:SS" 之中，截取 24小時制的 "HH:MM"
         if (trainObj.time) {
-            timeDisplay = trainObj.time.substring(11, 16); // 只截取 HH:MM
+            timeDisplay = trainObj.time.substring(11, 16); 
         } else {
             timeDisplay = "--:--";
         }
     }
 
-    // 獲取目的地中英文
+    // 格式化目的地中英文顯示
     const destName = trainObj.dest === "TUM" ? "屯門 Tuen Mun" : "烏溪沙 Wu Kai Sha";
 
     return {
@@ -221,12 +213,12 @@ function formatMtrTime(trainObj) {
     };
 }
 
-// 3. 渲染單一方向的下三班車
-function renderDirection(dataArray, elementId, defaultDest) {
+// 3. 渲染單向的下三班列車
+function renderDirection(dataArray, elementId) {
     const container = document.getElementById(elementId);
-    container.innerHTML = ""; // 清空舊資料
+    container.innerHTML = ""; // 先清空舊內容
 
-    // 港鐵 API 最多提供 4 班車，我們只取前 3 班
+    // 港鐵 API 每方向最多提供 4 班車，我們固定只取前 3 班
     for (let i = 0; i < 3; i++) {
         if (dataArray && dataArray[i]) {
             const info = formatMtrTime(dataArray[i]);
@@ -238,7 +230,7 @@ function renderDirection(dataArray, elementId, defaultDest) {
                 </div>
             `;
         } else {
-            // 如果沒有更多班次（例如深夜尾班車過後）
+            // 如果深夜尾班車過後沒有後續班次
             container.innerHTML += `
                 <div class="train-row">
                     <div class="seq">${i + 1}</div>
@@ -259,16 +251,18 @@ async function loadSchedule() {
         const data = json.data[`${line}-${station}`];
 
         if (data) {
-            renderDirection(data.DOWN, "down-list", "屯門 Tuen Mun");
-            renderDirection(data.UP, "up-list", "烏溪沙 Wu Kai Sha");
+            renderDirection(data.DOWN, "down-list"); // 往屯門
+            renderDirection(data.UP, "up-list");     // 往烏溪沙
         }
     } catch (e) {
         console.error("MTR API Error:", e);
     }
 }
 
-// 首次載入與定時更新（改為 10 秒更新一次，讓全螢幕看板更精確）
+// 首次加載班次
 loadSchedule();
+
+// 每 10 秒自動更新一次下班車資訊
 setInterval(loadSchedule, 10000);
 </script>
 
