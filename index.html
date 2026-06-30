@@ -146,7 +146,7 @@ body {
         
         <div class="direction-group">
             <div class="direction-title">往 屯門 To Tuen Mun</div>
-            <div id="down-list">
+            <div id="tuen-mun-list">
                 <div class="train-row"><div class="seq">1</div><div class="dest">屯門</div><div class="arrival-time">--:--</div></div>
                 <div class="train-row"><div class="seq">2</div><div class="dest">屯門</div><div class="arrival-time">--:--</div></div>
                 <div class="train-row"><div class="seq">3</div><div class="dest">屯門</div><div class="arrival-time">--:--</div></div>
@@ -155,7 +155,7 @@ body {
 
         <div class="direction-group">
             <div class="direction-title">往 烏溪沙 To Wu Kai Sha</div>
-            <div id="up-list">
+            <div id="wu-kai-sha-list">
                 <div class="train-row"><div class="seq">1</div><div class="dest">烏溪沙</div><div class="arrival-time">--:--</div></div>
                 <div class="train-row"><div class="seq">2</div><div class="dest">烏溪沙</div><div class="arrival-time">--:--</div></div>
                 <div class="train-row"><div class="seq">3</div><div class="dest">烏溪沙</div><div class="arrival-time">--:--</div></div>
@@ -251,8 +251,9 @@ async function loadSchedule() {
         const data = json.data[`${line}-${station}`];
 
         if (data) {
-            renderDirection(data.DOWN, "down-list"); // 往屯門
-            renderDirection(data.UP, "up-list");     // 往烏溪沙
+            // 【已修正】港鐵 API 規定：屯馬綫 UP 是往屯門，DOWN 是往烏溪沙
+            renderDirection(data.UP, "tuen-mun-list");       // 往屯門 (使用 UP 數據)
+            renderDirection(data.DOWN, "wu-kai-sha-list");   // 往烏溪沙 (使用 DOWN 數據)
         }
     } catch (e) {
         console.error("MTR API Error:", e);
