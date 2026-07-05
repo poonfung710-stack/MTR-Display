@@ -87,7 +87,7 @@ body {
     border-bottom: none;
 }
 
-/* 班次序號 (1, 2, 3) */
+/* 班次序號 (1, 2, 3, 4) */
 .seq {
     font-size: 3.5vh;
     color: #666666;
@@ -150,6 +150,7 @@ body {
                 <div class="train-row"><div class="seq">1</div><div class="dest">屯門</div><div class="arrival-time">--:--</div></div>
                 <div class="train-row"><div class="seq">2</div><div class="dest">屯門</div><div class="arrival-time">--:--</div></div>
                 <div class="train-row"><div class="seq">3</div><div class="dest">屯門</div><div class="arrival-time">--:--</div></div>
+                <div class="train-row"><div class="seq">4</div><div class="dest">屯門</div><div class="arrival-time">--:--</div></div>
             </div>
         </div>
 
@@ -159,6 +160,7 @@ body {
                 <div class="train-row"><div class="seq">1</div><div class="dest">烏溪沙</div><div class="arrival-time">--:--</div></div>
                 <div class="train-row"><div class="seq">2</div><div class="dest">烏溪沙</div><div class="arrival-time">--:--</div></div>
                 <div class="train-row"><div class="seq">3</div><div class="dest">烏溪沙</div><div class="arrival-time">--:--</div></div>
+                <div class="train-row"><div class="seq">4</div><div class="dest">烏溪沙</div><div class="arrival-time">--:--</div></div>
             </div>
         </div>
 
@@ -213,13 +215,13 @@ function formatMtrTime(trainObj) {
     };
 }
 
-// 3. 渲染單向的下三班列車
+// 3. 渲染單向的下四班列車
 function renderDirection(dataArray, elementId) {
     const container = document.getElementById(elementId);
     container.innerHTML = ""; // 先清空舊內容
 
-    // 港鐵 API 每方向最多提供 4 班車，我們固定只取前 3 班
-    for (let i = 0; i < 3; i++) {
+    // 已修改：港鐵 API 每方向最多提供 4 班車，我們固定取 4 班
+    for (let i = 0; i < 4; i++) {
         if (dataArray && dataArray[i]) {
             const info = formatMtrTime(dataArray[i]);
             container.innerHTML += `
@@ -251,7 +253,7 @@ async function loadSchedule() {
         const data = json.data[`${line}-${station}`];
 
         if (data) {
-            // 【已修正】港鐵 API 規定：屯馬綫 UP 是往屯門，DOWN 是往烏溪沙
+            // 港鐵 API 規定：屯馬綫 UP 是往屯門，DOWN 是往烏溪沙
             renderDirection(data.UP, "tuen-mun-list");       // 往屯門 (使用 UP 數據)
             renderDirection(data.DOWN, "wu-kai-sha-list");   // 往烏溪沙 (使用 DOWN 數據)
         }
