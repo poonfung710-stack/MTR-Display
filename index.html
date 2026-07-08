@@ -22,19 +22,21 @@ body {
     padding: 3vh 4vw;
 }
 
-/* 頂部資訊列：修正 iOS 12 渲染問題 */
+/* 頂部資訊列：徹底重構，放棄 Flexbox 與 vh 字體，解決 iOS 12 切字 Bug */
 .header-bar {
-    display: flex;
-    justify-content: space-between;
+    position: relative;
+    display: block; /* 改回區塊元素 */
+    height: 55px;   /* 使用固定 px 確保容器高度絕對充足 */
     border-bottom: 4px solid #947A4D; /* 屯馬綫代表色線條 */
-    padding-top: 1vh;     /* 增加頂部留白，防止 iOS 12 切字 */
-    padding-bottom: 2vh;  /* 增加底部留白 */
-    flex-shrink: 0;       /* 強迫容器不可被壓縮 */
+    padding-bottom: 10px;
+    margin-bottom: 1vh;
+    flex-shrink: 0;
 }
 
 .real-time {
-    font-size: 5vh;
-    line-height: 1.2;     /* 明確定義行高，修正舊版 Safari 字體切頂 Bug */
+    float: left;     /* 使用最穩定的浮動定位 */
+    font-size: 38px; /* 改用 px 避開 iOS 12 的 vh 文字計算錯誤 */
+    line-height: 55px; /* 讓行高等於容器高度，強制垂直居中且絕不切字 */
     font-weight: bold;
     color: #00FF33;
     font-family: monospace; /* 確保時間數字對齊不抖動 */
@@ -42,8 +44,9 @@ body {
 }
 
 .station-title {
-    font-size: 5vh;
-    line-height: 1.2;     /* 明確定義行高，修正舊版 Safari 字體切頂 Bug */
+    float: right;    /* 使用最穩定的浮動定位 */
+    font-size: 38px; /* 改用 px */
+    line-height: 55px; /* 讓行高等於容器高度，強制垂直居中且絕不切字 */
     font-weight: bold;
     color: #FFFFFF; /* 車站名用白色，還原真實車站設計 */
 }
@@ -267,9 +270,9 @@ async function loadSchedule() {
         const data = json.data[`${line}-${station}`];
 
         if (data) {
-            // 港鐵 API 規定：屯馬綫 UP 是往烏溪沙方向，DOWN 是往屯門方向
-            renderDirection(data.DOWN, "tuen-mun-list");       
-            renderDirection(data.UP, "wu-kai-sha-list");   
+            // 還原正確方向：UP 與 DOWN 對應正確看板
+            renderDirection(data.UP, "tuen-mun-list");       
+            renderDirection(data.DOWN, "wu-kai-sha-list");   
         }
     } catch (e) {
         console.error("MTR API Error:", e);
