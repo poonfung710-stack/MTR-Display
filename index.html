@@ -139,13 +139,13 @@ body {
 
     <div class="header-bar">
         <div class="real-time" id="clock">00:00:00</div>
-        <div class="station-title">天水圍 Tin Shui Wai</div>
+        <div class="station-title">天水圍</div>
     </div>
 
     <div class="main-content">
         
         <div class="direction-group">
-            <div class="direction-title">往 屯門方向 To Tuen Mun Direction</div>
+            <div class="direction-title">往 屯門方向</div>
             <div id="tuen-mun-list">
                 <div class="train-row"><div class="seq">1</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
                 <div class="train-row"><div class="seq">2</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
@@ -155,7 +155,7 @@ body {
         </div>
 
         <div class="direction-group">
-            <div class="direction-title">往 烏溪沙方向 To Wu Kai Sha Direction</div>
+            <div class="direction-title">往 烏溪沙方向</div>
             <div id="wu-kai-sha-list">
                 <div class="train-row"><div class="seq">1</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
                 <div class="train-row"><div class="seq">2</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
@@ -167,12 +167,23 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS Active | Dynamic Destination Enabled | Auto-refresh: 10s
+        PIDS 運作中 | 強制繁體中文核心 | 自動更新: 10秒
     </div>
 
 <script>
 const line = "TML";
 const station = "TIS";
+
+// 屯馬綫所有車站的英中對照表（確保 100% 轉換為繁體中文）
+const stationNameMap = {
+    "TUM": "屯門", "SIH": "兆康", "TIS": "天水圍", "KSR": "錦上路",
+    "YUL": "元朗", "LOP": "朗屏", "TWW": "荃灣西", "MEF": "美孚",
+    "NAC": "南昌", "AUS": "柯士甸", "ETS": "尖東", "HUH": "紅磡",
+    "HOM": "何文田", "TKW": "土瓜灣", "SUW": "宋皇臺", "CKH": "啟德",
+    "DIH": "鑽石山", "HIK": "顯徑", "TAW": "大圍", "CKT": "車公廟",
+    "STW": "沙田圍", "CIO": "第一城", "SHM": "石門", "TSH": "大水坑",
+    "HEO": "恆安", "MOS": "馬鞍山", "WKS": "烏溪沙"
+};
 
 // 1. 左上角 24 小時制真實時間 (包含秒)
 function updateClock() {
@@ -194,9 +205,9 @@ function formatMtrTime(trainObj) {
     
     // 如果剩下 0 或 1 分鐘，顯示「正在駛入」或「即將抵達」的紅字閃爍效果
     if (ttnt === 0) {
-        timeDisplay = `<span class="status-flash">正在駛入 Arriving</span>`;
+        timeDisplay = `<span class="status-flash">正在駛入</span>`;
     } else if (ttnt === 1) {
-        timeDisplay = `<span class="status-flash">即將抵達 Dept</span>`;
+        timeDisplay = `<span class="status-flash">即將抵達</span>`;
     } else {
         // 從 API 傳回的 "YYYY-MM-DD HH:MM:SS" 之中，截取 24小時制的 "HH:MM"
         if (trainObj.time) {
@@ -206,11 +217,9 @@ function formatMtrTime(trainObj) {
         }
     }
 
-    // 【動態修正】直接讀取 API 的繁體中文和英文目的地名稱，不硬寫死
-    // 預防 API 資料缺漏，若無動態名稱則保留原始代碼 (如 TUM / WKS)
-    const tchDest = trainObj.dest_tch || trainObj.dest;
-    const engDest = trainObj.dest_eng || "";
-    const destName = `${tchDest} ${engDest}`.trim();
+    // 【核心修正】先嘗試對照英中字典，如果找不到，再拿 API 的繁中名稱，確保絕對不會漏掉顯示中文
+    const rawDest = trainObj.dest;
+    const destName = stationNameMap[rawDest] || trainObj.dest_tch || rawDest;
 
     return {
         dest: destName,
@@ -239,7 +248,7 @@ function renderDirection(dataArray, elementId) {
             container.innerHTML += `
                 <div class="train-row">
                     <div class="seq">${i + 1}</div>
-                    <div class="dest">${i === 0 ? "班次已完結 Service Ended" : "--"}</div>
+                    <div class="dest">${i === 0 ? "班次已完結" : "--"}</div>
                     <div class="arrival-time">--:--</div>
                 </div>
             `;
