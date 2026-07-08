@@ -139,51 +139,40 @@ body {
 
     <div class="header-bar">
         <div class="real-time" id="clock">00:00:00</div>
-        <div class="station-title">天水圍</div>
+        <div class="station-title">天水圍 Tin Shui Wai</div>
     </div>
 
     <div class="main-content">
         
         <div class="direction-group">
-            <div class="direction-title">往 屯門方向</div>
+            <div class="direction-title">往 屯門 To Tuen Mun</div>
             <div id="tuen-mun-list">
-                <div class="train-row"><div class="seq">1</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">2</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">3</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">4</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
+                <div class="train-row"><div class="seq">1</div><div class="dest">屯門</div><div class="arrival-time">--:--</div></div>
+                <div class="train-row"><div class="seq">2</div><div class="dest">屯門</div><div class="arrival-time">--:--</div></div>
+                <div class="train-row"><div class="seq">3</div><div class="dest">屯門</div><div class="arrival-time">--:--</div></div>
+                <div class="train-row"><div class="seq">4</div><div class="dest">屯門</div><div class="arrival-time">--:--</div></div>
             </div>
         </div>
 
         <div class="direction-group">
-            <div class="direction-title">往 烏溪沙方向</div>
+            <div class="direction-title">往 烏溪沙 To Wu Kai Sha</div>
             <div id="wu-kai-sha-list">
-                <div class="train-row"><div class="seq">1</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">2</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">3</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">4</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
+                <div class="train-row"><div class="seq">1</div><div class="dest">烏溪沙</div><div class="arrival-time">--:--</div></div>
+                <div class="train-row"><div class="seq">2</div><div class="dest">烏溪沙</div><div class="arrival-time">--:--</div></div>
+                <div class="train-row"><div class="seq">3</div><div class="dest">烏溪沙</div><div class="arrival-time">--:--</div></div>
+                <div class="train-row"><div class="seq">4</div><div class="dest">烏溪沙</div><div class="arrival-time">--:--</div></div>
             </div>
         </div>
 
     </div>
 
     <div class="footer-bar">
-        PIDS 運作中 | 強制繁體中文核心 | 自動更新: 10秒
+        PIDS Active | Auto-refresh: 10s
     </div>
 
 <script>
 const line = "TML";
 const station = "TIS";
-
-// 屯馬綫所有車站的英中對照表（確保 100% 轉換為繁體中文）
-const stationNameMap = {
-    "TUM": "屯門", "SIH": "兆康", "TIS": "天水圍", "KSR": "錦上路",
-    "YUL": "元朗", "LOP": "朗屏", "TWW": "荃灣西", "MEF": "美孚",
-    "NAC": "南昌", "AUS": "柯士甸", "ETS": "尖東", "HUH": "紅磡",
-    "HOM": "何文田", "TKW": "土瓜灣", "SUW": "宋皇臺", "CKH": "啟德",
-    "DIH": "鑽石山", "HIK": "顯徑", "TAW": "大圍", "CKT": "車公廟",
-    "STW": "沙田圍", "CIO": "第一城", "SHM": "石門", "TSH": "大水坑",
-    "HEO": "恆安", "MOS": "馬鞍山", "WKS": "烏溪沙"
-};
 
 // 1. 左上角 24 小時制真實時間 (包含秒)
 function updateClock() {
@@ -203,11 +192,11 @@ function formatMtrTime(trainObj) {
     const ttnt = parseInt(trainObj.ttnt, 10);
     let timeDisplay = "";
     
-    // 如果剩下 0 或 1 分鐘，顯示「正在駛入」或「即將抵達」的紅字閃爍效果
+    // 如果剩下 0 或 1 分鐘，還原月台顯示「正在駛入」或「即將抵達」的紅字閃爍效果
     if (ttnt === 0) {
-        timeDisplay = `<span class="status-flash">正在駛入</span>`;
+        timeDisplay = `<span class="status-flash">正在駛入 Arriving</span>`;
     } else if (ttnt === 1) {
-        timeDisplay = `<span class="status-flash">即將抵達</span>`;
+        timeDisplay = `<span class="status-flash">即將抵達 Dept</span>`;
     } else {
         // 從 API 傳回的 "YYYY-MM-DD HH:MM:SS" 之中，截取 24小時制的 "HH:MM"
         if (trainObj.time) {
@@ -217,9 +206,8 @@ function formatMtrTime(trainObj) {
         }
     }
 
-    // 【核心修正】先嘗試對照英中字典，如果找不到，再拿 API 的繁中名稱，確保絕對不會漏掉顯示中文
-    const rawDest = trainObj.dest;
-    const destName = stationNameMap[rawDest] || trainObj.dest_tch || rawDest;
+    // 格式化目的地中英文顯示
+    const destName = trainObj.dest === "TUM" ? "屯門 Tuen Mun" : "烏溪沙 Wu Kai Sha";
 
     return {
         dest: destName,
@@ -232,7 +220,7 @@ function renderDirection(dataArray, elementId) {
     const container = document.getElementById(elementId);
     container.innerHTML = ""; // 先清空舊內容
 
-    // 固定取 4 班車
+    // 已修改：港鐵 API 每方向最多提供 4 班車，我們固定取 4 班
     for (let i = 0; i < 4; i++) {
         if (dataArray && dataArray[i]) {
             const info = formatMtrTime(dataArray[i]);
@@ -248,7 +236,7 @@ function renderDirection(dataArray, elementId) {
             container.innerHTML += `
                 <div class="train-row">
                     <div class="seq">${i + 1}</div>
-                    <div class="dest">${i === 0 ? "班次已完結" : "--"}</div>
+                    <div class="dest">${i === 0 ? "班次已完結 Service Ended" : "--"}</div>
                     <div class="arrival-time">--:--</div>
                 </div>
             `;
@@ -265,9 +253,9 @@ async function loadSchedule() {
         const data = json.data[`${line}-${station}`];
 
         if (data) {
-            // 港鐵 API 規定：屯馬綫 UP 是往屯門方向，DOWN 是往烏溪沙方向
-            renderDirection(data.UP, "tuen-mun-list");       
-            renderDirection(data.DOWN, "wu-kai-sha-list");   
+            // 港鐵 API 規定：屯馬綫 UP 是往屯門，DOWN 是往烏溪沙
+            renderDirection(data.UP, "tuen-mun-list");       // 往屯門 (使用 UP 數據)
+            renderDirection(data.DOWN, "wu-kai-sha-list");   // 往烏溪沙 (使用 DOWN 數據)
         }
     } catch (e) {
         console.error("MTR API Error:", e);
