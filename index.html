@@ -11,7 +11,8 @@ body {
     padding: 0;
     background-color: #000000;
     color: #00FF33; /* 經典港鐵 LED 鮮綠字 */
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
+    /* 融入地鐵宋體風格：優先調用系統宋體並加粗，配合字距拉開，重現月台印刷質感 */
+    font-family: "LiSong Pro", "儷宋 Pro", "Apple LiSung", "PMingLiU", "新細明體", "PingFang HK", "Microsoft JhengHei", sans-serif;
     height: 100vh;
     width: 100vw;
     display: flex;
@@ -22,13 +23,15 @@ body {
     padding: 3vh 4vw;
 }
 
-/* 頂部資訊列：左邊 24小時制真實時間，右邊車站名稱 */
+/* 頂部資訊列：優化排版，徹底解決字體底部 1/10 被切斷的問題 */
 .header-bar {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end; /* 改為底部對齊，讓字腳有支撐 */
     border-bottom: 4px solid #947A4D; /* 屯馬綫代表色線條 */
-    padding-bottom: 1.5vh;
+    padding-bottom: 2.5vh; /* 增加底部留白，防止線條切到字腳 */
+    margin-bottom: 1vh;
+    box-sizing: border-box;
 }
 
 .real-time {
@@ -37,12 +40,15 @@ body {
     color: #00FF33;
     font-family: monospace; /* 確保時間數字對齊不抖動 */
     text-shadow: 0 0 12px rgba(0, 255, 51, 0.7);
+    line-height: 1.2; /* 增大行高，給予字體下方充足空間 */
 }
 
 .station-title {
     font-size: 5vh;
-    font-weight: bold;
-    color: #FFFFFF; /* 車站名用白色，還原真實車站設計 */
+    font-weight: 700;
+    color: #FFFFFF; /* 車站名用白色 */
+    letter-spacing: 2px; /* 稍微拉開字距，更像真實燈箱 */
+    line-height: 1.2; /* 增大行高，防止中文底部被切 */
 }
 
 /* 班次顯示主要區域 */
@@ -68,23 +74,26 @@ body {
     margin-bottom: 1.5vh;
     border-left: 8px solid #947A4D;
     padding-left: 15px;
+    letter-spacing: 1px;
 }
 
-/* 列車班次列表 */
+/* 使用 Table 結構確保在 iPad 上完全對齊不抖動 */
 .train-table {
     width: 100%;
+    border-collapse: collapse;
 }
 
-.train-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1vh 0;
+.train-table tr {
     border-bottom: 1px dashed #222;
 }
 
-.train-row:last-child {
+.train-table tr:last-child {
     border-bottom: none;
+}
+
+.train-table td {
+    padding: 1.2vh 0;
+    vertical-align: middle;
 }
 
 /* 班次序號 (1, 2, 3, 4) */
@@ -92,14 +101,16 @@ body {
     font-size: 3.5vh;
     color: #666666;
     width: 10%;
+    font-family: monospace;
 }
 
-/* 目的地文字 */
+/* 目的地文字（宋體模擬效果） */
 .dest {
-    font-size: 4vh;
+    font-size: 4.2vh;
     color: #FFFFFF;
-    font-weight: bold;
+    font-weight: 600;
     width: 50%;
+    letter-spacing: 2px;
 }
 
 /* 24小時制到達時間 */
@@ -118,6 +129,7 @@ body {
     color: #FF3333; 
     text-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
     animation: blink 1s infinite;
+    font-weight: bold;
 }
 
 @keyframes blink {
@@ -131,6 +143,7 @@ body {
     text-align: right;
     font-size: 2vh;
     color: #444;
+    letter-spacing: 1px;
 }
 </style>
 </head>
@@ -146,28 +159,32 @@ body {
         
         <div class="direction-group">
             <div class="direction-title">往 屯門方向</div>
-            <div id="tuen-mun-list">
-                <div class="train-row"><div class="seq">1</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">2</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">3</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">4</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-            </div>
+            <table class="train-table">
+                <tbody id="tuen-mun-list">
+                    <tr><td class="seq">1</td><td class="dest">--</td><td class="arrival-time">--:--</td></tr>
+                    <tr><td class="seq">2</td><td class="dest">--</td><td class="arrival-time">--:--</td></tr>
+                    <tr><td class="seq">3</td><td class="dest">--</td><td class="arrival-time">--:--</td></tr>
+                    <tr><td class="seq">4</td><td class="dest">--</td><td class="arrival-time">--:--</td></tr>
+                </tbody>
+            </table>
         </div>
 
         <div class="direction-group">
             <div class="direction-title">往 烏溪沙方向</div>
-            <div id="wu-kai-sha-list">
-                <div class="train-row"><div class="seq">1</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">2</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">3</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">4</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-            </div>
+            <table class="train-table">
+                <tbody id="wu-kai-sha-list">
+                    <tr><td class="seq">1</td><td class="dest">--</td><td class="arrival-time">--:--</td></tr>
+                    <tr><td class="seq">2</td><td class="dest">--</td><td class="arrival-time">--:--</td></tr>
+                    <tr><td class="seq">3</td><td class="dest">--</td><td class="arrival-time">--:--</td></tr>
+                    <tr><td class="seq">4</td><td class="dest">--</td><td class="arrival-time">--:--</td></tr>
+                </tbody>
+            </table>
         </div>
 
     </div>
 
     <div class="footer-bar">
-        PIDS 運作中 | 強制繁體中文核心 | 自動更新: 10秒
+        旅客資訊顯示系統 | 地鐵宋體模擬核心 | 自動更新: 10秒
     </div>
 
 <script>
@@ -217,7 +234,6 @@ function formatMtrTime(trainObj) {
         }
     }
 
-    // 【核心修正】先嘗試對照英中字典，如果找不到，再拿 API 的繁中名稱，確保絕對不會漏掉顯示中文
     const rawDest = trainObj.dest;
     const destName = stationNameMap[rawDest] || trainObj.dest_tch || rawDest;
 
@@ -237,20 +253,20 @@ function renderDirection(dataArray, elementId) {
         if (dataArray && dataArray[i]) {
             const info = formatMtrTime(dataArray[i]);
             container.innerHTML += `
-                <div class="train-row">
-                    <div class="seq">${i + 1}</div>
-                    <div class="dest">${info.dest}</div>
-                    <div class="arrival-time">${info.time}</div>
-                </div>
+                <tr>
+                    <td class="seq">${i + 1}</td>
+                    <td class="dest">${info.dest}</td>
+                    <td class="arrival-time">${info.time}</td>
+                </tr>
             `;
         } else {
             // 如果深夜尾班車過後沒有後續班次
             container.innerHTML += `
-                <div class="train-row">
-                    <div class="seq">${i + 1}</div>
-                    <div class="dest">${i === 0 ? "班次已完結" : "--"}</div>
-                    <div class="arrival-time">--:--</div>
-                </div>
+                <tr>
+                    <td class="seq">${i + 1}</td>
+                    <td class="dest">${i === 0 ? "班次已完結" : "--"}</td>
+                    <td class="arrival-time">--:--</td>
+                </tr>
             `;
         }
     }
