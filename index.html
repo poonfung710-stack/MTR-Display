@@ -167,12 +167,23 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 運作中 | 繁體中文模式 | 自動更新: 10秒
+        PIDS 運作中 | 強制繁體中文核心 | 自動更新: 10秒
     </div>
 
 <script>
 const line = "TML";
 const station = "TIS";
+
+// 屯馬綫所有車站的英中對照表（確保 100% 轉換為繁體中文）
+const stationNameMap = {
+    "TUM": "屯門", "SIH": "兆康", "TIS": "天水圍", "KSR": "錦上路",
+    "YUL": "元朗", "LOP": "朗屏", "TWW": "荃灣西", "MEF": "美孚",
+    "NAC": "南昌", "AUS": "柯士甸", "ETS": "尖東", "HUH": "紅磡",
+    "HOM": "何文田", "TKW": "土瓜灣", "SUW": "宋皇臺", "CKH": "啟德",
+    "DIH": "鑽石山", "HIK": "顯徑", "TAW": "大圍", "CKT": "車公廟",
+    "STW": "沙田圍", "CIO": "第一城", "SHM": "石門", "TSH": "大水坑",
+    "HEO": "恆安", "MOS": "馬鞍山", "WKS": "烏溪沙"
+};
 
 // 1. 左上角 24 小時制真實時間 (包含秒)
 function updateClock() {
@@ -206,8 +217,9 @@ function formatMtrTime(trainObj) {
         }
     }
 
-    // 【純繁體中文修改】只抓取 API 的繁體中文目的地名稱，移除了英文部分
-    const destName = trainObj.dest_tch || trainObj.dest;
+    // 【核心修正】先嘗試對照英中字典，如果找不到，再拿 API 的繁中名稱，確保絕對不會漏掉顯示中文
+    const rawDest = trainObj.dest;
+    const destName = stationNameMap[rawDest] || trainObj.dest_tch || rawDest;
 
     return {
         dest: destName,
