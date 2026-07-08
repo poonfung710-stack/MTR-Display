@@ -23,12 +23,12 @@ body {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    padding: 2vh 4vw; 
+    padding: 1.5vh 3vw; /* 稍微縮小外邊距，讓內容撐得更大 */
 }
 
-/* 頂部資訊列：iOS 12 完美顯示結構 */
+/* 頂部資訊列：微調高度，釋放空間給下方 */
 .header-bar {
-    height: 10vh; 
+    height: 8vh; 
     border-bottom: 4px solid #947A4D; 
     box-sizing: border-box;
     position: relative;
@@ -37,42 +37,42 @@ body {
 .real-time {
     position: absolute;
     left: 0;
-    bottom: 1vh;
-    font-size: 5vh;
+    bottom: 0.8vh;
+    font-size: 4.8vh;
     font-weight: bold;
     color: #00FF33;
     font-family: monospace; 
     text-shadow: 0 0 12px rgba(0, 255, 51, 0.7);
-    line-height: 1.4; 
+    line-height: 1.2; 
 }
 
 .station-title {
     position: absolute;
     right: 0;
-    bottom: 1vh;
-    font-size: 5vh;
+    bottom: 0.8vh;
+    font-size: 4.8vh;
     font-weight: bold;
     color: #FFFFFF; 
-    line-height: 1.4; 
+    line-height: 1.2; 
 }
 
-/* 班次顯示主要區域 */
+/* 班次顯示主要區域：擴大佔螢幕比至 87% */
 .main-content {
-    height: 82vh; 
+    height: 87vh; 
     display: flex;
     flex-direction: column;
     justify-content: space-between; 
-    margin: 1.5vh 0;
+    margin: 1vh 0;
     box-sizing: border-box;
 }
 
-/* 每個方向的區塊 */
+/* 每個方向的區塊：高度擴大至 41vh */
 .direction-group {
     background: #050505;
     border: 2px solid #111;
     border-radius: 12px;
     padding: 1.5vh 3vw; 
-    height: 38vh; 
+    height: 41vh; 
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -80,10 +80,10 @@ body {
 }
 
 .direction-title {
-    font-size: 3.8vh;
+    font-size: 4.2vh; /* 標題放大 */
     font-weight: bold;
     color: #FFCC00; 
-    margin-bottom: 1vh;
+    margin-bottom: 0.8vh;
     border-left: 8px solid #947A4D;
     padding-left: 15px;
     line-height: 1.2;
@@ -98,12 +98,12 @@ body {
     justify-content: flex-start; 
 }
 
-/* 核心修改：改用固定物理高度 (vh) 與相對定位，徹底打破 iOS 12 縮小 Bug */
+/* 核心修改：大幅增加每行的物理高度（7.5vh），讓字體完全舒展 */
 .train-row {
-    position: relative; /* 啟用相對定位，讓時間可以絕對定位靠右 */
+    position: relative; 
     display: flex;
     align-items: center;
-    height: 6.5vh; /* 強制每一行擁有完全相等的物理高度 */
+    height: 7.5vh; 
     border-bottom: 1px dashed #222;
     box-sizing: border-box;
 }
@@ -112,38 +112,38 @@ body {
     border-bottom: none;
 }
 
-/* 班次序號 (1, 2, 3, 4) */
+/* 班次序號 (1, 2, 3, 4)：字體放大 */
 .seq {
-    font-size: 3.2vh;
+    font-size: 3.6vh;
     color: #666666;
     width: 10%;
 }
 
-/* 目的地文字 */
+/* 目的地文字：字體放大至 4.2vh */
 .dest {
-    font-size: 3.8vh;
+    font-size: 4.2vh;
     color: #FFFFFF;
     font-weight: bold;
-    width: 50%;
+    width: 45%;
 }
 
-/* 24小時制到達時間：改用絕對定位靠右，不受行高擠壓影響 */
+/* 24小時制到達時間：範圍拉大、字體放大至 4.5vh，充滿張力 */
 .arrival-time {
     position: absolute;
     right: 0;
-    font-size: 4vh !important; 
+    font-size: 4.5vh !important; 
     font-weight: bold;
     font-family: monospace;
     color: #00FF33;
-    text-shadow: 0 0 10px rgba(0, 255, 51, 0.8);
+    text-shadow: 0 0 12px rgba(0, 255, 51, 0.8);
     text-align: right;
     -webkit-text-size-adjust: 100% !important; 
 }
 
-/* 特殊狀態：正在駛入 / 即將抵達 改為紅色閃爍 */
+/* 特殊狀態：正在駛入 / 即將抵達 */
 .status-flash {
     color: #FF3333; 
-    text-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
+    text-shadow: 0 0 12px rgba(255, 51, 51, 0.8);
     animation: blink 1s infinite;
 }
 
@@ -153,12 +153,12 @@ body {
     100% { opacity: 1.0; }
 }
 
-/* 底部狀態列 */
+/* 底部狀態列：微調縮小，讓位給主面板 */
 .footer-bar {
-    height: 4vh;
-    line-height: 4vh;
+    height: 3vh;
+    line-height: 3vh;
     text-align: right;
-    font-size: 1.8vh;
+    font-size: 1.6vh;
     color: #444;
     box-sizing: border-box;
 }
