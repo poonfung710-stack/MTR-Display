@@ -22,13 +22,16 @@ body {
     padding: 3vh 4vw;
 }
 
-/* 頂部資訊列：左邊 24小時制真實時間，右邊車站名稱 */
+/* 頂部資訊列：專為 iOS 12 Safari 修正垂直對齊錯誤 */
 .header-bar {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    /* 核心修正 1：移除 align-items: center，改用 baseline 配合 padding 給予舊版 Safari 穩定的高度計算 */
+    align-items: baseline; 
     border-bottom: 4px solid #947A4D; /* 屯馬綫代表色線條 */
-    padding-bottom: 1.5vh;
+    padding-top: 1.5vh;    /* 核心修正 2：加強頂部留白，防止文字往上飄而被削掉 */
+    padding-bottom: 2vh;   /* 核心修正 3：增加與金色線條的距離 */
+    box-sizing: border-box;
 }
 
 .real-time {
@@ -37,12 +40,14 @@ body {
     color: #00FF33;
     font-family: monospace; /* 確保時間數字對齊不抖動 */
     text-shadow: 0 0 12px rgba(0, 255, 51, 0.7);
+    line-height: 1.2; /* 核心修正 4：給字體上下預留 1.2 倍的安全行高 */
 }
 
 .station-title {
     font-size: 5vh;
     font-weight: bold;
     color: #FFFFFF; /* 車站名用白色，還原真實車站設計 */
+    line-height: 1.2; /* 核心修正 5：確保中文下方或上方都不會被 Safari 截斷 */
 }
 
 /* 班次顯示主要區域 */
