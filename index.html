@@ -6,7 +6,7 @@
 <title>港鐵乘客資訊顯示系統 (PIDS) - 天水圍站</title>
 
 <style>
-/* 基礎重設，防止不同世代的 Safari 亂加預設邊距 */
+/* 基礎重設 */
 html, body {
     margin: 0;
     padding: 0;
@@ -17,19 +17,18 @@ html, body {
 }
 
 body {
-    color: #00FF33; /* 經典港鐵 LED 鮮綠字 */
+    color: #00FF33; 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    /* 縮減四周外邊距，釋放空間給 iOS 最新系統的第四班車 */
     padding: 2vh 4vw; 
 }
 
-/* 頂部資訊列：使用安全行高與明確高度，徹底根治 iOS 12 文字上飄被削的問題 */
+/* 頂部資訊列：iOS 12 完美顯示結構 */
 .header-bar {
-    height: 10vh; /* 固定佔螢幕 10% 高度 */
-    border-bottom: 4px solid #947A4D; /* 屯馬綫代表色線條 */
+    height: 10vh; 
+    border-bottom: 4px solid #947A4D; 
     box-sizing: border-box;
     position: relative;
 }
@@ -43,7 +42,7 @@ body {
     color: #00FF33;
     font-family: monospace; 
     text-shadow: 0 0 12px rgba(0, 255, 51, 0.7);
-    line-height: 1.4; /* 強制加大行高，把 iOS 12 飄上去的字體強行壓下來完整顯示 */
+    line-height: 1.4; 
 }
 
 .station-title {
@@ -53,26 +52,26 @@ body {
     font-size: 5vh;
     font-weight: bold;
     color: #FFFFFF; 
-    line-height: 1.4; /* 同步壓低中文，確保不切字 */
+    line-height: 1.4; 
 }
 
-/* 班次顯示主要區域：鎖定總高度為 82%，防止內容過多把第四班車擠出螢幕 */
+/* 班次顯示主要區域 */
 .main-content {
     height: 82vh; 
     display: flex;
     flex-direction: column;
-    justify-content: space-between; /* 均勻拉開上下兩個方向 */
+    justify-content: space-between; 
     margin: 1.5vh 0;
     box-sizing: border-box;
 }
 
-/* 每個方向的區塊：高度精準控制，確保 4 班車完美容納 */
+/* 每個方向的區塊 */
 .direction-group {
     background: #050505;
     border: 2px solid #111;
     border-radius: 12px;
-    padding: 1.5vh 3vw; /* 稍微縮減上下內邊距 */
-    height: 38vh; /* 兩個區塊各佔 38h，合共 76vh，預留充足安全感 */
+    padding: 1.5vh 3vw; 
+    height: 38vh; 
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -82,27 +81,28 @@ body {
 .direction-title {
     font-size: 3.8vh;
     font-weight: bold;
-    color: #FFCC00; /* 目的地路綫提示使用經典耀眼黃色 */
+    color: #FFCC00; 
     margin-bottom: 1vh;
     border-left: 8px solid #947A4D;
     padding-left: 15px;
     line-height: 1.2;
+    height: 5vh; /* 鎖定標題高度 */
 }
 
-/* 列車班次列表：平分剩餘空間，確保第四班列車絕對看得到 */
+/* 列車班次列表：改用靠上對齊，不使用彈性平分 */
 .train-list-container {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start; /* 核心修改：強制靠上對齊 */
+    height: 30vh; /* 鎖定列表總高度 */
 }
 
 .train-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    /* 縮小每行高低，確保全螢幕不溢出 */
-    padding: 0.5vh 0; 
+    height: 23%; /* 核心修改：精準鎖定每行大小為 23%，4行共92%，留出完美安全邊界 */
     border-bottom: 1px dashed #222;
     box-sizing: border-box;
 }
@@ -135,6 +135,8 @@ body {
     text-shadow: 0 0 10px rgba(0, 255, 51, 0.8);
     text-align: right;
     width: 40%;
+    /* 核心修改：強制禁止 Safari 為了塞進格子而自動縮小字體 */
+    -webkit-text-size-adjust: none; 
 }
 
 /* 特殊狀態：正在駛入 / 即將抵達 改為紅色閃爍 */
@@ -150,7 +152,7 @@ body {
     100% { opacity: 1.0; }
 }
 
-/* 底部狀態列：佔 4% 高度 */
+/* 底部狀態列 */
 .footer-bar {
     height: 4vh;
     line-height: 4vh;
