@@ -22,32 +22,37 @@ body {
     padding: 3vh 4vw;
 }
 
-/* 頂部資訊列：專為 iOS 12 Safari 修正垂直對齊錯誤 */
+/* 頂部資訊列：改用絕對定位法，徹底根治 iOS 12 Safari 切字問題 */
 .header-bar {
-    display: flex;
-    justify-content: space-between;
-    /* 核心修正 1：移除 align-items: center，改用 baseline 配合 padding 給予舊版 Safari 穩定的高度計算 */
-    align-items: baseline; 
+    position: relative;
+    height: 10vh; /* 強制給予頂部 10% 的螢幕高度空間 */
     border-bottom: 4px solid #947A4D; /* 屯馬綫代表色線條 */
-    padding-top: 1.5vh;    /* 核心修正 2：加強頂部留白，防止文字往上飄而被削掉 */
-    padding-bottom: 2vh;   /* 核心修正 3：增加與金色線條的距離 */
     box-sizing: border-box;
+    margin-bottom: 1vh;
 }
 
+/* 左邊時間：強制固定在左下角，留出安全邊距 */
 .real-time {
+    position: absolute;
+    left: 0;
+    bottom: 1.5vh; /* 距離金色線條的高度 */
     font-size: 5vh;
     font-weight: bold;
     color: #00FF33;
-    font-family: monospace; /* 確保時間數字對齊不抖動 */
+    font-family: monospace; 
     text-shadow: 0 0 12px rgba(0, 255, 51, 0.7);
-    line-height: 1.2; /* 核心修正 4：給字體上下預留 1.2 倍的安全行高 */
+    line-height: 1; /* 強制行高為 1，不允許 Safari 亂加內襯 */
 }
 
+/* 右邊車站名：強制固定在右下角，留出安全邊距 */
 .station-title {
+    position: absolute;
+    right: 0;
+    bottom: 1.5vh; /* 距離金色線條的高度 */
     font-size: 5vh;
     font-weight: bold;
-    color: #FFFFFF; /* 車站名用白色，還原真實車站設計 */
-    line-height: 1.2; /* 核心修正 5：確保中文下方或上方都不會被 Safari 截斷 */
+    color: #FFFFFF; 
+    line-height: 1; /* 強制行高為 1，不允許 Safari 亂加內襯 */
 }
 
 /* 班次顯示主要區域 */
@@ -179,7 +184,7 @@ body {
 const line = "TML";
 const station = "TIS";
 
-// 屯馬綫所有車站的英中對照表（確保 100% 轉換為繁體中文）
+// 屯馬綫所有車站的英中對照表
 const stationNameMap = {
     "TUM": "屯門", "SIH": "兆康", "TIS": "天水圍", "KSR": "錦上路",
     "YUL": "元朗", "LOP": "朗屏", "TWW": "荃灣西", "MEF": "美孚",
@@ -222,7 +227,6 @@ function formatMtrTime(trainObj) {
         }
     }
 
-    // 【核心修正】先嘗試對照英中字典，如果找不到，再拿 API 的繁中名稱，確保絕對不會漏掉顯示中文
     const rawDest = trainObj.dest;
     const destName = stationNameMap[rawDest] || trainObj.dest_tch || rawDest;
 
@@ -270,7 +274,6 @@ async function loadSchedule() {
         const data = json.data[`${line}-${station}`];
 
         if (data) {
-            // 港鐵 API 規定：屯馬綫 UP 是往屯門方向，DOWN 是往烏溪沙方向
             renderDirection(data.UP, "tuen-mun-list");       
             renderDirection(data.DOWN, "wu-kai-sha-list");   
         }
