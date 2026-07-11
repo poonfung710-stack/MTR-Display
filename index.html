@@ -22,13 +22,12 @@ body {
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
-    /* 縮減四周外邊距，釋放空間給 iOS 最新系統的第四班車 */
-    padding: 2vh 4vw; 
+    padding: 1.5vh 3vw; /* 稍微縮小外邊距，讓內容撐得更大 */
 }
 
-/* 頂部資訊列：使用安全行高與明確高度，徹底根治 iOS 12 文字上飄被削的問題 */
+/* 頂部資訊列：微調高度，釋放空間給下方 */
 .header-bar {
-    height: 10vh; /* 固定佔螢幕 10% 高度 */
+    height: 8vh; 
     border-bottom: 4px solid #947A4D; /* 屯馬綫代表色線條 */
     box-sizing: border-box;
     position: relative;
@@ -37,42 +36,42 @@ body {
 .real-time {
     position: absolute;
     left: 0;
-    bottom: 1vh;
-    font-size: 5vh;
+    bottom: 0.8vh;
+    font-size: 4.8vh;
     font-weight: bold;
     color: #00FF33;
     font-family: monospace; 
     text-shadow: 0 0 12px rgba(0, 255, 51, 0.7);
-    line-height: 1.4; /* 強制加大行高，把 iOS 12 飄上去的字體強行壓下來完整顯示 */
+    line-height: 1.2; 
 }
 
 .station-title {
     position: absolute;
     right: 0;
-    bottom: 1vh;
-    font-size: 5vh;
+    bottom: 0.8vh;
+    font-size: 4.8vh;
     font-weight: bold;
     color: #FFFFFF; 
-    line-height: 1.4; /* 同步壓低中文，確保不切字 */
+    line-height: 1.2; 
 }
 
-/* 班次顯示主要區域：鎖定總高度為 82%，防止內容過多把第四班車擠出螢幕 */
+/* 班次顯示主要區域：鎖定總高度為 88vh，擴大可視面積 */
 .main-content {
-    height: 82vh; 
+    height: 88vh; 
     display: flex;
     flex-direction: column;
     justify-content: space-between; /* 均勻拉開上下兩個方向 */
-    margin: 1.5vh 0;
+    margin: 0.5vh 0;
     box-sizing: border-box;
 }
 
-/* 每個方向的區塊：高度精準控制，確保 4 班車完美容納 */
+/* 每個方向的區塊：高度從 38vh 放大至 42vh，佔屏比大幅增加 */
 .direction-group {
     background: #050505;
     border: 2px solid #111;
     border-radius: 12px;
-    padding: 1.5vh 3vw; /* 稍微縮減上下內邊距 */
-    height: 38vh; /* 兩個區塊各佔 38h，合共 76vh，預留充足安全感 */
+    padding: 1.5vh 3vw; 
+    height: 42vh; 
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -80,10 +79,10 @@ body {
 }
 
 .direction-title {
-    font-size: 3.8vh;
+    font-size: 4.3vh; /* 標題放大 */
     font-weight: bold;
     color: #FFCC00; /* 目的地路綫提示使用經典耀眼黃色 */
-    margin-bottom: 1vh;
+    margin-bottom: 0.8vh;
     border-left: 8px solid #947A4D;
     padding-left: 15px;
     line-height: 1.2;
@@ -101,8 +100,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    /* 縮小每行高低，確保全螢幕不溢出 */
-    padding: 0.5vh 0; 
+    padding: 0.3vh 0; /* 微調內襯，騰出空間給大字體 */
     border-bottom: 1px dashed #222;
     box-sizing: border-box;
 }
@@ -111,36 +109,36 @@ body {
     border-bottom: none;
 }
 
-/* 班次序號 (1, 2, 3, 4) */
+/* 班次序號 (1, 2, 3, 4)：字體放大 */
 .seq {
-    font-size: 3.2vh;
+    font-size: 3.6vh;
     color: #666666;
     width: 10%;
 }
 
-/* 目的地文字 */
+/* 目的地文字：字體放大，視覺感更強 */
 .dest {
-    font-size: 3.8vh;
+    font-size: 4.5vh;
     color: #FFFFFF;
     font-weight: bold;
-    width: 50%;
+    width: 45%;
 }
 
-/* 24小時制到達時間 */
+/* 24小時制到達時間：大幅放大至 4.8vh，更粗更顯眼 */
 .arrival-time {
-    font-size: 4vh;
+    font-size: 4.8vh;
     font-weight: bold;
     font-family: monospace;
     color: #00FF33;
-    text-shadow: 0 0 10px rgba(0, 255, 51, 0.8);
+    text-shadow: 0 0 12px rgba(0, 255, 51, 0.8);
     text-align: right;
-    width: 40%;
+    width: 45%;
 }
 
 /* 特殊狀態：正在駛入 / 即將抵達 改為紅色閃爍 */
 .status-flash {
     color: #FF3333; 
-    text-shadow: 0 0 10px rgba(255, 51, 51, 0.8);
+    text-shadow: 0 0 12px rgba(255, 51, 51, 0.8);
     animation: blink 1s infinite;
 }
 
@@ -150,12 +148,12 @@ body {
     100% { opacity: 1.0; }
 }
 
-/* 底部狀態列：佔 4% 高度 */
+/* 底部狀態列：佔 3% 高度，讓位給上方 */
 .footer-bar {
-    height: 4vh;
-    line-height: 4vh;
+    height: 3vh;
+    line-height: 3vh;
     text-align: right;
-    font-size: 1.8vh;
+    font-size: 1.6vh;
     color: #444;
     box-sizing: border-box;
 }
