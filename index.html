@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>港鐵/輕鐵/巴士綜合乘客資訊顯示系統 (PIDS) - 天水圍 (iOS 9 精簡版)</title>
+<title>港鐵/輕鐵/巴士綜合乘客資訊顯示系統 (PIDS) - 天水圍 (iOS 9 終極倒數版)</title>
 
 <style>
 /* 基礎重設 */
@@ -128,11 +128,11 @@ body {
     width: 10%;
 }
 .dest {
-    font-size: 3.8vh;
+    font-size: 3.5vh; /* 稍微縮小字體以容納更長的目的地 */
     color: #FFFFFF;
     font-weight: bold;
     float: left;
-    width: 50%;
+    width: 55%;
     white-space: nowrap;
     overflow: hidden;
 }
@@ -142,7 +142,7 @@ body {
     font-family: monospace;
     float: right;
     text-align: right;
-    width: 40%;
+    width: 35%;
 }
 .time-mtr { font-size: 4.2vh; color: #00FF33; text-shadow: 0 0 10px rgba(0,255,51,0.8); }
 .time-lrt { font-size: 3.8vh; color: #FF9900; text-shadow: 0 0 8px rgba(255,153,0,0.8); }
@@ -218,11 +218,11 @@ body {
             </div>
 
             <div class="direction-group right-group">
-                <div class="direction-title title-bus">九巴 276A (天祐苑) 往上水</div>
+                <div class="direction-title title-bus">九巴 276A (天祐苑)</div>
                 <div id="bus-list">
-                    <div class="train-row"><div class="seq">1</div><div class="dest" style="color:#FF3333">276A 上水</div><div class="arrival-time time-bus">載入中</div></div>
-                    <div class="train-row"><div class="seq">2</div><div class="dest" style="color:#CCCCCC">下班車</div><div class="arrival-time time-bus">--:--</div></div>
-                    <div class="train-row"><div class="seq">3</div><div class="dest" style="color:#CCCCCC">第三班</div><div class="arrival-time time-bus">--:--</div></div>
+                    <div class="train-row"><div class="seq">1</div><div class="dest" style="color:#FF3333">往上水 (太平)</div><div class="arrival-time time-bus">-- 分鐘</div></div>
+                    <div class="train-row"><div class="seq">2</div><div class="dest" style="color:#FF3333">往上水 (太平)</div><div class="arrival-time time-bus">-- 分鐘</div></div>
+                    <div class="train-row"><div class="seq">3</div><div class="dest" style="color:#FF3333">往上水 (太平)</div><div class="arrival-time time-bus">-- 分鐘</div></div>
                 </div>
             </div>
         </div>
@@ -230,7 +230,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 運作中 | iOS 9 輕裝優化核心 | 自動更新: 10秒
+        PIDS 運作中 | iOS 9 高相容代理核心 | 自動更新: 10秒
     </div>
 
 <script>
@@ -238,8 +238,8 @@ var mtrLine = "TML";
 var mtrStation = "TIS";
 var lrtStationId = "435"; 
 
-// 針對舊 iOS 的公共 CORS 代理
-var proxyUrl = "https://api.allorigins.win/raw?url=";
+// 換用另一個對舊核心更友善、連線更穩定的公共高相容 CORS 代理
+var proxyUrl = "https://corsproxy.io/?";
 
 var stationNameMap = {
     "TUM": "屯門", "SIH": "兆康", "TIS": "天水圍", "KSR": "錦上路",
@@ -262,6 +262,7 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
+// 1. 地鐵資料處理
 function renderMtrDirection(dataArray, elementId) {
     var container = document.getElementById(elementId);
     var htmlContent = "";
@@ -311,6 +312,7 @@ function loadMtrSchedule() {
     xhr.send();
 }
 
+// 2. 輕鐵資料處理 (使用全新的 corsproxy.io)
 function loadLrtSchedule() {
     var xhr = new XMLHttpRequest();
     var targetUrl = "https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule.php?id=" + lrtStationId;
@@ -322,7 +324,6 @@ function loadLrtSchedule() {
                 var platformList = json.platform_list;
                 var allItems = [];
                 
-                // 限制解析深度，防禦舊 WebKit 卡死
                 if (platformList) {
                     var pMax = platformList.length < 3 ? platformList.length : 3;
                     for (var p = 0; p < pMax; p++) {
@@ -371,6 +372,7 @@ function loadLrtSchedule() {
     xhr.send();
 }
 
+// 3. 巴士資料處理：倒數分鐘邏輯加固
 function loadBusSchedule() {
     var xhr = new XMLHttpRequest();
     var targetUrl = "https://data.etabus.gov.hk/v1/transport/kmb/eta/TI14-N-1050-0/276A/1";
@@ -383,7 +385,6 @@ function loadBusSchedule() {
                 var validEta = [];
                 
                 if (data) {
-                    // 最多只抓前 4 個，減少迴圈負擔
                     var dMax = data.length < 6 ? data.length : 6;
                     for (var d = 0; d < dMax; d++) {
                         if (data[d] && data[d].eta) {
@@ -392,28 +393,47 @@ function loadBusSchedule() {
                     }
                 }
 
+                // 獲取當前 iPad 物理時間（防禦 Date.parse 失敗）
+                var now = new Date();
+                var currentTotalMinutes = (now.getHours() * 60) + now.getMinutes();
+
                 var htmlContent = "";
-                // 精確限制為 3 班車顯示
+                // 精確限制只顯示 3 班車
                 for (var i = 0; i < 3; i++) {
-                    var label = i === 0 ? "276A 上水" : i === 1 ? "下班車" : "第三班";
-                    var labelColor = i === 0 ? "#FF3333" : "#CCCCCC";
-                    
                     if (validEta[i] && validEta[i].eta) {
-                        var rawEtaStr = validEta[i].eta;
-                        var timeStr = "--:--";
+                        var rawEtaStr = validEta[i].eta; // "2026-07-13T16:20:00+08:00"
+                        var displayTime = "-- 分鐘";
+                        
                         if (rawEtaStr && rawEtaStr.length >= 16) {
-                            timeStr = rawEtaStr.substring(11, 16);
+                            // 暴力字串切割法：直接拆出小時與分鐘，避免 iOS 9 解析 ISO 8601 時區出錯
+                            var etaHour = parseInt(rawEtaStr.substring(11, 13), 10);
+                            var etaMin = parseInt(rawEtaStr.substring(14, 16), 10);
+                            
+                            var etaTotalMinutes = (etaHour * 60) + etaMin;
+                            var diff = etaTotalMinutes - currentTotalMinutes;
+                            
+                            // 跨午夜處理
+                            if (diff < -600) { 
+                                diff += 1440;
+                            }
+                            
+                            if (diff <= 0) {
+                                displayTime = '<span class="status-flash" style="color:#FF3333">即將抵達</span>';
+                            } else {
+                                displayTime = diff + " 分鐘";
+                            }
                         }
+                        
                         htmlContent += '<div class="train-row">' +
                                             '<div class="seq">' + (i + 1) + '</div>' +
-                                            '<div class="dest" style="color:' + labelColor + '">' + label + '</div>' +
-                                            '<div class="arrival-time time-bus">' + timeStr + '</div>' +
+                                            '<div class="dest" style="color:#FF3333">往上水 (太平)</div>' +
+                                            '<div class="arrival-time time-bus">' + displayTime + '</div>' +
                                        '</div>';
                     } else {
                         htmlContent += '<div class="train-row">' +
                                             '<div class="seq">' + (i + 1) + '</div>' +
-                                            '<div class="dest" style="color:#444">' + label + '</div>' +
-                                            '<div class="arrival-time time-bus">--:--</div>' +
+                                            '<div class="dest" style="color:#444">往上水 (太平)</div>' +
+                                            '<div class="arrival-time time-bus">-- 分鐘</div>' +
                                        '</div>';
                     }
                 }
