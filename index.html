@@ -136,7 +136,7 @@ body {
 
 /* 列表容器 */
 .train-list-container {
-    height: 80%; 
+    height: 85%; /* 微調高度比例配合 6 班車 */
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -159,7 +159,6 @@ body {
     align-items: center;
     border-bottom: 1px dashed #222;
     box-sizing: border-box;
-    height: 20%; 
 }
 .train-row:last-child {
     border-bottom: none;
@@ -235,20 +234,20 @@ body {
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往屯門方向</div>
                 <div class="train-list-container" id="tuen-mun-list">
-                    <div class="train-row"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
-                    <div class="train-row"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
-                    <div class="train-row"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
                 </div>
             </div>
 
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往烏溪沙方向</div>
                 <div class="train-list-container" id="wu-kai-sha-list">
-                    <div class="train-row"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
-                    <div class="train-row"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
-                    <div class="train-row"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
                 </div>
             </div>
         </div>
@@ -270,7 +269,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 智能資訊屏 | iOS 9 XMLHttpRequest 終極聯網相容版 | 自動更新
+        PIDS 智能資訊屏 | 輕鐵 6 班車視覺優化版 | 自動更新
     </div>
 
 <script>
@@ -304,14 +303,15 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站
+// 右邊上方：輕鐵 天慈站 (已擴充至 6 班列車資料庫)
 // ==========================================
 var lrtTrains = [
     { route: '706', dest: '天水圍', eta: 1 },
     { route: '751', dest: '友愛', eta: 3 },
     { route: '705', dest: '天水圍', eta: 6 },
     { route: '751', dest: '天逸', eta: 9 },
-    { route: '706', dest: '天水圍', eta: 13 }
+    { route: '706', dest: '天水圍', eta: 13 },
+    { route: '705', dest: '天水圍', eta: 16 } // 新增的第 6 班車
 ];
 
 function renderLrtPIDS() {
@@ -336,7 +336,8 @@ function renderLrtPIDS() {
             finalDest = "往天水圍(南)";
         }
 
-        htmlString += '<div class="train-row" style="height:20%;">' +
+        // 行高調整為 16% 以完美適應 6 班車的擺放
+        htmlString += '<div class="train-row" style="height:16%;">' +
             '<div class="seq">' + (i + 1) + '</div>' +
             '<div class="lrt-no">' + train.route + '</div>' +
             '<div class="dest dest-lrt">' + finalDest + '</div>' +
@@ -346,17 +347,22 @@ function renderLrtPIDS() {
     listContainer.innerHTML = htmlString;
 }
 
+var lrtTickCount = 0;
 function simulateLrtCountdown() {
-    for (var i = 0; i < lrtTrains.length; i++) {
-        if (lrtTrains[i].eta > 0) {
-            lrtTrains[i].eta -= 1;
-        } else {
-            lrtTrains[i].eta = Math.floor(Math.random() * 6) + 10; 
+    lrtTickCount++;
+    if (lrtTickCount >= 6) { 
+        lrtTickCount = 0;
+        for (var i = 0; i < lrtTrains.length; i++) {
+            if (lrtTrains[i].eta > 0) {
+                lrtTrains[i].eta -= 1;
+            } else {
+                lrtTrains[i].eta = Math.floor(Math.random() * 6) + 12; 
+            }
         }
     }
     renderLrtPIDS();
 }
-setInterval(simulateLrtCountdown, 30000);
+setInterval(simulateLrtCountdown, 10000); 
 renderLrtPIDS();
 
 
@@ -394,22 +400,27 @@ function renderBusPIDS() {
     listContainer.innerHTML = htmlString;
 }
 
+var busTickCount = 0;
 function simulateBusCountdown() {
-    for (var i = 0; i < busTrains.length; i++) {
-        if (busTrains[i].eta > 0) {
-            busTrains[i].eta -= 1;
-        } else {
-            busTrains[i].eta = Math.floor(Math.random() * 5) + 8; 
+    busTickCount++;
+    if (busTickCount >= 6) {
+        busTickCount = 0;
+        for (var i = 0; i < busTrains.length; i++) {
+            if (busTrains[i].eta > 0) {
+                busTrains[i].eta -= 1;
+            } else {
+                busTrains[i].eta = Math.floor(Math.random() * 5) + 8; 
+            }
         }
     }
     renderBusPIDS();
 }
-setInterval(simulateBusCountdown, 30000);
+setInterval(simulateBusCountdown, 10000);
 renderBusPIDS();
 
 
 // ==========================================
-// 左邊：港鐵資料聯網核心 (使用古董級且高相容的 XMLHttpRequest 替代 fetch)
+// 左邊：港鐵資料聯網核心
 // ==========================================
 function formatMtrTime(trainObj) {
     if (!trainObj) return null;
@@ -455,7 +466,6 @@ function renderMtrDirection(dataArray, elementId) {
 function loadMtrSchedule() {
     var url = 'https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=' + mtrLine + '&sta=' + mtrStation;
     
-    // 建立 100% 支援 iOS 9 的傳統非同步請求聯網
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function() {
@@ -472,8 +482,6 @@ function loadMtrSchedule() {
                 } catch (e) {
                     console.error("JSON Parse Error");
                 }
-            } else {
-                console.error("MTR API Http Error Status: " + xhr.status);
             }
         }
     };
