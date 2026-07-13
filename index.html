@@ -19,7 +19,6 @@ html, body {
 body {
     color: #00FF33; 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
-    /* iOS 9 Flexbox 相容前綴 */
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -78,7 +77,7 @@ body {
 
 /* 左右對半分 50% */
 .left-col, .right-col {
-    width: 48%; /* 稍微縮小寬度防止舊版 Safari 擠壓換行 */
+    width: 48%; 
     height: 100%;
     display: -webkit-box;
     display: -webkit-flex;
@@ -90,7 +89,6 @@ body {
     box-sizing: border-box;
 }
 
-/* 左側兩個面板各佔 48% 高度，中間預留 4% 間距 */
 .mtr-panel {
     height: 48%;
     margin-bottom: 4%;
@@ -99,7 +97,6 @@ body {
     margin-bottom: 0;
 }
 
-/* 右側利用固定百分比直接切分，徹底解決 iOS 9 不懂 flex 比例的問題 */
 .lrt-panel {
     height: 56%;
     margin-bottom: 4%;
@@ -139,7 +136,7 @@ body {
 
 /* 列表容器 */
 .train-list-container {
-    height: 80%; /* 給予固定高度百分比，確保內部表格能撐開 */
+    height: 80%; 
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -162,7 +159,7 @@ body {
     align-items: center;
     border-bottom: 1px dashed #222;
     box-sizing: border-box;
-    height: 20%; /* 讓每一行都有固定佔比 */
+    height: 20%; 
 }
 .train-row:last-child {
     border-bottom: none;
@@ -273,11 +270,10 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 智能資訊屏 | iOS 9 內核徹底修復版 | 自動更新
+        PIDS 智能資訊屏 | iOS 9 XMLHttpRequest 終極聯網相容版 | 自動更新
     </div>
 
 <script>
-// 嚴格將所有變數宣告還原為舊版傳統 var
 var mtrLine = "TML";
 var mtrStation = "TIS";
 
@@ -295,7 +291,6 @@ function padZero(num) {
     return num < 10 ? '0' + num : num;
 }
 
-// 修正時鐘：確保舊版瀏覽器能順利抓到 DOM 且順暢執行
 function updateClock() {
     var clockEl = document.getElementById('clock');
     if (!clockEl) return;
@@ -309,7 +304,7 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 (資料核心)
+// 右邊上方：輕鐵 天慈站
 // ==========================================
 var lrtTrains = [
     { route: '706', dest: '天水圍', eta: 1 },
@@ -322,10 +317,8 @@ var lrtTrains = [
 function renderLrtPIDS() {
     var listContainer = document.getElementById('lrt-flat-list');
     if (!listContainer) return;
-    
     listContainer.innerHTML = '';
     
-    // 改用傳統的匿名排序函數，防止箭頭函數在 iOS 9 閃退
     lrtTrains.sort(function(a, b) { return a.eta - b.eta; });
 
     var htmlString = '';
@@ -343,7 +336,6 @@ function renderLrtPIDS() {
             finalDest = "往天水圍(南)";
         }
 
-        // 徹底展開成單行字串拼接，確保舊 WebKit 引擎解析 100% 成功
         htmlString += '<div class="train-row" style="height:20%;">' +
             '<div class="seq">' + (i + 1) + '</div>' +
             '<div class="lrt-no">' + train.route + '</div>' +
@@ -381,8 +373,8 @@ var busTrains = [
 function renderBusPIDS() {
     var listContainer = document.getElementById('bus-flat-list');
     if (!listContainer) return;
-    
     listContainer.innerHTML = '';
+    
     busTrains.sort(function(a, b) { return a.eta - b.eta; });
 
     var htmlString = '';
@@ -417,7 +409,7 @@ renderBusPIDS();
 
 
 // ==========================================
-// 左邊：港鐵實時資料聯網 (完全相容 iOS 9 Promise)
+// 左邊：港鐵資料聯網核心 (使用古董級且高相容的 XMLHttpRequest 替代 fetch)
 // ==========================================
 function formatMtrTime(trainObj) {
     if (!trainObj) return null;
@@ -463,21 +455,29 @@ function renderMtrDirection(dataArray, elementId) {
 function loadMtrSchedule() {
     var url = 'https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=' + mtrLine + '&sta=' + mtrStation;
     
-    fetch(url)
-        .then(function(response) {
-            return response.json();
-        })
-        .then(function(json) {
-            if (!json || !json.data) return;
-            var data = json.data[mtrLine + '-' + mtrStation];
-            if (data) {
-                renderMtrDirection(data.UP, "tuen-mun-list");       
-                renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
+    // 建立 100% 支援 iOS 9 的傳統非同步請求聯網
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                try {
+                    var json = JSON.parse(xhr.responseText);
+                    if (!json || !json.data) return;
+                    var data = json.data[mtrLine + '-' + mtrStation];
+                    if (data) {
+                        renderMtrDirection(data.UP, "tuen-mun-list");       
+                        renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
+                    }
+                } catch (e) {
+                    console.error("JSON Parse Error");
+                }
+            } else {
+                console.error("MTR API Http Error Status: " + xhr.status);
             }
-        })
-        .catch(function(error) {
-            console.error("MTR API Error", error);
-        });
+        }
+    };
+    xhr.send();
 }
 
 loadMtrSchedule();
