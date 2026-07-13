@@ -19,7 +19,13 @@ html, body {
 body {
     color: #00FF33; 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
+    /* iOS 9 Flexbox 相容前綴 */
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
     flex-direction: column;
     box-sizing: border-box;
     padding: 1.5vh 2vw; 
@@ -58,36 +64,50 @@ body {
 /* 主要分欄區域 */
 .main-content {
     height: 88vh; 
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: row;
     flex-direction: row;
     justify-content: space-between;
     margin: 1.5vh 0 0 0; 
     box-sizing: border-box;
-    gap: 2vw;
 }
 
 /* 左右對半分 50% */
 .left-col, .right-col {
-    width: 50%;
+    width: 48%; /* 稍微縮小寬度防止舊版 Safari 擠壓換行 */
     height: 100%;
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
     flex-direction: column;
-    gap: 2vh; 
     box-sizing: border-box;
 }
 
-/* 左側兩個面板各佔一半 */
+/* 左側兩個面板各佔 48% 高度，中間預留 4% 間距 */
 .mtr-panel {
-    flex: 1;
+    height: 48%;
+    margin-bottom: 4%;
+}
+.mtr-panel:last-child {
+    margin-bottom: 0;
 }
 
-/* 右側利用 flex 比例瓜分空間 (60:40) */
+/* 右側利用固定百分比直接切分，徹底解決 iOS 9 不懂 flex 比例的問題 */
 .lrt-panel {
-    flex: 6;
+    height: 56%;
+    margin-bottom: 4%;
 }
 
 .bus-panel {
-    flex: 4;
+    height: 40%;
+    margin-bottom: 0;
 }
 
 /* 容器群組 */
@@ -96,9 +116,13 @@ body {
     border: 2px solid #111;
     border-radius: 12px;
     padding: 1.2vh 2vw; 
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
     flex-direction: column;
-    justify-content: flex-start;
     box-sizing: border-box;
 }
 
@@ -115,19 +139,30 @@ body {
 
 /* 列表容器 */
 .train-list-container {
-    flex: 1;
+    height: 80%; /* 給予固定高度百分比，確保內部表格能撐開 */
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
     flex-direction: column;
     justify-content: space-between;
 }
 
 .train-row {
+    display: -webkit-box;
+    display: -webkit-flex;
     display: flex;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: row;
+    flex-direction: row;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px dashed #222;
     box-sizing: border-box;
-    flex: 1; 
+    height: 20%; /* 讓每一行都有固定佔比 */
 }
 .train-row:last-child {
     border-bottom: none;
@@ -238,11 +273,11 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 三向智能資訊屏 | iOS 9 / 舊版 Safari 極致相容版 | 自動更新
+        PIDS 智能資訊屏 | iOS 9 內核徹底修復版 | 自動更新
     </div>
 
 <script>
-// 全數替換為 var，確保老舊 JavaScript 引擎不會報錯
+// 嚴格將所有變數宣告還原為舊版傳統 var
 var mtrLine = "TML";
 var mtrStation = "TIS";
 
@@ -256,24 +291,25 @@ var stationNameMap = {
     "HEO": "恆安", "MOS": "馬鞍山", "WKS": "烏溪沙"
 };
 
-// 舊式補零函數，替代舊環境可能不支援的 padStart
 function padZero(num) {
     return num < 10 ? '0' + num : num;
 }
 
-// 1. 時鐘同步
+// 修正時鐘：確保舊版瀏覽器能順利抓到 DOM 且順暢執行
 function updateClock() {
+    var clockEl = document.getElementById('clock');
+    if (!clockEl) return;
     var now = new Date();
     var hours = padZero(now.getHours());
     var minutes = padZero(now.getMinutes());
     var seconds = padZero(now.getSeconds());
-    document.getElementById('clock').innerText = hours + ':' + minutes + ':' + seconds;
+    clockEl.innerText = hours + ':' + minutes + ':' + seconds;
 }
 setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站
+// 右邊上方：輕鐵 天慈站 (資料核心)
 // ==========================================
 var lrtTrains = [
     { route: '706', dest: '天水圍', eta: 1 },
@@ -288,7 +324,8 @@ function renderLrtPIDS() {
     if (!listContainer) return;
     
     listContainer.innerHTML = '';
-
+    
+    // 改用傳統的匿名排序函數，防止箭頭函數在 iOS 9 閃退
     lrtTrains.sort(function(a, b) { return a.eta - b.eta; });
 
     var htmlString = '';
@@ -306,8 +343,8 @@ function renderLrtPIDS() {
             finalDest = "往天水圍(南)";
         }
 
-        // 使用傳統字串拼接，防止 iOS 9 不支援 ES6 模板字串 (Template Literals)
-        htmlString += '<div class="train-row">' +
+        // 徹底展開成單行字串拼接，確保舊 WebKit 引擎解析 100% 成功
+        htmlString += '<div class="train-row" style="height:20%;">' +
             '<div class="seq">' + (i + 1) + '</div>' +
             '<div class="lrt-no">' + train.route + '</div>' +
             '<div class="dest dest-lrt">' + finalDest + '</div>' +
@@ -346,7 +383,6 @@ function renderBusPIDS() {
     if (!listContainer) return;
     
     listContainer.innerHTML = '';
-
     busTrains.sort(function(a, b) { return a.eta - b.eta; });
 
     var htmlString = '';
@@ -357,7 +393,7 @@ function renderBusPIDS() {
             etaDisplay = '<span class="status-flash">到站中</span>';
         }
 
-        htmlString += '<div class="train-row">' +
+        htmlString += '<div class="train-row" style="height:25%;">' +
             '<div class="seq">' + (i + 1) + '</div>' +
             '<div class="dest dest-bus">往' + bus.dest + '</div>' +
             '<div class="arrival-time time-bus">' + etaDisplay + '</div>' +
@@ -381,7 +417,7 @@ renderBusPIDS();
 
 
 // ==========================================
-// 左邊：天水圍西鐵站 實時聯網核心 (ES5 / Promise 相容版本)
+// 左邊：港鐵實時資料聯網 (完全相容 iOS 9 Promise)
 // ==========================================
 function formatMtrTime(trainObj) {
     if (!trainObj) return null;
@@ -404,18 +440,17 @@ function renderMtrDirection(dataArray, elementId) {
     if (!container) return;
     
     var htmlString = "";
-
     for (var i = 0; i < 4; i++) {
         if (dataArray && dataArray[i]) {
             var info = formatMtrTime(dataArray[i]);
-            htmlString += '<div class="train-row">' +
+            htmlString += '<div class="train-row" style="height:25%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-mtr">' + info.dest + '</div>' +
                 '<div class="arrival-time time-mtr">' + info.time + '</div>' +
                 '</div>';
         } else {
             var defaultDest = (i === 0) ? "班次已完結" : "--";
-            htmlString += '<div class="train-row">' +
+            htmlString += '<div class="train-row" style="height:25%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-mtr">' + defaultDest + '</div>' +
                 '<div class="arrival-time time-mtr">--:--</div>' +
@@ -425,7 +460,6 @@ function renderMtrDirection(dataArray, elementId) {
     container.innerHTML = htmlString;
 }
 
-// 移除 async/await，全面降級為 iOS 9 支援的標準 Promise 鏈
 function loadMtrSchedule() {
     var url = 'https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=' + mtrLine + '&sta=' + mtrStation;
     
@@ -434,6 +468,7 @@ function loadMtrSchedule() {
             return response.json();
         })
         .then(function(json) {
+            if (!json || !json.data) return;
             var data = json.data[mtrLine + '-' + mtrStation];
             if (data) {
                 renderMtrDirection(data.UP, "tuen-mun-list");       
