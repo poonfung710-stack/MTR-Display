@@ -269,7 +269,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 智能資訊屏 | 輕鐵8班/九巴3班 最佳化版 | 自動更新
+        PIDS 智能資訊屏 | 輕鐵8班/九巴3班 聯網實時版 | 自動更新
     </div>
 
 <script>
@@ -368,56 +368,74 @@ renderLrtPIDS();
 
 
 // ==========================================
-// 右邊下方：九巴 天祐苑 (已縮減至 3 班車)
+// 右邊下方：九巴 276A 天祐苑站 (實時聯網數據)
 // ==========================================
-var busTrains = [
-    { dest: '上水(太平)', eta: 4 },
-    { dest: '上水(太平)', eta: 12 },
-    { dest: '上水(太平)', eta: 20 }
-];
+function loadBusSchedule() {
+    // 九巴政府開放數據接口 (276A 往太平方向，天祐苑站點代碼為 CA07-T-1150-0)
+    var url = 'https://rt.data.gov.hk/v1/transport/kmb/stop-eta/CA07-T-1150-0';
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            try {
+                var json = JSON.parse(xhr.responseText);
+                if (!json || !json.data) return;
+                
+                // 過濾出 276A 往太平方向的實時數據
+                var filtered = json.data.filter(function(item) {
+                    return item.route === '276A' && item.dir === 'O';
+                });
+                
+                renderBusPIDS(filtered);
+            } catch (e) {
+                console.error("KMB API Parse Error");
+            }
+        }
+    };
+    xhr.send();
+}
 
-function renderBusPIDS() {
+function renderBusPIDS(etaData) {
     var listContainer = document.getElementById('bus-flat-list');
     if (!listContainer) return;
     listContainer.innerHTML = '';
     
-    busTrains.sort(function(a, b) { return a.eta - b.eta; });
-
     var htmlString = '';
-    for (var i = 0; i < busTrains.length; i++) {
-        var bus = busTrains[i];
-        var etaDisplay = bus.eta + ' 分鐘';
-        if (bus.eta <= 0) {
-            etaDisplay = '<span class="status-flash">到站中</span>';
+    for (var i = 0; i < 3; i++) {
+        var bus = etaData ? etaData[i] : null;
+        var destDisplay = "往上水(太平)";
+        var etaDisplay = "--:--";
+
+        if (bus && bus.eta) {
+            // 計算與當前時間相差的分鐘數
+            var now = new Date();
+            var etaTime = new Date(bus.eta);
+            var diffMins = Math.round((etaTime - now) / 1000 / 60);
+            
+            if (diffMins <= 0) {
+                etaDisplay = '<span class="status-flash">到站中</span>';
+            } else {
+                etaDisplay = diffMins + ' 分鐘';
+            }
+        } else if (i === 0) {
+            destDisplay = "暫無班次資料";
+        } else {
+            destDisplay = "--";
         }
 
         htmlString += '<div class="train-row" style="height:33.3%;">' +
             '<div class="seq">' + (i + 1) + '</div>' +
-            '<div class="dest dest-bus">往' + bus.dest + '</div>' +
+            '<div class="dest dest-bus">' + destDisplay + '</div>' +
             '<div class="arrival-time time-bus">' + etaDisplay + '</div>' +
             '</div>';
     }
     listContainer.innerHTML = htmlString;
 }
 
-var busTickCount = 0;
-function simulateBusCountdown() {
-    busTickCount++;
-    if (busTickCount >= 6) {
-        busTickCount = 0;
-        for (var i = 0; i < busTrains.length; i++) {
-            if (busTrains[i].eta > 0) {
-                busTrains[i].eta -= 1;
-            } else {
-                // 當前一班車開走後，重新拉開合理的三班車間距（如 6, 14, 22分鐘）
-                busTrains[i].eta = (i === 0) ? Math.floor(Math.random() * 4) + 5 : busTrains[i-1].eta + Math.floor(Math.random() * 4) + 6;
-            }
-        }
-    }
-    renderBusPIDS();
-}
-setInterval(simulateBusCountdown, 10000);
-renderBusPIDS();
+// 每 10 秒自動與政府/九巴數據中心同步一次真實時間
+loadBusSchedule();
+setInterval(loadBusSchedule, 10000);
 
 
 // ==========================================
