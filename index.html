@@ -159,7 +159,7 @@ body {
     overflow: hidden;
 }
 .dest-mtr, .dest-lrt { width: 47%; }
-.dest-bus { width: 62%; } /* 巴士因隱藏路線編號，目的地加寬顯示 */
+.dest-bus { width: 62%; } 
 
 .arrival-time {
     font-size: 4.4vh;
@@ -227,13 +227,13 @@ body {
 
         <div class="right-col">
             <div class="direction-group lrt-panel">
-                <div class="direction-title title-lrt">輕鐵 天慈站 (下一班列車)</div>
+                <div class="direction-title title-lrt">輕鐵 天慈站</div>
                 <div class="train-list-container" id="lrt-flat-list">
                     </div>
             </div>
 
             <div class="direction-group bus-panel">
-                <div class="direction-title title-bus">九巴 天祐苑站 (下一班車)</div>
+                <div class="direction-title title-bus">九巴 276A 天祐苑站</div>
                 <div class="train-list-container" id="bus-flat-list">
                     </div>
             </div>
@@ -242,7 +242,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 三向智能資訊屏 | 60:40 右側空間最佳化配比 | 自動更新
+        PIDS 三向智能資訊屏 | 獨立自適應核心 | 自動更新
     </div>
 
 <script>
@@ -271,7 +271,7 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 本地安全引擎 (705/706顯示往天水圍)
+// 右邊上方：輕鐵 天慈站 本地安全引擎 (區分北/南方向)
 // ==========================================
 let lrtTrains = [
     { route: '706', dest: '天水圍', eta: 1 },
@@ -293,11 +293,19 @@ function renderLrtPIDS() {
             etaDisplay = '<span class="status-flash">到達</span>';
         }
 
+        // 核心邏輯判斷：705 顯示天水圍(北)，706 顯示天水圍(南)
+        let finalDest = "往" + train.dest;
+        if (train.route === '705') {
+            finalDest = "往天水圍(北)";
+        } else if (train.route === '706') {
+            finalDest = "往天水圍(南)";
+        }
+
         listContainer.innerHTML += `
             <div class="train-row lrt-row">
                 <div class="seq">${index + 1}</div>
                 <div class="lrt-no">${train.route}</div>
-                <div class="dest dest-lrt">往${train.dest}</div>
+                <div class="dest dest-lrt">${finalDest}</div>
                 <div class="arrival-time time-lrt">${etaDisplay}</div>
             </div>
         `;
@@ -319,7 +327,7 @@ renderLrtPIDS();
 
 
 // ==========================================
-// 右邊下方：九巴 天祐苑 本地安全引擎 (精簡格式，不顯示276A，顯示4班車)
+// 右邊下方：九巴 天祐苑 本地安全引擎
 // ==========================================
 let busTrains = [
     { dest: '上水', eta: 4 },
