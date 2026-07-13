@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>九巴276A｜天祐苑站 實時到站顯示屏</title>
+    <title>九巴276A｜天祐苑TN593 往太平(上水)實時顯示屏</title>
     <style>
         * {
             margin: 0;
@@ -30,9 +30,6 @@
             box-shadow: 0 0 40px #ffcc0040;
         }
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             border-bottom: 2px solid #ffcc00;
             padding-bottom: 16px;
             margin-bottom: 24px;
@@ -47,18 +44,10 @@
             font-size: 22px;
             margin-top: 6px;
         }
-        .direction-switch {
-            background: #222;
-            color: #ffcc00;
-            border: 2px solid #ffcc00;
-            padding: 8px 16px;
-            font-size: 18px;
-            cursor: pointer;
-            border-radius: 6px;
-        }
-        .direction-switch:hover {
-            background: #ffcc00;
-            color: #000;
+        .direction-label {
+            color: #ff6666;
+            font-size: 20px;
+            margin-top: 8px;
         }
         /* 到站列表 三班車 */
         .eta-list {
@@ -102,6 +91,13 @@
             font-size: 24px;
             padding: 60px 0;
         }
+        .error-text {
+            color: #ff3333;
+            text-align: center;
+            font-size: 22px;
+            padding: 40px 0;
+            line-height: 1.6;
+        }
         .footer {
             margin-top: 30px;
             padding-top: 16px;
@@ -116,11 +112,9 @@
 <body>
     <div class="bus-screen">
         <div class="header">
-            <div>
-                <div class="route-title">九巴 276A</div>
-                <div class="station-name">天祐苑 Tin Yau Court</div>
-            </div>
-            <button class="direction-switch" id="switchBtn">切換方向</button>
+            <div class="route-title">九巴 276A</div>
+            <div class="station-name">天祐苑 Tin Yau Court (TN593)</div>
+            <div class="direction-label">單向：往太平（上水站）</div>
         </div>
 
         <div class="eta-list" id="etaContainer">
@@ -134,61 +128,69 @@
     </div>
 
     <script>
-        // 天祐苑站 stop ID
-        const STOP_ID = "002148";
-        // 兩個行車方向：
-        // 1: 天恆邨 → 太平 (往上水太平)
-        // 2: 太平 → 天恆邨 (往天水圍天恆邨)
-        let currentDirection = 1;
-        const destName = {
-            1: "太平 Tai Ping",
-            2: "天恆邨 Tin Heng Estate"
-        };
+        // 修正關鍵參數
+        const STOP_ID = "TN593";      // 天祐苑正確站號
+        const ROUTE_NUM = "276A";
+        const TARGET_DIR = "O";       // O = Outbound 天水圍→太平(上水)
+        const DEST_TEXT = "太平 Tai Ping (上水方向)";
 
         const etaContainer = document.getElementById("etaContainer");
-        const switchBtn = document.getElementById("switchBtn");
 
-        // 切換方向按鈕
-        switchBtn.addEventListener("click", () => {
-            currentDirection = currentDirection === 1 ? 2 : 1;
-            loadBusETA();
-        });
+        // 計算剩餘分鐘工具函數
+        function getMinLeft(etaIsoStr) {
+            const etaTime = new Date(etaIsoStr);
+            const now = new Date();
+            const diffMs = etaTime - now;
+            const diffMin = Math.floor(diffMs / 60000);
+            return diffMin >= 0 ? diffMin : 0;
+        }
 
         // 載入實時ETA
         async function loadBusETA() {
-            etaContainer.innerHTML = `<div class="loading-text">載入${destName[currentDirection]}方向數據…</div>`;
+            etaContainer.innerHTML = `<div class="loading-text">載入往太平方向實時班次…</div>`;
             try {
-                // 官方API：取得該站+路線的預計到站
-                const res = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${STOP_ID}/276A/1`);
-                const data = await res.json();
-                // 過濾對應方向班次
-                const targetEta = data.data.filter(item => item.dir == currentDirection);
+                // 官方標準API接口：stop / route / service_type(1=常規班次)
+                const apiUrl = `https://data.etabus.gov.hk/v1/transport/kmb/eta/${STOP_ID}/${ROUTE_NUM}/1`;
+                const res = await fetch(apiUrl);
 
-                if (targetEta.length === 0) {
-                    etaContainer.innerHTML = `<div class="empty-text">暫無即將到站班次</div>`;
+                if (!res.ok) throw new Error(`API回應錯誤：${res.status}`);
+                const data = await res.json();
+
+                // 過濾只保留往太平(O)方向班次
+                const targetEtaList = data.data.filter(item => item.dir === TARGET_DIR);
+
+                if (targetEtaList.length === 0) {
+                    etaContainer.innerHTML = `<div class="empty-text">暫無即將到站276A班次</div>`;
                     return;
                 }
+
                 // 只取頭3班
-                const top3 = targetEta.slice(0, 3);
+                const top3Bus = targetEtaList.slice(0, 3);
                 let html = "";
-                top3.forEach((bus, idx) => {
-                    const minute = bus.eta_min;
+                top3Bus.forEach((bus, idx) => {
+                    const remainMin = getMinLeft(bus.eta);
                     html += `
                     <div class="eta-item">
                         <div class="eta-number">${idx+1}</div>
-                        <div class="eta-dest">往 ${destName[currentDirection]}</div>
-                        <div class="eta-time">${minute} 分鐘</div>
+                        <div class="eta-dest">往 ${DEST_TEXT}</div>
+                        <div class="eta-time">${remainMin} 分鐘</div>
                     </div>
                     `;
                 });
                 etaContainer.innerHTML = html;
+
             } catch (err) {
-                etaContainer.innerHTML = `<div class="empty-text">數據載入失敗，請稍後重試</div>`;
-                console.error("API錯誤：", err);
+                etaContainer.innerHTML = `
+                <div class="error-text">
+                    數據載入失敗<br>
+                    原因：${err.message}<br>
+                    請確認網絡正常、或稍後重試
+                </div>`;
+                console.error("API載入異常：", err);
             }
         }
 
-        // 開頁立即執行 + 每30秒自動刷新
+        // 頁面載入立刻執行 + 每30秒自動刷新
         loadBusETA();
         setInterval(loadBusETA, 30000);
     </script>
