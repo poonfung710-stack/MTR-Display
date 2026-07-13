@@ -97,14 +97,13 @@ body {
     margin-bottom: 0;
 }
 
-/* 已優化：重新配比右側面板高度 */
 .lrt-panel {
-    height: 70%; /* 從 56% 大幅擴張至 70%，容納 8 班車 */
+    height: 70%; 
     margin-bottom: 4%;
 }
 
 .bus-panel {
-    height: 26%; /* 從 40% 精簡至 26%，保持 4 班車 */
+    height: 26%; 
     margin-bottom: 0;
 }
 
@@ -124,7 +123,6 @@ body {
     box-sizing: border-box;
 }
 
-/* 大題目字體維持清晰醒目（不縮小） */
 .direction-title {
     font-size: 3.8vh; 
     font-weight: bold;
@@ -166,10 +164,7 @@ body {
     border-bottom: none;
 }
 
-/* =================================================== */
-/* 欄位尺寸與字體優化（專為 8 班車精細調優） */
-/* =================================================== */
-
+/* 欄位尺寸與字體 */
 .seq {
     font-size: 3vh;
     color: #666666;
@@ -180,34 +175,14 @@ body {
 .left-col .dest-mtr { font-size: 4.2vh; color: #FFFFFF; font-weight: bold; width: 47%; white-space: nowrap; overflow: hidden; }
 .left-col .time-mtr { font-size: 4.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 30%; color: #00FF33; text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); }
 
-/* 右側輕鐵字體：精密微調至 3.2vh / 3.4vh，極致防擁擠 */
-.lrt-no {
-    font-size: 3.2vh; 
-    font-weight: bold;
-    color: #FF9900;
-    width: 15%;
-}
-.dest-lrt {
-    font-size: 3.2vh; 
-    color: #FFFFFF;
-    font-weight: bold;
-    white-space: nowrap;
-    overflow: hidden;
-    width: 47%;
-}
-.time-lrt {
-    font-size: 3.4vh; 
-    font-weight: bold;
-    font-family: monospace;
-    text-align: right;
-    width: 30%;
-    color: #FFCC00; 
-    text-shadow: 0 0 10px rgba(255, 204, 0, 0.8);
-}
+/* 右側輕鐵字體 (8班車版) */
+.lrt-no { font-size: 3.2vh; font-weight: bold; color: #FF9900; width: 15%; }
+.dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 47%; }
+.time-lrt { font-size: 3.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 30%; color: #FFCC00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); }
 
-/* 右側巴士字體：適度縮小至 3.4vh / 3.6vh */
+/* 右側巴士字體 (3班車版：字體可稍微放大恢復清晰度) */
 .dest-bus {
-    font-size: 3.4vh; 
+    font-size: 3.6vh; 
     color: #FFFFFF;
     font-weight: bold;
     white-space: nowrap;
@@ -215,7 +190,7 @@ body {
     width: 62%;
 }
 .time-bus {
-    font-size: 3.6vh; 
+    font-size: 3.8vh; 
     font-weight: bold;
     font-family: monospace;
     text-align: right;
@@ -294,7 +269,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 智能資訊屏 | 右側 70:26 黃金比例佈局 (輕鐵 8 班車版) | 自動更新
+        PIDS 智能資訊屏 | 輕鐵8班/九巴3班 最佳化版 | 自動更新
     </div>
 
 <script>
@@ -328,7 +303,7 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 (已擴充至 8 班列車資料庫)
+// 右邊上方：輕鐵 天慈站 (8 班車資料庫)
 // ==========================================
 var lrtTrains = [
     { route: '706', dest: '天水圍', eta: 1 },
@@ -363,7 +338,6 @@ function renderLrtPIDS() {
             finalDest = "往天水圍(南)";
         }
 
-        // 高度變更為 12.5% 以完美將 8 班車均分填滿容器
         htmlString += '<div class="train-row" style="height:12.5%;">' +
             '<div class="seq">' + (i + 1) + '</div>' +
             '<div class="lrt-no">' + train.route + '</div>' +
@@ -394,13 +368,12 @@ renderLrtPIDS();
 
 
 // ==========================================
-// 右邊下方：九巴 天祐苑 (4 班車)
+// 右邊下方：九巴 天祐苑 (已縮減至 3 班車)
 // ==========================================
 var busTrains = [
     { dest: '上水', eta: 4 },
     { dest: '上水', eta: 12 },
-    { dest: '上水', eta: 20 },
-    { dest: '上水', eta: 28 }
+    { dest: '上水', eta: 20 }
 ];
 
 function renderBusPIDS() {
@@ -418,7 +391,8 @@ function renderBusPIDS() {
             etaDisplay = '<span class="status-flash">到站中</span>';
         }
 
-        htmlString += '<div class="train-row" style="height:25%;">' +
+        // 高度變更為 33.3% 以完美填滿精簡後的巴士容器
+        htmlString += '<div class="train-row" style="height:33.3%;">' +
             '<div class="seq">' + (i + 1) + '</div>' +
             '<div class="dest dest-bus">往' + bus.dest + '</div>' +
             '<div class="arrival-time time-bus">' + etaDisplay + '</div>' +
