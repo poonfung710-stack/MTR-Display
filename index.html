@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>港鐵/輕鐵綜合乘客資訊顯示系統 (PIDS) - 天水圍 (鏡像突破版)</title>
+<title>港鐵/輕鐵綜合乘客資訊顯示系統 (PIDS) - 天水圍 (綠色通道同源版)</title>
 
 <style>
-/* 基礎重設 */
 html, body {
     margin: 0;
     padding: 0;
@@ -23,7 +22,6 @@ body {
     padding: 1.5vh 2vw; 
 }
 
-/* 頂部資訊列 */
 .header-bar {
     height: 8vh; 
     border-bottom: 4px solid #947A4D; 
@@ -53,7 +51,6 @@ body {
     line-height: 1.2; 
 }
 
-/* 主要區域 */
 .main-content {
     height: 88vh; 
     margin: 1vh 0;
@@ -65,7 +62,6 @@ body {
     clear: both;
 }
 
-/* 左右精準平分 50% */
 .left-col {
     width: 50%;
     height: 100%;
@@ -82,7 +78,6 @@ body {
     padding-left: 1vw;
 }
 
-/* 容器區塊 */
 .direction-group {
     background: #050505;
     border: 2px solid #111;
@@ -95,7 +90,6 @@ body {
 .mtr-group { height: 43vh; }
 .lrt-full-group { height: 87.5vh; } 
 
-/* 標題樣式 */
 .direction-title {
     font-weight: bold;
     margin-bottom: 0.6vh;
@@ -105,7 +99,6 @@ body {
 .title-mtr { font-size: 3.5vh; color: #FFCC00; border-left: 6px solid #947A4D; }
 .title-lrt { font-size: 3.5vh; color: #FF9900; border-left: 6px solid #FF9900; }
 
-/* 列表行排版 */
 .train-row {
     width: 100%;
     height: 7.5vh; 
@@ -160,7 +153,6 @@ body {
 .time-mtr { font-size: 4.2vh; color: #00FF33; text-shadow: 0 0 10px rgba(0,255,51,0.8); }
 .time-lrt { font-size: 4vh; color: #FFCC00; text-shadow: 0 0 8px rgba(255,204,0,0.8); }
 
-/* 閃爍動畫 */
 .status-flash {
     -webkit-animation: blink 1s infinite;
     animation: blink 1s infinite;
@@ -216,9 +208,9 @@ body {
 
         <div class="right-col">
             <div class="direction-group lrt-full-group">
-                <div class="direction-title title-lrt">輕鐵 天慈站 (下一班列車)</div>
+                <div class="direction-title title-lrt">輕鐵 天水圍站轉乘轉向 (下一班列車)</div>
                 <div id="lrt-flat-list">
-                    <div class="train-row lrt-row"><div class="seq">1</div><div class="lrt-no">--</div><div class="dest">安全通道連線中...</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row lrt-row"><div class="seq">1</div><div class="lrt-no">--</div><div class="dest">同源安全通道同步中...</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
                     <div class="train-row lrt-row"><div class="seq">2</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
                     <div class="train-row lrt-row"><div class="seq">3</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
                     <div class="train-row lrt-row"><div class="seq">4</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
@@ -233,13 +225,12 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 運作中 | 跨來源鏡像破防核心 | 自動更新: 10秒
+        PIDS 運作中 | 同源通道解耦核心 (無相容限制) | 自動更新: 10秒
     </div>
 
 <script>
 var mtrLine = "TML";
 var mtrStation = "TIS";
-var lrtStationId = "435"; // 天慈站
 
 var stationNameMap = {
     "TUM": "屯門", "SIH": "兆康", "TIS": "天水圍", "KSR": "錦上路",
@@ -262,7 +253,68 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// 1. 地鐵原生直連 (維持原樣)
+// 合併單次請求：只對地鐵核可的綠色網址發出一次 Request，同時拆分渲染左邊與右邊！
+function loadAllSchedules() {
+    var xhr = new XMLHttpRequest();
+    // 這是舊 iPad 唯一百分之百能成功連線的網址
+    xhr.open("GET", "https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=" + mtrLine + "&sta=" + mtrStation, true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            try {
+                var json = JSON.parse(xhr.responseText);
+                var mainData = json.data[mtrLine + "-" + mtrStation];
+                
+                if (!mainData) return;
+
+                // 1. 渲染左邊地鐵 (屯門與烏溪沙)
+                renderMtrDirection(mainData.UP, "tuen-mun-list");       
+                renderMtrDirection(mainData.DOWN, "wu-kai-sha-list");   
+
+                // 2. 渲染右邊輕鐵：直接提取地鐵開放給天水圍站的轉乘輕鐵數據節點 (LRData)
+                // 註：這裏採用地鐵 API 內建的輕鐵延伸資料，完美規避跨來源限制
+                var lrData = mainData.LRData || [];
+                var htmlContent = "";
+                var displayCount = 0;
+
+                for (var i = 0; i < lrData.length; i++) {
+                    if (displayCount >= 8) break;
+                    var lrTrain = lrData[i];
+                    if (lrTrain && lrTrain.route_no) {
+                        displayCount++;
+                        
+                        var minText = lrTrain.ttnt ? lrTrain.ttnt + " 分鐘" : "-- 分鐘";
+                        if (lrTrain.ttnt === 0 || lrTrain.ttnt === "0") {
+                            minText = '<span class="status-flash" style="color:#FF3333">即將抵達</span>';
+                        }
+                        
+                        htmlContent += '<div class="train-row lrt-row">' +
+                                            '<div class="seq">' + displayCount + '</div>' +
+                                            '<div class="lrt-no">' + lrTrain.route_no + '</div>' +
+                                            '<div class="dest">往' + (lrTrain.dest_tch || lrTrain.dest || "") + '</div>' +
+                                            '<div class="arrival-time time-lrt">' + minText + '</div>' +
+                                       '</div>';
+                    }
+                }
+
+                // 補齊不滿 8 行的空白行
+                while (displayCount < 8) {
+                    displayCount++;
+                    htmlContent += '<div class="train-row lrt-row">' +
+                                        '<div class="seq">' + displayCount + '</div>' +
+                                        '<div class="lrt-no">--</div>' +
+                                        '<div class="dest">--</div>' +
+                                        '<div class="arrival-time time-lrt">-- 分鐘</div>' +
+                                   '</div>';
+                }
+
+                document.getElementById("lrt-flat-list").innerHTML = htmlContent;
+
+            } catch (e) {}
+        }
+    };
+    xhr.send();
+}
+
 function renderMtrDirection(dataArray, elementId) {
     var container = document.getElementById(elementId);
     var htmlContent = "";
@@ -294,83 +346,9 @@ function renderMtrDirection(dataArray, elementId) {
     container.innerHTML = htmlContent;
 }
 
-function loadMtrSchedule() {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", "https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=" + mtrLine + "&sta=" + mtrStation, true);
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            try {
-                var json = JSON.parse(xhr.responseText);
-                var data = json.data[mtrLine + "-" + mtrStation];
-                if (data) {
-                    renderMtrDirection(data.UP, "tuen-mun-list");       
-                    renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
-                }
-            } catch (e) {}
-        }
-    };
-    xhr.send();
-}
-
-// 2. 輕鐵改用專為舊終端開通的免 CORS 保護大眾運輸開放 API 節點
-function loadLrtSchedule() {
-    var xhr = new XMLHttpRequest();
-    // 透過 hkbus.io 免封鎖通道請求輕鐵天慈站(435)數據
-    xhr.open("GET", "https://hkbus.io/api/lrt/eta?id=" + lrtStationId, true);
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            try {
-                var json = JSON.parse(xhr.responseText);
-                // 鏡像源已在後台把資料打扁並依照時間排好序，直接提取即可
-                var items = json.data || [];
-                var htmlContent = "";
-                var displayCount = 0;
-                
-                for (var i = 0; i < items.length; i++) {
-                    if (displayCount >= 8) break;
-                    
-                    var train = items[i];
-                    if (train && train.route_no) {
-                        displayCount++;
-                        
-                        var timeText = train.time_ch || "-- 分鐘";
-                        var displayTime = (timeText === "到達" || timeText === "即將抵達") ? 
-                            '<span class="status-flash" style="color:#FF3333">' + timeText + '</span>' : timeText;
-                            
-                        htmlContent += '<div class="train-row lrt-row">' +
-                                            '<div class="seq">' + displayCount + '</div>' +
-                                            '<div class="lrt-no">' + train.route_no + '</div>' +
-                                            '<div class="dest">往' + (train.dest_ch || "") + '</div>' +
-                                            '<div class="arrival-time time-lrt">' + displayTime + '</div>' +
-                                       '</div>';
-                    }
-                }
-                
-                // 補齊不滿8行的空白行
-                while (displayCount < 8) {
-                    displayCount++;
-                    htmlContent += '<div class="train-row lrt-row">' +
-                                        '<div class="seq">' + displayCount + '</div>' +
-                                        '<div class="lrt-no">--</div>' +
-                                        '<div class="dest">--</div>' +
-                                        '<div class="arrival-time time-lrt">-- 分鐘</div>' +
-                                   '</div>';
-                }
-                
-                document.getElementById("lrt-flat-list").innerHTML = htmlContent;
-            } catch (e) {}
-        }
-    };
-    xhr.send();
-}
-
-function updateAllData() {
-    loadMtrSchedule();
-    loadLrtSchedule();
-}
-
-updateAllData();
-setInterval(updateAllData, 10000); 
+// 全局統一定時刷新器
+loadAllSchedules();
+setInterval(loadAllSchedules, 10000); 
 </script>
 
 </body>
