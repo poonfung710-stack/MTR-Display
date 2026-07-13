@@ -55,42 +55,42 @@ body {
     line-height: 1.2; 
 }
 
-/* 主要分欄區域 */
+/* 主要分欄區域：確保總高度固定，內部元素精準對齊 */
 .main-content {
     height: 88vh; 
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    margin: 1vh 0 0 0;
+    margin: 1.5vh 0 0 0; /* 微調上方間距 */
     box-sizing: border-box;
     gap: 2vw;
 }
 
-/* 左右對半分 50% */
+/* 左右對半分 50% 且高度 100% 絕對齊平 */
 .left-col, .right-col {
     width: 50%;
     height: 100%;
     display: flex;
     flex-direction: column;
+    gap: 2vh; /* 統一上下兩個面板之間的間距，防止右邊跑位 */
+    box-sizing: border-box;
 }
 
-/* 左側區塊高度分配 */
+/* 左側兩個面板各佔一半 */
 .mtr-panel {
-    height: 42.5vh;
-    margin-bottom: 2vh;
+    flex: 1;
 }
 
-/* 右側垂直分割：輕鐵 60%，巴士 40% */
+/* 右側利用 flex 比例瓜分空間 (輕鐵佔 60% 空間，巴士佔 40% 空間) */
 .lrt-panel {
-    height: 51vh;
-    margin-bottom: 2vh;
+    flex: 6;
 }
 
 .bus-panel {
-    height: 34vh;
+    flex: 4;
 }
 
-/* 容器群組 */
+/* 容器群組：移除固定 height，交由 flex 自動撐滿並工整對齊 */
 .direction-group {
     background: #050505;
     border: 2px solid #111;
@@ -127,14 +127,11 @@ body {
     align-items: center;
     border-bottom: 1px dashed #222;
     box-sizing: border-box;
+    flex: 1; /* 讓行高自適應面板高度，達到極致的對齊工整 */
 }
 .train-row:last-child {
     border-bottom: none;
 }
-
-.mtr-row { height: 7.2vh; }
-.lrt-row { height: 7.4vh; }
-.bus-row { height: 6.8vh; }
 
 /* 欄位尺寸與比例放大 */
 .seq {
@@ -150,7 +147,7 @@ body {
     width: 15%;
 }
 
-/* 目的地文字欄位寬度調整 */
+/* 目的地文字欄位 */
 .dest {
     font-size: 4.2vh;
     color: #FFFFFF;
@@ -207,20 +204,20 @@ body {
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往屯門方向</div>
                 <div class="train-list-container" id="tuen-mun-list">
-                    <div class="train-row mtr-row"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row mtr-row"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
-                    <div class="train-row mtr-row"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
-                    <div class="train-row mtr-row"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
                 </div>
             </div>
 
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往烏溪沙方向</div>
                 <div class="train-list-container" id="wu-kai-sha-list">
-                    <div class="train-row mtr-row"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row mtr-row"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
-                    <div class="train-row mtr-row"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
-                    <div class="train-row mtr-row"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time">--:--</div></div>
                 </div>
             </div>
         </div>
@@ -242,7 +239,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 三向智能資訊屏 | 獨立自適應核心 | 自動更新
+        PIDS 三向智能資訊屏 | 左右幾何工整對齊優化版 | 自動更新
     </div>
 
 <script>
@@ -271,7 +268,7 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 本地安全引擎 (區分北/南方向)
+// 右邊上方：輕鐵 天慈站 本地安全引擎
 // ==========================================
 let lrtTrains = [
     { route: '706', dest: '天水圍', eta: 1 },
@@ -293,7 +290,6 @@ function renderLrtPIDS() {
             etaDisplay = '<span class="status-flash">到達</span>';
         }
 
-        // 核心邏輯判斷：705 顯示天水圍(北)，706 顯示天水圍(南)
         let finalDest = "往" + train.dest;
         if (train.route === '705') {
             finalDest = "往天水圍(北)";
@@ -302,7 +298,7 @@ function renderLrtPIDS() {
         }
 
         listContainer.innerHTML += `
-            <div class="train-row lrt-row">
+            <div class="train-row">
                 <div class="seq">${index + 1}</div>
                 <div class="lrt-no">${train.route}</div>
                 <div class="dest dest-lrt">${finalDest}</div>
@@ -349,7 +345,7 @@ function renderBusPIDS() {
         }
 
         listContainer.innerHTML += `
-            <div class="train-row bus-row">
+            <div class="train-row">
                 <div class="seq">${index + 1}</div>
                 <div class="dest dest-bus">往${bus.dest}</div>
                 <div class="arrival-time time-bus">${etaDisplay}</div>
@@ -399,7 +395,7 @@ function renderMtrDirection(dataArray, elementId) {
         if (dataArray && dataArray[i]) {
             const info = formatMtrTime(dataArray[i]);
             container.innerHTML += `
-                <div class="train-row mtr-row">
+                <div class="train-row">
                     <div class="seq">${i + 1}</div>
                     <div class="dest dest-mtr">${info.dest}</div>
                     <div class="arrival-time time-mtr">${info.time}</div>
@@ -407,7 +403,7 @@ function renderMtrDirection(dataArray, elementId) {
             `;
         } else {
             container.innerHTML += `
-                <div class="train-row mtr-row">
+                <div class="train-row">
                     <div class="seq">${i + 1}</div>
                     <div class="dest dest-mtr">${i === 0 ? "班次已完結" : "--"}</div>
                     <div class="arrival-time time-mtr">--:--</div>
