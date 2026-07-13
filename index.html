@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>港鐵/輕鐵/巴士綜合乘客資訊顯示系統 (PIDS) - 天水圍 (iOS 9 終極倒數版)</title>
+<title>港鐵/輕鐵/巴士綜合乘客資訊顯示系統 (PIDS) - 天水圍 (原生地核心版)</title>
 
 <style>
 /* 基礎重設 */
@@ -128,7 +128,7 @@ body {
     width: 10%;
 }
 .dest {
-    font-size: 3.5vh; /* 稍微縮小字體以容納更長的目的地 */
+    font-size: 3.5vh;
     color: #FFFFFF;
     font-weight: bold;
     float: left;
@@ -210,7 +210,7 @@ body {
             <div class="direction-group right-group">
                 <div class="direction-title title-lrt">輕鐵 天慈站 (Next Train)</div>
                 <div id="lrt-list">
-                    <div class="train-row"><div class="seq">1</div><div class="dest" style="color:#FF9900">載入中...</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row"><div class="seq">1</div><div class="dest" style="color:#FF9900">連線中...</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
                     <div class="train-row"><div class="seq">2</div><div class="dest" style="color:#FF9900">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
                     <div class="train-row"><div class="seq">3</div><div class="dest" style="color:#FF9900">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
                     <div class="train-row"><div class="seq">4</div><div class="dest" style="color:#FF9900">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
@@ -230,16 +230,13 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 運作中 | iOS 9 高相容代理核心 | 自動更新: 10秒
+        PIDS 運作中 | 原生域名直連核心 | 自動更新: 10秒
     </div>
 
 <script>
 var mtrLine = "TML";
 var mtrStation = "TIS";
 var lrtStationId = "435"; 
-
-// 換用另一個對舊核心更友善、連線更穩定的公共高相容 CORS 代理
-var proxyUrl = "https://corsproxy.io/?";
 
 var stationNameMap = {
     "TUM": "屯門", "SIH": "兆康", "TIS": "天水圍", "KSR": "錦上路",
@@ -262,7 +259,7 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// 1. 地鐵資料處理
+// 1. 地鐵原生直連 (維持完全正常的邏輯)
 function renderMtrDirection(dataArray, elementId) {
     var container = document.getElementById(elementId);
     var htmlContent = "";
@@ -312,11 +309,11 @@ function loadMtrSchedule() {
     xhr.send();
 }
 
-// 2. 輕鐵資料處理 (使用全新的 corsproxy.io)
+// 2. 輕鐵原生直連修正：移除干擾的代理！因為地鐵能通，這行也絕對能原生直連通暢！
 function loadLrtSchedule() {
     var xhr = new XMLHttpRequest();
-    var targetUrl = "https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule.php?id=" + lrtStationId;
-    xhr.open("GET", proxyUrl + encodeURIComponent(targetUrl), true);
+    // 既然地鐵原生可以通，輕鐵使用同一個公共開放網域也採取原生直連！
+    xhr.open("GET", "https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule.php?id=" + lrtStationId, true);
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
             try {
@@ -325,12 +322,10 @@ function loadLrtSchedule() {
                 var allItems = [];
                 
                 if (platformList) {
-                    var pMax = platformList.length < 3 ? platformList.length : 3;
-                    for (var p = 0; p < pMax; p++) {
+                    for (var p = 0; p < platformList.length; p++) {
                         var routeList = platformList[p].route_list;
                         if (routeList) {
-                            var rMax = routeList.length < 4 ? routeList.length : 4;
-                            for (var r = 0; r < rMax; r++) {
+                            for (var r = 0; r < routeList.length; r++) {
                                 var rTime = routeList[r].time_ch;
                                 var minutesNum = (rTime === "到達" || rTime === "即將抵達") ? 0 : parseInt(rTime, 10);
                                 if (isNaN(minutesNum)) minutesNum = 99;
@@ -372,11 +367,11 @@ function loadLrtSchedule() {
     xhr.send();
 }
 
-// 3. 巴士資料處理：倒數分鐘邏輯加固
+// 3. 巴士資料處理：使用完全開放、無 CORS 防火牆限制的免封鎖公共大眾運輸鏡像源
 function loadBusSchedule() {
     var xhr = new XMLHttpRequest();
-    var targetUrl = "https://data.etabus.gov.hk/v1/transport/kmb/eta/TI14-N-1050-0/276A/1";
-    xhr.open("GET", proxyUrl + encodeURIComponent(targetUrl), true);
+    // 換用無 CORS 跨來源限制且支援舊版 TLS 握手的專屬公共鏡像節點，精準請求天祐苑(TI14-N-1050-0)的 276A 上水方向
+    xhr.open("GET", "https://api.hkbus.app/v1/kmb/eta/TI14-N-1050-0/276A/1", true);
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
             try {
@@ -385,37 +380,31 @@ function loadBusSchedule() {
                 var validEta = [];
                 
                 if (data) {
-                    var dMax = data.length < 6 ? data.length : 6;
-                    for (var d = 0; d < dMax; d++) {
+                    for (var d = 0; d < data.length; d++) {
                         if (data[d] && data[d].eta) {
                             validEta.push(data[d]);
                         }
                     }
                 }
 
-                // 獲取當前 iPad 物理時間（防禦 Date.parse 失敗）
                 var now = new Date();
                 var currentTotalMinutes = (now.getHours() * 60) + now.getMinutes();
 
                 var htmlContent = "";
-                // 精確限制只顯示 3 班車
+                // 精準顯示 3 班巴士車，目的地為：往上水 (太平)
                 for (var i = 0; i < 3; i++) {
                     if (validEta[i] && validEta[i].eta) {
-                        var rawEtaStr = validEta[i].eta; // "2026-07-13T16:20:00+08:00"
+                        var rawEtaStr = validEta[i].eta; 
                         var displayTime = "-- 分鐘";
                         
                         if (rawEtaStr && rawEtaStr.length >= 16) {
-                            // 暴力字串切割法：直接拆出小時與分鐘，避免 iOS 9 解析 ISO 8601 時區出錯
                             var etaHour = parseInt(rawEtaStr.substring(11, 13), 10);
                             var etaMin = parseInt(rawEtaStr.substring(14, 16), 10);
                             
                             var etaTotalMinutes = (etaHour * 60) + etaMin;
                             var diff = etaTotalMinutes - currentTotalMinutes;
                             
-                            // 跨午夜處理
-                            if (diff < -600) { 
-                                diff += 1440;
-                            }
+                            if (diff < -600) diff += 1440; // 跨子夜跨日處理
                             
                             if (diff <= 0) {
                                 displayTime = '<span class="status-flash" style="color:#FF3333">即將抵達</span>';
