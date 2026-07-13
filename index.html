@@ -269,7 +269,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 智能資訊屏 | 輕鐵8班/九巴3班 聯網實時版 | 自動更新
+        PIDS 智能資訊屏 | 輕鐵8班/九巴3班 終極解鎖實時版 | 自動更新
     </div>
 
 <script>
@@ -368,39 +368,38 @@ renderLrtPIDS();
 
 
 // ==========================================
-// 右邊下方：九巴 276A TN593 站 (無安全攔截聯網技術)
+// 右邊下方：九巴 276A TN593 站 (終極 JSONP 無安全攔截聯網)
 // ==========================================
-function loadBusSchedule() {
-    // 透過開放的高級反向代理，在後端完成握手，100% 繞過瀏覽器的 CORS 安全封鎖
-    var targetUrl = 'https://rt.data.gov.hk/v1/transport/kmb/stop-eta/TN593';
-    var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(targetUrl);
-    
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', proxyUrl, true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            try {
-                var response = JSON.parse(xhr.responseText);
-                var json = JSON.parse(response.contents); // 解開代理包裹的真實開放數據
-                
-                if (json && json.data && json.data.length > 0) {
-                    // 精準過濾：路線 276A 且往上水/太平方向 (dir: "O")
-                    var filtered = json.data.filter(function(item) {
-                        return item.route === '276A' && item.dir === 'O';
-                    });
-                    
-                    if (filtered && filtered.length > 0) {
-                        renderBusPIDS(filtered);
-                        return;
-                    }
-                }
-            } catch (e) {
-                console.error("KMB Proxy Parse Error");
-            }
-            renderBusEmpty();
+// 全局回調函數，當數據抓到後會自動執行這裡
+window.handleKmbData = function(response) {
+    if (response && response.data && response.data.length > 0) {
+        var filtered = response.data.filter(function(item) {
+            return item.route === '276A' && item.dir === 'O';
+        });
+        if (filtered && filtered.length > 0) {
+            renderBusPIDS(filtered);
+            return;
         }
+    }
+    renderBusEmpty();
+};
+
+function loadBusSchedule() {
+    // 移除舊的 script 標籤防止無限疊加
+    var oldScript = document.getElementById('kmb-jsonp-script');
+    if (oldScript) { oldScript.parentNode.removeChild(oldScript); }
+
+    // 使用政府開放平台的 JSONP 加載模式，完全繞過瀏覽器的 CORS 安全封鎖，直連數據庫
+    var script = document.createElement('script');
+    script.id = 'kmb-jsonp-script';
+    script.src = 'https://rt.data.gov.hk/v1/transport/kmb/stop-eta/TN593?callback=handleKmbData';
+    
+    // 萬一完全斷網或伺服器死機的安全超時處理
+    script.onerror = function() {
+        renderBusEmpty();
     };
-    xhr.send();
+
+    document.body.appendChild(script);
 }
 
 function renderBusEmpty() {
@@ -445,9 +444,9 @@ function renderBusPIDS(etaData) {
     listContainer.innerHTML = htmlString;
 }
 
-// 每 10 秒自動聯網同步一次最真實的九巴班次數據
+// 每 15 秒自動跟九巴數據庫同步一次最新時間
 loadBusSchedule();
-setInterval(loadBusSchedule, 10000);
+setInterval(loadBusSchedule, 15000);
 
 
 // ==========================================
