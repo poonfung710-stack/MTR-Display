@@ -2,220 +2,225 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>天慈站輕鐵下班車顯示屏 | Tin Tsz PIDS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>天水圍交通綜合資訊屏 (PIDS 完美模擬版)</title>
     <style>
-        /* 引入點陣體電子字型與繁體中文字型 */
         @import url('https://fonts.googleapis.com/css2?family=VT323&family=Noto+Sans+HK:wght@500;700&display=swap');
 
-        * {
-            box-sizing: border-box;
+        html, body {
             margin: 0;
             padding: 0;
+            height: 100%;
+            width: 100%;
+            background-color: #000000;
+            overflow: hidden;
+            font-family: 'Noto Sans HK', sans-serif;
+            box-sizing: border-box;
         }
 
         body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Noto Sans HK', sans-serif;
+            padding: 1.5vh 2vw;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
         }
 
-        /* 顯示屏外框（模擬月台懸掛式燈箱） */
-        .pids-container {
-            width: 100%;
-            max-width: 850px;
-            background-color: #050505;
-            border: 8px solid #2d2d2d;
-            border-radius: 6px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7), inset 0 0 20px rgba(0,0,0,0.9);
-            overflow: hidden;
-        }
-
-        /* 顯示屏頂部（站名與目前時間） */
-        .pids-header {
-            background-color: #111111;
-            padding: 15px 25px;
+        /* 頂部資訊列 */
+        .header-bar {
+            height: 8vh;
+            border-bottom: 4px solid #947A4D;
+            position: relative;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid #222222;
+            align-items: flex-end;
+            padding-bottom: 0.8vh;
         }
 
-        .station-name {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #00ffcc; 
-            text-shadow: 0 0 8px rgba(0,255,204,0.6);
-        }
-
-        .station-name span {
-            font-size: 1.3rem;
-            margin-left: 8px;
-            font-weight: 500;
-        }
-
-        .current-time {
+        .real-time {
             font-family: 'VT323', monospace;
-            font-size: 2.2rem;
-            color: #ff9900;
-            text-shadow: 0 0 8px rgba(255,153,0,0.6);
-            letter-spacing: 1px;
+            font-size: 5vh;
+            font-weight: bold;
+            color: #00FF33;
+            text-shadow: 0 0 12px rgba(0, 255, 51, 0.7);
+            line-height: 1;
         }
 
-        /* 班次表格頂部欄目 */
-        .pids-table-header {
-            display: grid;
-            grid-template-columns: 1.5fr 3.5fr 1.5fr 1.5fr;
-            padding: 10px 25px;
-            background-color: #161616;
-            color: #888888;
-            font-size: 0.9rem;
-            border-bottom: 1px solid #222222;
-            text-align: center;
+        .station-title {
+            font-size: 4.5vh;
+            font-weight: 700;
+            color: #FFFFFF;
+            line-height: 1;
         }
 
-        .pids-table-header div:nth-child(2) {
-            text-align: left;
-            padding-left: 15px;
+        /* 主要分欄區域 */
+        .main-content {
+            height: 87vh;
+            margin: 1.5vh 0 0 0;
+            display: flex;
+            gap: 2vw;
         }
 
-        /* 班次列表區域 */
-        .pids-body {
-            padding: 5px 0;
-            min-height: 260px;
+        .left-col, .right-col {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* 單行班次 */
+        /* 容器區塊 */
+        .direction-group {
+            background-color: #050505;
+            border: 4px solid #2d2d2d;
+            border-radius: 8px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
+            padding: 1.5vh 2vw;
+            box-sizing: border-box;
+        }
+
+        /* 區塊高度分配 */
+        .mtr-group { 
+            height: 42.5vh; 
+            margin-bottom: 2vh;
+        }
+        .lrt-full-group { 
+            height: 87vh; 
+        }
+
+        /* 標題樣式 */
+        .direction-title {
+            font-weight: bold;
+            margin-bottom: 1vh;
+            padding-left: 10px;
+            font-size: 3.2vh;
+            line-height: 1.2;
+        }
+        .title-mtr { color: #FFCC00; border-left: 6px solid #947A4D; }
+        .title-lrt { color: #ff9900; border-left: 6px solid #ff9900; }
+
+        /* 列表行排版 */
         .train-row {
-            display: grid;
-            grid-template-columns: 1.5fr 3.5fr 1.5fr 1.5fr;
-            padding: 14px 25px;
+            width: 100%;
+            border-bottom: 1px dashed #222;
+            box-sizing: border-box;
+            display: flex;
             align-items: center;
-            text-align: center;
-            color: #ff9900;
+            justify-content: space-between;
             font-family: 'VT323', 'Noto Sans HK', monospace;
-            font-size: 1.9rem;
             letter-spacing: 1px;
-            text-shadow: 0 0 6px rgba(255,153,0,0.7);
-            border-bottom: 1px dashed #222222;
+        }
+        .train-row:last-child { border-bottom: none; }
+
+        /* 地鐵行高與字體 */
+        .mtr-row {
+            height: 7.2vh;
+            font-size: 3.6vh;
+        }
+        /* 輕鐵行高與字體 (8班車緊湊均衡分配) */
+        .lrt-row {
+            height: 9vh;
+            font-size: 4.2vh;
         }
 
-        .train-row:last-child {
-            border-bottom: none;
+        /* 左側資訊組合 (編號 + 目的地) */
+        .train-info-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5vw;
+            color: #ffffff;
         }
 
         /* 路線編號外框 */
         .route-num {
             font-weight: 700;
+            border-radius: 4px;
+            padding: 0 8px;
+            text-align: center;
+            display: inline-block;
+        }
+        .mtr-no {
+            background-color: #1a1500;
+            border: 2px solid #FFCC00;
+            color: #FFCC00;
+            font-size: 3.2vh;
+            min-width: 90px;
+        }
+        .lrt-no {
             background-color: #1c1100;
             border: 2px solid #ff9900;
-            border-radius: 4px;
-            padding: 0px 10px;
-            display: inline-block;
-            min-width: 65px;
-            text-align: center;
+            color: #ff9900;
+            font-size: 3.8vh;
+            min-width: 75px;
         }
 
-        /* 目的地 */
+        /* 目的地文字 */
         .destination {
-            text-align: left;
-            font-size: 1.6rem;
             font-weight: 700;
-            padding-left: 15px;
-        }
-
-        .destination span {
-            font-family: 'VT323', monospace;
-            font-size: 1.5rem;
-            margin-left: 8px;
-            font-weight: 500;
-        }
-
-        /* 車廂數目 (拖卡/單卡) */
-        .cars {
-            font-size: 1.3rem;
-            color: #ffbe3b;
         }
 
         /* 到站時間 */
         .arrival-time {
             font-weight: 700;
-            color: #ffaa00;
+            text-align: right;
         }
+        .time-mtr { color: #00FF33; text-shadow: 0 0 6px rgba(0,255,51,0.7); }
+        .time-lrt { color: #ffaa00; text-shadow: 0 0 6px rgba(255,153,0,0.7); }
 
-        /* 正在到站的閃爍效果 */
+        /* 正在到站閃爍 */
         .eta-now {
             color: #ff3300;
             text-shadow: 0 0 10px rgba(255,51,0,0.8);
+            -webkit-animation: blink 1s infinite;
             animation: blink 1s infinite;
-            font-weight: 700;
         }
 
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.2; }
-            100% { opacity: 1; }
-        }
+        @-webkit-keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.2; } 100% { opacity: 1; } }
 
-        /* 底部裝飾與說明 */
-        .pids-footer {
-            background-color: #111111;
-            text-align: center;
-            padding: 10px;
-            font-size: 0.8rem;
+        /* 頁尾 */
+        .footer-bar {
+            height: 2vh;
+            text-align: right;
+            font-size: 1.5vh;
             color: #444444;
-            border-top: 2px solid #222222;
-        }
-
-        .github-tips {
-            margin-top: 20px;
-            font-size: 0.85rem;
-            color: #666666;
-            text-align: center;
-            line-height: 1.5;
+            margin-top: 0.5vh;
         }
     </style>
 </head>
 <body>
 
-    <div class="pids-container">
-        <!-- 頂部資訊欄 -->
-        <div class="pids-header">
-            <div class="station-name">天慈 <span>Tin Tsz</span></div>
-            <div class="current-time" id="clock">00:00:00</div>
-        </div>
-
-        <!-- 欄目表頭 -->
-        <div class="pids-table-header">
-            <div>路線 Route</div>
-            <div>目的地 Destination</div>
-            <div>車廂 Cars</div>
-            <div>等候時間 Min</div>
-        </div>
-
-        <!-- 班次動態內容 -->
-        <div class="pids-body" id="pids-list">
-            <!-- 由 JavaScript 自動動態載入 -->
-        </div>
-
-        <!-- 底部裝飾線 -->
-        <div class="pids-footer">
-            MTR Light Rail Real-time Information Display System Simulation
-        </div>
+    <div class="header-bar">
+        <div class="real-time" id="clock">00:00:00</div>
+        <div class="station-title">天水圍交通綜合資訊屏</div>
     </div>
 
-    <div class="github-tips">
-        預設模擬天慈站 (705, 706, 751) 班次資訊 • 每 30 秒自動更新倒數
+    <div class="main-content">
+        
+        <div class="left-col">
+            <div class="direction-group mtr-group">
+                <div class="direction-title title-mtr">屯馬綫 往屯門方向</div>
+                <div id="tuen-mun-list"></div>
+            </div>
+            
+            <div class="direction-group mtr-group">
+                <div class="direction-title title-mtr">屯馬綫 往烏溪沙方向</div>
+                <div id="wu-kai-sha-list"></div>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="direction-group lrt-full-group">
+                <div class="direction-title title-lrt">輕鐵 天慈站 (下一班列車)</div>
+                <div id="lrt-flat-list"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer-bar">
+        MTR PIDS Integrated System Simulation • Local Engine Active
     </div>
 
     <script>
-        // 即時更新電子鐘
+        // 1. 電子鐘邏輯
         function updateClock() {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
@@ -226,62 +231,120 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // 模擬行經天慈站的輕鐵路線數據
-        let mockTrains = [
-            { route: '706', destCh: '天水圍循環線', destEn: 'Tin Shui Wai Loop', cars: 2, eta: 1 },
-            { route: '751', destCh: '友愛', destEn: 'Yau Oi', cars: 1, eta: 4 },
-            { route: '705', destCh: '天水圍循環線', destEn: 'Tin Shui Wai Loop', cars: 2, eta: 7 },
-            { route: '751', destCh: '天逸', destEn: 'Tin Yat', cars: 1, eta: 12 }
+        // 2. 模擬數據源
+        // 地鐵屯門方向 (上行)
+        let mtrUpTrains = [
+            { route: 'TML', dest: '屯門', eta: 2 },
+            { route: 'TML', dest: '屯門', eta: 8 },
+            { route: 'TML', dest: '屯門', eta: 14 },
+            { route: 'TML', dest: '屯門', eta: 20 }
         ];
 
-        // 渲染畫面
-        function renderPIDS() {
-            const listContainer = document.getElementById('pids-list');
-            listContainer.innerHTML = '';
+        // 地鐵烏溪沙方向 (下行)
+        let mtrDownTrains = [
+            { route: 'TML', dest: '烏溪沙', eta: 1 },
+            { route: 'TML', dest: '烏溪沙', eta: 6 },
+            { route: 'TML', dest: '烏溪沙', eta: 12 },
+            { route: 'TML', dest: '烏溪沙', eta: 18 }
+        ];
 
-            // 依據抵達時間排序
-            mockTrains.sort((a, b) => a.eta - b.eta);
+        // 輕鐵天慈站混合方向 (精確分配8班車)
+        let lrtTrains = [
+            { route: '706', dest: '天水圍循環線', eta: 1 },
+            { route: '751', dest: '友愛', eta: 3 },
+            { route: '705', dest: '天水圍循環線', eta: 5 },
+            { route: '751', dest: '天逸', eta: 8 },
+            { route: '706', dest: '天水圍循環線', eta: 10 },
+            { route: '751', dest: '友愛', eta: 13 },
+            { route: '705', dest: '天水圍循環線', eta: 16 },
+            { route: '751', dest: '天逸', eta: 19 }
+        ];
 
-            mockTrains.forEach(train => {
+        // 3. 渲染地鐵畫面 (固定4班)
+        function renderMTR(trains, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            trains.sort((a, b) => a.eta - b.eta);
+
+            trains.forEach(train => {
                 const row = document.createElement('div');
-                row.className = 'train-row';
+                row.className = 'train-row mtr-row';
 
-                // 處理即將到站 (0分鐘) 的特殊動態顯示
-                let etaDisplay = train.eta + ' min';
+                let etaDisplay = train.eta + ' 分鐘';
+                if (train.eta <= 0) {
+                    etaDisplay = '<span class="eta-now">正在駛入</span>';
+                }
+
+                row.innerHTML = `
+                    <div class="train-info-left">
+                        <span class="route-num mtr-no">${train.route}</span>
+                        <span class="destination">往${train.dest}</span>
+                    </div>
+                    <div class="arrival-time time-mtr">${etaDisplay}</div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // 4. 渲染輕鐵畫面 (精準符合：編號 + 往目的地 + 餘下分鐘，固定8班)
+        function renderLRT() {
+            const container = document.getElementById('lrt-flat-list');
+            container.innerHTML = '';
+            lrtTrains.sort((a, b) => a.eta - b.eta);
+
+            lrtTrains.forEach(train => {
+                const row = document.createElement('div');
+                row.className = 'train-row lrt-row';
+
+                let etaDisplay = train.eta + ' 分鐘';
                 if (train.eta <= 0) {
                     etaDisplay = '<span class="eta-now">到站中 NOW</span>';
                 }
 
-                const carDisplay = train.cars === 2 ? '拖卡 Double' : '單卡 Single';
-
                 row.innerHTML = `
-                    <div><span class="route-num">${train.route}</span></div>
-                    <div class="destination">${train.destCh}<span>${train.destEn}</span></div>
-                    <div class="cars">${carDisplay}</div>
-                    <div class="arrival-time">${etaDisplay}</div>
+                    <div class="train-info-left">
+                        <span class="route-num lrt-no">${train.route}</span>
+                        <span class="destination">往${train.dest}</span>
+                    </div>
+                    <div class="arrival-time time-lrt">${etaDisplay}</div>
                 `;
-                listContainer.appendChild(row);
+                container.appendChild(row);
             });
         }
 
-        // 模擬每 30 秒時間流逝倒數
-        function simulateCountdown() {
-            mockTrains.forEach((train) => {
-                if (train.eta > 0) {
-                    train.eta -= 1;
-                } else {
-                    // 到站後隨機生成下一班車的時間 (10 - 17 分鐘後)
-                    train.eta = Math.floor(Math.random() * 8) + 10; 
-                }
-            });
-            renderPIDS();
+        // 全螢幕刷新調度
+        function refreshDisplay() {
+            renderMTR(mtrUpTrains, 'tuen-mun-list');
+            renderMTR(mtrDownTrains, 'wu-kai-sha-list');
+            renderLRT();
         }
 
-        // 初始化
-        renderPIDS();
-        // 每 30 秒執行一次倒數
-        setInterval(simulateCountdown, 30000); 
+        // 5. 倒數計時模擬器 (每 30 秒倒數 1 分鐘)
+        function startCountdown() {
+            // 地鐵上行遞減
+            mtrUpTrains.forEach(t => {
+                if (t.eta > 0) t.eta--;
+                else t.eta = Math.floor(Math.random() * 5) + 18;
+            });
+            // 地鐵下行遞減
+            mtrDownTrains.forEach(t => {
+                if (t.eta > 0) t.eta--;
+                else t.eta = Math.floor(Math.random() * 5) + 16;
+            });
+            // 輕鐵遞減
+            lrtTrains.forEach(t => {
+                if (t.eta > 0) t.eta--;
+                else t.eta = Math.floor(Math.random() * 6) + 17;
+            });
+
+            refreshDisplay();
+        }
+
+        // 初次加載執行
+        refreshDisplay();
+        
+        // 設定每 30 秒執行一次時間倒數
+        setInterval(startCountdown, 30000);
     </script>
-
 </body>
 </html>
