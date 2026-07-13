@@ -371,8 +371,8 @@ renderLrtPIDS();
 // 右邊下方：九巴 276A 天祐苑站 (實時聯網數據)
 // ==========================================
 function loadBusSchedule() {
-    // 九巴政府開放數據接口 (276A 往太平方向，天祐苑站點代碼為 CA07-T-1150-0)
-    var url = 'https://rt.data.gov.hk/v1/transport/kmb/stop-eta/CA07-T-1150-0';
+    // 修正站點代碼為天祐苑往太平方向的正確編號：CA07-N-1050-0
+    var url = 'https://rt.data.gov.hk/v1/transport/kmb/stop-eta/CA07-N-1050-0';
     
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
@@ -382,7 +382,7 @@ function loadBusSchedule() {
                 var json = JSON.parse(xhr.responseText);
                 if (!json || !json.data) return;
                 
-                // 過濾出 276A 往太平方向的實時數據
+                // 過濾出 276A 往上水(太平)方向的班次 (dir: "O" 代表去程 Outbound)
                 var filtered = json.data.filter(function(item) {
                     return item.route === '276A' && item.dir === 'O';
                 });
@@ -408,7 +408,6 @@ function renderBusPIDS(etaData) {
         var etaDisplay = "--:--";
 
         if (bus && bus.eta) {
-            // 計算與當前時間相差的分鐘數
             var now = new Date();
             var etaTime = new Date(bus.eta);
             var diffMins = Math.round((etaTime - now) / 1000 / 60);
@@ -433,7 +432,7 @@ function renderBusPIDS(etaData) {
     listContainer.innerHTML = htmlString;
 }
 
-// 每 10 秒自動與政府/九巴數據中心同步一次真實時間
+// 每 10 秒自動與九巴數據中心同步一次
 loadBusSchedule();
 setInterval(loadBusSchedule, 10000);
 
