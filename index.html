@@ -75,7 +75,7 @@ body {
     box-sizing: border-box;
 }
 
-/* 左右對半分 50% */
+/* 左右對半分 */
 .left-col, .right-col {
     width: 48%; 
     height: 100%;
@@ -123,6 +123,7 @@ body {
     box-sizing: border-box;
 }
 
+/* 大題目字體維持清晰醒目（不縮小） */
 .direction-title {
     font-size: 3.8vh; 
     font-weight: bold;
@@ -136,7 +137,7 @@ body {
 
 /* 列表容器 */
 .train-list-container {
-    height: 85%; /* 統一高度比例 */
+    height: 85%; 
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -164,40 +165,64 @@ body {
     border-bottom: none;
 }
 
-/* 欄位尺寸 */
+/* =================================================== */
+/* 欄位尺寸與字體優化（調小資訊字體以解決右側擁擠感） */
+/* =================================================== */
+
+/* 序號 */
 .seq {
-    font-size: 3.4vh;
+    font-size: 3.2vh;
     color: #666666;
     width: 8%;
 }
 
+/* 左側港鐵字體維持原本的舒適大小 */
+.left-col .dest-mtr { font-size: 4.2vh; color: #FFFFFF; font-weight: bold; width: 47%; white-space: nowrap; overflow: hidden; }
+.left-col .time-mtr { font-size: 4.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 30%; color: #00FF33; text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); }
+
+/* 右側輕鐵資訊字體微調縮小 */
 .lrt-no {
-    font-size: 4vh;
+    font-size: 3.6vh; /* 原 4vh */
     font-weight: bold;
     color: #FF9900;
     width: 15%;
 }
-
-.dest {
-    font-size: 4.2vh;
+.dest-lrt {
+    font-size: 3.6vh; /* 原 4.2vh */
     color: #FFFFFF;
     font-weight: bold;
     white-space: nowrap;
     overflow: hidden;
+    width: 47%;
 }
-.dest-mtr, .dest-lrt { width: 47%; }
-.dest-bus { width: 62%; } 
-
-.arrival-time {
-    font-size: 4.4vh;
+.time-lrt {
+    font-size: 3.8vh; /* 原 4.4vh */
     font-weight: bold;
     font-family: monospace;
     text-align: right;
     width: 30%;
+    color: #FFCC00; 
+    text-shadow: 0 0 12px rgba(255, 204, 0, 0.8);
 }
-.time-mtr { color: #00FF33; text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); }
-.time-lrt { color: #FFCC00; text-shadow: 0 0 12px rgba(255, 204, 0, 0.8); }
-.time-bus { color: #FF99CC; text-shadow: 0 0 12px rgba(255, 51, 102, 0.8); }
+
+/* 右側巴士資訊字體微調縮小 */
+.dest-bus {
+    font-size: 3.6vh; /* 原 4.2vh */
+    color: #FFFFFF;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 62%;
+}
+.time-bus {
+    font-size: 3.8vh; /* 原 4.4vh */
+    font-weight: bold;
+    font-family: monospace;
+    text-align: right;
+    width: 30%;
+    color: #FF99CC; 
+    text-shadow: 0 0 12px rgba(255, 51, 102, 0.8);
+}
 
 /* 紅色閃爍狀態 */
 .status-flash {
@@ -234,13 +259,21 @@ body {
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往屯門方向</div>
                 <div class="train-list-container" id="tuen-mun-list">
-                    </div>
+                    <div class="train-row" style="height:25%;"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                </div>
             </div>
 
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往烏溪沙方向</div>
                 <div class="train-list-container" id="wu-kai-sha-list">
-                    </div>
+                    <div class="train-row" style="height:25%;"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row" style="height:25%;"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                </div>
             </div>
         </div>
 
@@ -261,7 +294,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 智能資訊屏 | 10行全對稱幾何工整優化版 | 自動更新
+        PIDS 智能資訊屏 | 右側視覺疏朗化改良版 | 自動更新
     </div>
 
 <script>
@@ -411,7 +444,7 @@ renderBusPIDS();
 
 
 // ==========================================
-// 左邊：港鐵資料聯網核心 (擴展至 5 班車方案)
+// 左邊：港鐵資料聯網核心 (還原為純 4 班實時數據)
 // ==========================================
 function formatMtrTime(trainObj) {
     if (!trainObj) return null;
@@ -426,67 +459,32 @@ function formatMtrTime(trainObj) {
     }
     var rawDest = trainObj.dest;
     var destName = stationNameMap[rawDest] || trainObj.dest_tch || rawDest;
-    return { dest: destName, time: timeDisplay, rawTime: trainObj.time };
+    return { dest: destName, time: timeDisplay };
 }
 
-// 預估第 5 班車時間的邏輯函數
-function estimateFifthTrain(fourthTrainRawTime) {
-    if (!fourthTrainRawTime) return "--:--";
-    try {
-        // 格式化解析 2026-07-13 18:40:00 直轉為 Date 物件
-        var tStr = fourthTrainRawTime.replace(/-/g, "/"); 
-        var date = new Date(tStr);
-        // 自動加 7 分鐘作為下一班估算
-        date.setMinutes(date.getMinutes() + 7); 
-        return padZero(date.getHours()) + ":" + padZero(date.getMinutes());
-    } catch(e) {
-        return "--:--";
-    }
-}
-
-function renderMtrDirection(dataArray, elementId, defaultDestName) {
+function renderMtrDirection(dataArray, elementId) {
     var container = document.getElementById(elementId);
     if (!container) return;
     
     var htmlString = "";
-    var lastValidTimeStr = null;
-    var finalDestName = defaultDestName;
 
-    // 前 4 班直接使用實時 API 數據
     for (var i = 0; i < 4; i++) {
         if (dataArray && dataArray[i]) {
             var info = formatMtrTime(dataArray[i]);
-            finalDestName = info.dest; 
-            if (dataArray[i].time) {
-                lastValidTimeStr = dataArray[i].time;
-            }
-            htmlString += '<div class="train-row" style="height:20%;">' +
+            htmlString += '<div class="train-row" style="height:25%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-mtr">' + info.dest + '</div>' +
                 '<div class="arrival-time time-mtr">' + info.time + '</div>' +
                 '</div>';
         } else {
             var defaultMsg = (i === 0) ? "班次已完結" : "--";
-            htmlString += '<div class="train-row" style="height:20%;">' +
+            htmlString += '<div class="train-row" style="height:25%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-mtr">' + defaultMsg + '</div>' +
                 '<div class="arrival-time time-mtr">--:--</div>' +
                 '</div>';
         }
     }
-
-    // 第 5 班車：本地智能預估推算
-    var fifthTimeDisplay = "--:--";
-    if (dataArray && dataArray.length >= 4 && lastValidTimeStr) {
-        fifthTimeDisplay = estimateFifthTrain(lastValidTimeStr);
-    }
-    
-    htmlString += '<div class="train-row" style="height:20%;">' +
-        '<div class="seq">5</div>' +
-        '<div class="dest dest-mtr">' + finalDestName + '</div>' +
-        '<div class="arrival-time time-mtr" style="opacity: 0.75;">' + fifthTimeDisplay + '</div>' +
-        '</div>';
-
     container.innerHTML = htmlString;
 }
 
@@ -503,8 +501,8 @@ function loadMtrSchedule() {
                     if (!json || !json.data) return;
                     var data = json.data[mtrLine + '-' + mtrStation];
                     if (data) {
-                        renderMtrDirection(data.UP, "tuen-mun-list", "屯門");       
-                        renderMtrDirection(data.DOWN, "wu-kai-sha-list", "烏溪沙");   
+                        renderMtrDirection(data.UP, "tuen-mun-list");       
+                        renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
                     }
                 } catch (e) {
                     console.error("JSON Parse Error");
