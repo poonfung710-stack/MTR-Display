@@ -97,13 +97,14 @@ body {
     margin-bottom: 0;
 }
 
+/* 已優化：重新配比右側面板高度 */
 .lrt-panel {
-    height: 56%;
+    height: 70%; /* 從 56% 大幅擴張至 70%，容納 8 班車 */
     margin-bottom: 4%;
 }
 
 .bus-panel {
-    height: 40%;
+    height: 26%; /* 從 40% 精簡至 26%，保持 4 班車 */
     margin-bottom: 0;
 }
 
@@ -137,7 +138,7 @@ body {
 
 /* 列表容器 */
 .train-list-container {
-    height: 85%; 
+    height: 88%; 
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -166,29 +167,28 @@ body {
 }
 
 /* =================================================== */
-/* 欄位尺寸與字體優化（調小資訊字體以解決右側擁擠感） */
+/* 欄位尺寸與字體優化（專為 8 班車精細調優） */
 /* =================================================== */
 
-/* 序號 */
 .seq {
-    font-size: 3.2vh;
+    font-size: 3vh;
     color: #666666;
     width: 8%;
 }
 
-/* 左側港鐵字體維持原本的舒適大小 */
+/* 左側港鐵字體 */
 .left-col .dest-mtr { font-size: 4.2vh; color: #FFFFFF; font-weight: bold; width: 47%; white-space: nowrap; overflow: hidden; }
 .left-col .time-mtr { font-size: 4.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 30%; color: #00FF33; text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); }
 
-/* 右側輕鐵資訊字體微調縮小 */
+/* 右側輕鐵字體：精密微調至 3.2vh / 3.4vh，極致防擁擠 */
 .lrt-no {
-    font-size: 3.6vh; /* 原 4vh */
+    font-size: 3.2vh; 
     font-weight: bold;
     color: #FF9900;
     width: 15%;
 }
 .dest-lrt {
-    font-size: 3.6vh; /* 原 4.2vh */
+    font-size: 3.2vh; 
     color: #FFFFFF;
     font-weight: bold;
     white-space: nowrap;
@@ -196,18 +196,18 @@ body {
     width: 47%;
 }
 .time-lrt {
-    font-size: 3.8vh; /* 原 4.4vh */
+    font-size: 3.4vh; 
     font-weight: bold;
     font-family: monospace;
     text-align: right;
     width: 30%;
     color: #FFCC00; 
-    text-shadow: 0 0 12px rgba(255, 204, 0, 0.8);
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.8);
 }
 
-/* 右側巴士資訊字體微調縮小 */
+/* 右側巴士字體：適度縮小至 3.4vh / 3.6vh */
 .dest-bus {
-    font-size: 3.6vh; /* 原 4.2vh */
+    font-size: 3.4vh; 
     color: #FFFFFF;
     font-weight: bold;
     white-space: nowrap;
@@ -215,13 +215,13 @@ body {
     width: 62%;
 }
 .time-bus {
-    font-size: 3.8vh; /* 原 4.4vh */
+    font-size: 3.6vh; 
     font-weight: bold;
     font-family: monospace;
     text-align: right;
     width: 30%;
     color: #FF99CC; 
-    text-shadow: 0 0 12px rgba(255, 51, 102, 0.8);
+    text-shadow: 0 0 10px rgba(255, 51, 102, 0.8);
 }
 
 /* 紅色閃爍狀態 */
@@ -294,7 +294,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 智能資訊屏 | 右側視覺疏朗化改良版 | 自動更新
+        PIDS 智能資訊屏 | 右側 70:26 黃金比例佈局 (輕鐵 8 班車版) | 自動更新
     </div>
 
 <script>
@@ -328,15 +328,17 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 (6 班車)
+// 右邊上方：輕鐵 天慈站 (已擴充至 8 班列車資料庫)
 // ==========================================
 var lrtTrains = [
     { route: '706', dest: '天水圍', eta: 1 },
     { route: '751', dest: '友愛', eta: 3 },
     { route: '705', dest: '天水圍', eta: 6 },
     { route: '751', dest: '天逸', eta: 9 },
-    { route: '706', dest: '天水圍', eta: 13 },
-    { route: '705', dest: '天水圍', eta: 16 }
+    { route: '706', dest: '天水圍', eta: 11 },
+    { route: '705', dest: '天水圍', eta: 14 },
+    { route: '751', dest: '友愛', eta: 17 },
+    { route: '706', dest: '天水圍', eta: 20 }
 ];
 
 function renderLrtPIDS() {
@@ -361,7 +363,8 @@ function renderLrtPIDS() {
             finalDest = "往天水圍(南)";
         }
 
-        htmlString += '<div class="train-row" style="height:16%;">' +
+        // 高度變更為 12.5% 以完美將 8 班車均分填滿容器
+        htmlString += '<div class="train-row" style="height:12.5%;">' +
             '<div class="seq">' + (i + 1) + '</div>' +
             '<div class="lrt-no">' + train.route + '</div>' +
             '<div class="dest dest-lrt">' + finalDest + '</div>' +
@@ -380,7 +383,7 @@ function simulateLrtCountdown() {
             if (lrtTrains[i].eta > 0) {
                 lrtTrains[i].eta -= 1;
             } else {
-                lrtTrains[i].eta = Math.floor(Math.random() * 6) + 12; 
+                lrtTrains[i].eta = Math.floor(Math.random() * 6) + 16; 
             }
         }
     }
@@ -444,7 +447,7 @@ renderBusPIDS();
 
 
 // ==========================================
-// 左邊：港鐵資料聯網核心 (還原為純 4 班實時數據)
+// 左邊：港鐵資料聯網核心
 // ==========================================
 function formatMtrTime(trainObj) {
     if (!trainObj) return null;
@@ -467,7 +470,6 @@ function renderMtrDirection(dataArray, elementId) {
     if (!container) return;
     
     var htmlString = "";
-
     for (var i = 0; i < 4; i++) {
         if (dataArray && dataArray[i]) {
             var info = formatMtrTime(dataArray[i]);
