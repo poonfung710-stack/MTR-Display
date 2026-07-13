@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>港鐵/輕鐵乘客資訊顯示系統 (PIDS) - 天水圍複合屏</title>
+<title>港鐵/輕鐵/巴士綜合資訊顯示系統 (PIDS)</title>
 
 <style>
 /* 基礎重設 */
@@ -80,8 +80,14 @@ body {
     margin-bottom: 2vh;
 }
 
+/* 右側垂直分割：輕鐵 70%，巴士 30% */
 .lrt-panel {
-    height: 87vh;
+    height: 59vh;
+    margin-bottom: 2vh;
+}
+
+.bus-panel {
+    height: 26vh;
 }
 
 /* 容器群組 */
@@ -89,7 +95,7 @@ body {
     background: #050505;
     border: 2px solid #111;
     border-radius: 12px;
-    padding: 1.5vh 2vw; 
+    padding: 1.2vh 2vw; 
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -97,14 +103,15 @@ body {
 }
 
 .direction-title {
-    font-size: 4vh; 
+    font-size: 3.8vh; 
     font-weight: bold;
-    margin-bottom: 0.8vh;
+    margin-bottom: 0.6vh;
     padding-left: 15px;
     line-height: 1.2;
 }
 .title-mtr { color: #FFCC00; border-left: 8px solid #947A4D; }
 .title-lrt { color: #FF9900; border-left: 8px solid #FF9900; }
+.title-bus { color: #FF3366; border-left: 8px solid #FF3366; } /* 巴士使用鮮明紅粉色邊條 */
 
 /* 列表容器 */
 .train-list-container {
@@ -126,7 +133,8 @@ body {
 }
 
 .mtr-row { height: 7.2vh; }
-.lrt-row { height: 8.8vh; }
+.lrt-row { height: 8.4vh; }
+.bus-row { height: 6.2vh; }
 
 /* 欄位尺寸放大 */
 .seq {
@@ -135,12 +143,13 @@ body {
     width: 8%;
 }
 
-.lrt-no {
+.lrt-no, .bus-no {
     font-size: 4vh;
-    color: #FF9900;
     font-weight: bold;
     width: 15%;
 }
+.lrt-no { color: #FF9900; }
+.bus-no { color: #FF3366; }
 
 .dest {
     font-size: 4.2vh;
@@ -160,6 +169,7 @@ body {
 }
 .time-mtr { color: #00FF33; text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); }
 .time-lrt { color: #FFCC00; text-shadow: 0 0 12px rgba(255, 204, 0, 0.8); }
+.time-bus { color: #FF99CC; text-shadow: 0 0 12px rgba(255, 51, 102, 0.8); }
 
 /* 紅色閃爍狀態 */
 .status-flash {
@@ -220,12 +230,18 @@ body {
                 <div class="train-list-container" id="lrt-flat-list">
                     </div>
             </div>
+
+            <div class="direction-group bus-panel">
+                <div class="direction-title title-bus">九巴 276A 天祐苑站 (往上水)</div>
+                <div class="train-list-container" id="bus-flat-list">
+                    </div>
+            </div>
         </div>
 
     </div>
 
     <div class="footer-bar">
-        PIDS 混合雙工屏 | 左側實時聯網 / 右側本地引擎 | 自動刷新
+        PIDS 三向智能資訊屏 | 地鐵實時直連 / 輕鐵巴士本地雙引擎 | 自動更新
     </div>
 
 <script>
@@ -254,24 +270,20 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊：天慈輕鐵站 本地安全計時核心 (參考您的成功代碼)
+// 右邊上方：輕鐵 天慈站 本地安全引擎 (調整為5班車)
 // ==========================================
 let lrtTrains = [
     { route: '706', dest: '天水圍循環線', eta: 1 },
     { route: '751', dest: '友愛', eta: 3 },
     { route: '705', dest: '天水圍循環線', eta: 6 },
-    { route: '751', dest: '天逸', eta: 8 },
-    { route: '706', dest: '天水圍循環線', eta: 11 },
-    { route: '751', dest: '友愛', eta: 14 },
-    { route: '705', dest: '天水圍循環線', eta: 16 },
-    { route: '751', dest: '天逸', eta: 19 }
+    { route: '751', dest: '天逸', eta: 9 },
+    { route: '706', dest: '天水圍循環線', eta: 13 }
 ];
 
 function renderLrtPIDS() {
     const listContainer = document.getElementById('lrt-flat-list');
     listContainer.innerHTML = '';
 
-    // 依據時間排序
     lrtTrains.sort((a, b) => a.eta - b.eta);
 
     lrtTrains.forEach((train, index) => {
@@ -296,16 +308,59 @@ function simulateLrtCountdown() {
         if (train.eta > 0) {
             train.eta -= 1;
         } else {
-            // 到站後隨機生成下一班車時間 (12 - 19 分鐘後)
-            train.eta = Math.floor(Math.random() * 8) + 12; 
+            train.eta = Math.floor(Math.random() * 6) + 10; 
         }
     });
     renderLrtPIDS();
 }
-
-// 每 30 秒執行一次輕鐵時間倒數 (與成功代碼完全相同)
 setInterval(simulateLrtCountdown, 30000);
 renderLrtPIDS();
+
+
+// ==========================================
+// 右邊下方：九巴 276A 天祐苑 本地安全引擎 (顯示3班車)
+// ==========================================
+let busTrains = [
+    { route: '276A', dest: '上水', eta: 4 },
+    { route: '276A', dest: '上水', eta: 12 },
+    { route: '276A', dest: '上水', eta: 20 }
+];
+
+function renderBusPIDS() {
+    const listContainer = document.getElementById('bus-flat-list');
+    listContainer.innerHTML = '';
+
+    busTrains.sort((a, b) => a.eta - b.eta);
+
+    busTrains.forEach((bus, index) => {
+        let etaDisplay = bus.eta + ' 分鐘';
+        if (bus.eta <= 0) {
+            etaDisplay = '<span class="status-flash">到站中</span>';
+        }
+
+        listContainer.innerHTML += `
+            <div class="train-row bus-row">
+                <div class="seq">${index + 1}</div>
+                <div class="bus-no">${bus.route}</div>
+                <div class="dest">往${bus.dest}</div>
+                <div class="arrival-time time-bus">${etaDisplay}</div>
+            </div>
+        `;
+    });
+}
+
+function simulateBusCountdown() {
+    busTrains.forEach((bus) => {
+        if (bus.eta > 0) {
+            bus.eta -= 1;
+        } else {
+            bus.eta = Math.floor(Math.random() * 5) + 8; // 隨機生成 8-12 分鐘後的下班車
+        }
+    });
+    renderBusPIDS();
+}
+setInterval(simulateBusCountdown, 30000);
+renderBusPIDS();
 
 
 // ==========================================
@@ -365,11 +420,10 @@ async function loadMtrSchedule() {
             renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
         }
     } catch (e) {
-        console.error("MTR API Error:", e);
+        console.error("MTR API Error");
     }
 }
 
-// 每 10 秒獲取一次地鐵最新實時時間
 loadMtrSchedule();
 setInterval(loadMtrSchedule, 10000);
 </script>
