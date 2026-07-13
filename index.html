@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>港鐵乘客資訊顯示系統 (PIDS) - 天水圍站 (iOS 9 相容版)</title>
+<title>港鐵/輕鐵/巴士綜合乘客資訊顯示系統 (PIDS) - 天水圍 (iOS 9 相容版)</title>
 
 <style>
 /* 基礎重設，防止不同世代的 Safari 亂加預設邊距 */
@@ -19,13 +19,8 @@ html, body {
 body {
     color: #00FF33; 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
-    /* 針對 iOS 9 補上舊版 Flexbox 前綴 */
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: column;
-    flex-direction: column;
     box-sizing: border-box;
-    padding: 1.5vh 3vw; 
+    padding: 1.5vh 2vw; 
 }
 
 /* 頂部資訊列 */
@@ -58,103 +53,114 @@ body {
     line-height: 1.2; 
 }
 
-/* 班次顯示主要區域 */
+/* 班次顯示主要區域：iOS 9 完美相容的傳統清除浮動排版 */
 .main-content {
     height: 88vh; 
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: column;
-    flex-direction: column;
-    -webkit-justify-content: space-between;
-    justify-content: space-between; 
-    margin: 0.5vh 0;
+    margin: 1vh 0;
     box-sizing: border-box;
 }
+.main-content::after {
+    content: "";
+    display: block;
+    clear: both;
+}
 
-/* 每個方向的區塊 */
+/* 核心修改：左右精準平分 50%，採用 float 以保證 iOS 9 不跑偏 */
+.left-col {
+    width: 50%;
+    height: 100%;
+    float: left;
+    box-sizing: border-box;
+    padding-right: 1vw;
+}
+
+.right-col {
+    width: 50%;
+    height: 100%;
+    float: left;
+    box-sizing: border-box;
+    padding-left: 1vw;
+}
+
+/* 容器區塊樣式 */
 .direction-group {
     background: #050505;
     border: 2px solid #111;
     border-radius: 12px;
-    padding: 1.5vh 3vw; 
-    height: 42vh; 
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: column;
-    flex-direction: column;
-    -webkit-justify-content: flex-start;
-    justify-content: flex-start;
+    padding: 1.2vh 2vw; 
     box-sizing: border-box;
+    margin-bottom: 1.5vh;
 }
 
+/* 地鐵左側上下高度分配 */
+.mtr-group {
+    height: 43vh; 
+}
+
+/* 右側輕鐵與巴士上下各佔 43vh */
+.right-group {
+    height: 43vh;
+}
+
+/* 標題樣式與顏色區分 */
 .direction-title {
-    font-size: 4.3vh; 
     font-weight: bold;
-    color: #FFCC00; 
-    margin-bottom: 0.8vh;
-    border-left: 8px solid #947A4D;
-    padding-left: 15px;
+    margin-bottom: 0.6vh;
+    padding-left: 12px;
     line-height: 1.2;
 }
+.title-mtr { font-size: 3.5vh; color: #FFCC00; border-left: 6px solid #947A4D; }
+.title-lrt { font-size: 3.5vh; color: #FF9900; border-left: 6px solid #FF9900; }
+.title-bus { font-size: 3.5vh; color: #FF3333; border-left: 6px solid #FF3333; }
 
-/* 列車班次列表 */
-.train-list-container {
-    -webkit-flex: 1;
-    flex: 1;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: column;
-    flex-direction: column;
-    -webkit-justify-content: space-between;
-    justify-content: space-between;
-}
-
+/* 列表行排版：iOS 9 浮動排列 */
 .train-row {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-justify-content: space-between;
-    justify-content: space-between;
-    -webkit-align-items: center;
-    align-items: center;
-    padding: 0.3vh 0; 
+    width: 100%;
+    height: 7.5vh; 
     border-bottom: 1px dashed #222;
     box-sizing: border-box;
+    line-height: 7.5vh;
 }
-
+.train-row::after {
+    content: "";
+    display: block;
+    clear: both;
+}
 .train-row:last-child {
     border-bottom: none;
 }
 
-/* 班次序號 */
+/* 文字基本欄位 */
 .seq {
-    font-size: 3.6vh;
+    font-size: 3.2vh;
     color: #666666;
+    float: left;
     width: 10%;
 }
-
-/* 目的地文字 */
 .dest {
-    font-size: 4.5vh;
+    font-size: 3.8vh;
     color: #FFFFFF;
     font-weight: bold;
+    float: left;
     width: 45%;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
-/* 24小時制到達時間 */
+/* 右側到站時間浮動靠右 */
 .arrival-time {
-    font-size: 4.8vh;
     font-weight: bold;
     font-family: monospace;
-    color: #00FF33;
-    text-shadow: 0 0 12px rgba(0, 255, 51, 0.8);
+    float: right;
     text-align: right;
     width: 45%;
 }
+.time-mtr { font-size: 4.2vh; color: #00FF33; text-shadow: 0 0 10px rgba(0,255,51,0.8); }
+.time-lrt { font-size: 3.8vh; color: #FF9900; text-shadow: 0 0 8px rgba(255,153,0,0.8); }
+.time-bus { font-size: 3.8vh; color: #FF3333; text-shadow: 0 0 8px rgba(255,51,51,0.8); }
 
 /* 特殊狀態閃爍 - 補上舊版 WebKit 前綴 */
 .status-flash {
-    color: #FF3333; 
-    text-shadow: 0 0 12px rgba(255, 51, 51, 0.8);
     -webkit-animation: blink 1s infinite;
     animation: blink 1s infinite;
 }
@@ -186,41 +192,66 @@ body {
 
     <div class="header-bar">
         <div class="real-time" id="clock">00:00:00</div>
-        <div class="station-title">天水圍</div>
+        <div class="station-title">天水圍交通顯示屏</div>
     </div>
 
     <div class="main-content">
         
-        <div class="direction-group">
-            <div class="direction-title">往 屯門方向</div>
-            <div class="train-list-container" id="tuen-mun-list">
-                <div class="train-row"><div class="seq">1</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">2</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">3</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">4</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
+        <div class="left-col">
+            <div class="direction-group mtr-group">
+                <div class="direction-title title-mtr">往 屯門方向</div>
+                <div id="tuen-mun-list">
+                    <div class="train-row"><div class="seq">1</div><div class="dest">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row"><div class="seq">2</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row"><div class="seq">3</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row"><div class="seq">4</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
+                </div>
+            </div>
+            
+            <div class="direction-group mtr-group">
+                <div class="direction-title title-mtr">往 烏溪沙方向</div>
+                <div id="wu-kai-sha-list">
+                    <div class="train-row"><div class="seq">1</div><div class="dest">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <div class="train-row"><div class="seq">2</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row"><div class="seq">3</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
+                    <div class="train-row"><div class="seq">4</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
+                </div>
             </div>
         </div>
 
-        <div class="direction-group">
-            <div class="direction-title">往 烏溪沙方向</div>
-            <div class="train-list-container" id="wu-kai-sha-list">
-                <div class="train-row"><div class="seq">1</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">2</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">3</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
-                <div class="train-row"><div class="seq">4</div><div class="dest">--</div><div class="arrival-time">--:--</div></div>
+        <div class="right-col">
+            <div class="direction-group right-group">
+                <div class="direction-title title-lrt">輕鐵 天慈站 (Next Train)</div>
+                <div id="lrt-list">
+                    <div class="train-row"><div class="seq">1</div><div class="dest" style="color:#FF9900">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row"><div class="seq">2</div><div class="dest" style="color:#FF9900">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row"><div class="seq">3</div><div class="dest" style="color:#FF9900">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row"><div class="seq">4</div><div class="dest" style="color:#FF9900">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                </div>
+            </div>
+
+            <div class="direction-group right-group">
+                <div class="direction-title title-bus">九巴 276A (天祐苑) 往上水</div>
+                <div id="bus-list">
+                    <div class="train-row"><div class="seq">1</div><div class="dest" style="color:#FF3333">276A 上水</div><div class="arrival-time time-bus">--:--</div></div>
+                    <div class="train-row"><div class="seq">2</div><div class="dest" style="color:#CCCCCC">下班車</div><div class="arrival-time time-bus">--:--</div></div>
+                    <div class="train-row"><div class="seq">3</div><div class="dest" style="color:#CCCCCC">第三班</div><div class="arrival-time time-bus">--:--</div></div>
+                    <div class="train-row"><div class="seq">4</div><div class="dest" style="color:#CCCCCC">第四班</div><div class="arrival-time time-bus">--:--</div></div>
+                </div>
             </div>
         </div>
 
     </div>
 
     <div class="footer-bar">
-        PIDS 運作中 | iOS 9 相容核心 | 自動更新: 10秒
+        多路整合 PIDS 運作中 | iOS 9 經典相容核心 | 自動更新: 10秒
     </div>
 
 <script>
-// iOS 9 降級處理：全部使用 var，禁用 const/let，禁用箭頭函數
-var line = "TML";
-var station = "TIS";
+// iOS 9 降級規範：只使用 var，禁用 let/const，禁用箭頭函數
+var mtrLine = "TML";
+var mtrStation = "TIS";
+var lrtStationId = "435"; // 輕鐵天慈站官方編號
 
 var stationNameMap = {
     "TUM": "屯門", "SIH": "兆康", "TIS": "天水圍", "KSR": "錦上路",
@@ -232,11 +263,12 @@ var stationNameMap = {
     "HEO": "恆安", "MOS": "馬鞍山", "WKS": "烏溪沙"
 };
 
-// 自製 iOS 9 相容的補零工具函數（替代 String.padStart）
+// 自製相容 iOS 9 的數字前置補零工具
 function padZero(num) {
     return num < 10 ? '0' + num : num;
 }
 
+// 1. 真實時間更新
 function updateClock() {
     var now = new Date();
     var hours = padZero(now.getHours());
@@ -247,80 +279,178 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-function formatMtrTime(trainObj) {
-    if (!trainObj) return null;
-    
-    var ttnt = parseInt(trainObj.ttnt, 10);
-    var timeDisplay = "";
-    
-    if (ttnt === 0) {
-        timeDisplay = '<span class="status-flash">正在駛入</span>';
-    } else if (ttnt === 1) {
-        timeDisplay = '<span class="status-flash">即將抵達</span>';
-    } else {
-        if (trainObj.time) {
-            timeDisplay = trainObj.time.substring(11, 16); 
-        } else {
-            timeDisplay = "--:--";
-        }
-    }
-
-    var rawDest = trainObj.dest;
-    var destName = stationNameMap[rawDest] || trainObj.dest_tch || rawDest;
-
-    return {
-        dest: destName,
-        time: timeDisplay
-    };
-}
-
-function renderDirection(dataArray, elementId) {
+// 2. 港鐵地鐵數據渲染
+function renderMtrDirection(dataArray, elementId) {
     var container = document.getElementById(elementId);
     var htmlContent = "";
-
+    
     for (var i = 0; i < 4; i++) {
         if (dataArray && dataArray[i]) {
-            var info = formatMtrTime(dataArray[i]);
+            var ttnt = parseInt(dataArray[i].ttnt, 10);
+            var timeDisplay = "";
+            
+            if (ttnt === 0) {
+                timeDisplay = '<span class="status-flash" style="color:#FF3333">正在駛入</span>';
+            } else if (ttnt === 1) {
+                timeDisplay = '<span class="status-flash" style="color:#FF3333">即將抵達</span>';
+            } else {
+                timeDisplay = dataArray[i].time ? dataArray[i].time.substring(11, 16) : "--:--";
+            }
+            
+            var destName = stationNameMap[dataArray[i].dest] || dataArray[i].dest_tch || dataArray[i].dest;
             htmlContent += '<div class="train-row">' +
                                 '<div class="seq">' + (i + 1) + '</div>' +
-                                '<div class="dest">' + info.dest + '</div>' +
-                                '<div class="arrival-time">' + info.time + '</div>' +
+                                '<div class="dest">' + destName + '</div>' +
+                                '<div class="arrival-time time-mtr">' + timeDisplay + '</div>' +
                            '</div>';
         } else {
             htmlContent += '<div class="train-row">' +
                                 '<div class="seq">' + (i + 1) + '</div>' +
                                 '<div class="dest">' + (i === 0 ? "班次已完結" : "--") + '</div>' +
-                                '<div class="arrival-time">--:--</div>' +
+                                '<div class="arrival-time time-mtr">--:--</div>' +
                            '</div>';
         }
     }
     container.innerHTML = htmlContent;
 }
 
-// iOS 9 降級處理：使用 XMLHttpRequest 替代 fetch/async/await
-function loadSchedule() {
-    var url = "https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=" + line + "&sta=" + station;
+// 3. 獲取港鐵地鐵數據
+function loadMtrSchedule() {
+    var url = "https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=" + mtrLine + "&sta=" + mtrStation;
     var xhr = new XMLHttpRequest();
     xhr.open("GET", url, true);
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
             try {
                 var json = JSON.parse(xhr.responseText);
-                var data = json.data[line + "-" + station];
+                var data = json.data[mtrLine + "-" + mtrStation];
                 if (data) {
-                    renderDirection(data.UP, "tuen-mun-list");       
-                    renderDirection(data.DOWN, "wu-kai-sha-list");   
+                    renderMtrDirection(data.UP, "tuen-mun-list");       
+                    renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
                 }
-            } catch (e) {
-                console.error("JSON Parse Error:", e);
-            }
+            } catch (e) {}
         }
     };
     xhr.send();
 }
 
-loadSchedule();
-setInterval(loadSchedule, 10000);
+// 4. 獲取與渲染輕鐵天慈站數據
+function loadLrtSchedule() {
+    var url = "https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule.php?id=" + lrtStationId;
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            try {
+                var json = JSON.parse(xhr.responseText);
+                var platformList = json.platform_list;
+                var allItems = [];
+                
+                if (platformList) {
+                    for (var p = 0; p < platformList.length; p++) {
+                        var routeList = platformList[p].route_list;
+                        if (routeList) {
+                            for (var r = 0; r < routeList.length; r++) {
+                                var rTime = routeList[r].time_ch;
+                                var minutesNum = (rTime === "到達" || rTime === "即將抵達") ? 0 : parseInt(rTime, 10);
+                                allItems.push({
+                                    route: routeList[r].route_no,
+                                    dest: routeList[r].dest_ch,
+                                    timeStr: rTime,
+                                    timeValue: minutesNum
+                                });
+                            }
+                        }
+                    }
+                }
+                
+                // 排序以符合到站順序
+                allItems.sort(function(a, b) {
+                    return a.timeValue - b.timeValue;
+                });
+
+                var htmlContent = "";
+                for (var i = 0; i < 4; i++) {
+                    if (allItems[i]) {
+                        var displayTime = (allItems[i].timeStr === "到達" || allItems[i].timeStr === "即將抵達") ? 
+                            '<span class="status-flash" style="color:#FF3333">' + allItems[i].timeStr + '</span>' : allItems[i].timeStr;
+                        htmlContent += '<div class="train-row">' +
+                                            '<div class="seq">' + (i + 1) + '</div>' +
+                                            '<div class="dest" style="color:#FF9900">' + allItems[i].route + ' ' + allItems[i].dest + '</div>' +
+                                            '<div class="arrival-time time-lrt">' + displayTime + '</div>' +
+                                       '</div>';
+                    } else {
+                        htmlContent += '<div class="train-row">' +
+                                            '<div class="seq">' + (i + 1) + '</div>' +
+                                            '<div class="dest" style="color:#666">--</div>' +
+                                            '<div class="arrival-time time-lrt">-- 分鐘</div>' +
+                                       '</div>';
+                    }
+                }
+                document.getElementById("lrt-list").innerHTML = htmlContent;
+            } catch (e) {}
+        }
+    };
+    xhr.send();
+}
+
+// 5. 獲取與渲染九巴 276A 天祐苑數據 (站點代碼: TI14-N-1050-0)
+function loadBusSchedule() {
+    var url = "https://data.etabus.gov.hk/v1/transport/kmb/eta/TI14-N-1050-0/276A/1";
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url, true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            try {
+                var json = JSON.parse(xhr.responseText);
+                var data = json.data;
+                var validEta = [];
+                
+                if (data) {
+                    for (var d = 0; d < data.length; d++) {
+                        if (data[d].eta) {
+                            validEta.push(data[d]);
+                        }
+                    }
+                }
+
+                var htmlContent = "";
+                for (var i = 0; i < 4; i++) {
+                    var label = i === 0 ? "276A 上水" : i === 1 ? "下班車" : i === 2 ? "第三班" : "第四班";
+                    var labelColor = i === 0 ? "#FF3333" : "#CCCCCC";
+                    
+                    if (validEta[i]) {
+                        var etaTime = new Date(validEta[i].eta);
+                        var timeStr = padZero(etaTime.getHours()) + ":" + padZero(etaTime.getMinutes());
+                        htmlContent += '<div class="train-row">' +
+                                            '<div class="seq">' + (i + 1) + '</div>' +
+                                            '<div class="dest" style="color:' + labelColor + '">' + label + '</div>' +
+                                            '<div class="arrival-time time-bus">' + timeStr + '</div>' +
+                                       '</div>';
+                    } else {
+                        htmlContent += '<div class="train-row">' +
+                                            '<div class="seq">' + (i + 1) + '</div>' +
+                                            '<div class="dest" style="color:#666">' + label + '</div>' +
+                                            '<div class="arrival-time time-bus">--:--</div>' +
+                                       '</div>';
+                    }
+                }
+                document.getElementById("bus-list").innerHTML = htmlContent;
+            } catch (e) {}
+        }
+    };
+    xhr.send();
+}
+
+// 總初始化與定時更新處理
+function updateAllData() {
+    loadMtrSchedule();
+    loadLrtSchedule();
+    loadBusSchedule();
+}
+
+updateAllData();
+setInterval(updateAllData, 10000); // 10秒自動更新所有交通數據
 </script>
 
 </body>
