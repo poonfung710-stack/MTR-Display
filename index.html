@@ -1,514 +1,196 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>港鐵/輕鐵/巴士綜合資訊顯示系統 (PIDS)</title>
-
-<style>
-/* 基礎重設 */
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
-    background-color: #000000;
-    overflow: hidden;
-}
-
-body {
-    color: #00FF33; 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-box-orient: vertical;
-    -webkit-box-direction: normal;
-    -webkit-flex-direction: column;
-    flex-direction: column;
-    box-sizing: border-box;
-    padding: 1.5vh 2vw; 
-}
-
-/* 頂部資訊列 */
-.header-bar {
-    height: 8vh; 
-    border-bottom: 4px solid #947A4D; 
-    box-sizing: border-box;
-    position: relative;
-}
-
-.real-time {
-    position: absolute;
-    left: 0;
-    bottom: 0.8vh;
-    font-size: 4.8vh;
-    font-weight: bold;
-    color: #00FF33;
-    font-family: monospace; 
-    text-shadow: 0 0 12px rgba(0, 255, 51, 0.7);
-    line-height: 1.2; 
-}
-
-.station-title {
-    position: absolute;
-    right: 0;
-    bottom: 0.8vh;
-    font-size: 4.8vh;
-    font-weight: bold;
-    color: #FFFFFF; 
-    line-height: 1.2; 
-}
-
-/* 主要分欄區域 */
-.main-content {
-    height: 88vh; 
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-box-orient: horizontal;
-    -webkit-box-direction: normal;
-    -webkit-flex-direction: row;
-    flex-direction: row;
-    justify-content: space-between;
-    margin: 1.5vh 0 0 0; 
-    box-sizing: border-box;
-}
-
-/* 左右對半分 */
-.left-col, .right-col {
-    width: 48%; 
-    height: 100%;
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-box-orient: vertical;
-    -webkit-box-direction: normal;
-    -webkit-flex-direction: column;
-    flex-direction: column;
-    box-sizing: border-box;
-}
-
-.mtr-panel {
-    height: 48%;
-    margin-bottom: 4%;
-}
-.mtr-panel:last-child {
-    margin-bottom: 0;
-}
-
-.lrt-panel {
-    height: 62%; 
-    margin-bottom: 4%;
-}
-
-.bus-panel {
-    height: 34%; 
-    margin-bottom: 0;
-}
-
-/* 容器群組 */
-.direction-group {
-    background: #050505;
-    border: 2px solid #111;
-    border-radius: 12px;
-    padding: 1.2vh 2vw; 
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-box-orient: vertical;
-    -webkit-box-direction: normal;
-    -webkit-flex-direction: column;
-    flex-direction: column;
-    box-sizing: border-box;
-}
-
-.direction-title {
-    font-size: 3.8vh; 
-    font-weight: bold;
-    margin-bottom: 0.6vh;
-    padding-left: 15px;
-    line-height: 1.2;
-}
-.title-mtr { color: #FFCC00; border-left: 8px solid #947A4D; }
-.title-lrt { color: #FF9900; border-left: 8px solid #FF9900; }
-.title-bus { color: #FF3366; border-left: 8px solid #FF3366; } 
-
-/* 列表容器 */
-.train-list-container {
-    height: 88%; 
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-box-orient: vertical;
-    -webkit-box-direction: normal;
-    -webkit-flex-direction: column;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.train-row {
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-box-orient: horizontal;
-    -webkit-box-direction: normal;
-    -webkit-flex-direction: row;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px dashed #222;
-    box-sizing: border-box;
-}
-.train-row:last-child {
-    border-bottom: none;
-}
-
-/* 欄位尺寸與字體 */
-.seq {
-    font-size: 3vh;
-    color: #666666;
-    width: 8%;
-}
-
-/* 左側港鐵字體 */
-.left-col .dest-mtr { font-size: 4.2vh; color: #FFFFFF; font-weight: bold; width: 47%; white-space: nowrap; overflow: hidden; }
-.left-col .time-mtr { font-size: 4.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 30%; color: #00FF33; text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); }
-
-/* 右側輕鐵字體 (8班車版) */
-.lrt-no { font-size: 3.2vh; font-weight: bold; color: #FF9900; width: 15%; }
-.dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 47%; }
-.time-lrt { font-size: 3.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 30%; color: #FFCC00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); }
-
-/* 右側巴士字體 (3班車版：字體可稍微放大恢復清晰度) */
-.dest-bus {
-    font-size: 3.6vh; 
-    color: #FFFFFF;
-    font-weight: bold;
-    white-space: nowrap;
-    overflow: hidden;
-    width: 62%;
-}
-.time-bus {
-    font-size: 3.4vh; 
-    font-weight: bold;
-    font-family: monospace;
-    text-align: right;
-    width: 30%;
-    color: #FF99CC; 
-    text-shadow: 0 0 10px rgba(255, 51, 102, 0.8);
-}
-
-/* 紅色閃爍狀態 */
-.status-flash {
-    color: #FF3333; 
-    text-shadow: 0 0 12px rgba(255, 51, 51, 0.8);
-    -webkit-animation: blink 1s infinite;
-    animation: blink 1s infinite;
-}
-
-@-webkit-keyframes blink { 0% { opacity: 1.0; } 50% { opacity: 0.3; } 100% { opacity: 1.0; } }
-@keyframes blink { 0% { opacity: 1.0; } 50% { opacity: 0.3; } 100% { opacity: 1.0; } }
-
-.footer-bar {
-    height: 3vh;
-    line-height: 3vh;
-    text-align: right;
-    font-size: 1.6vh;
-    color: #444;
-    box-sizing: border-box;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>九巴276A｜天祐苑站 實時到站顯示屏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft JhengHei", "Noto Sans TC", monospace;
+        }
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        /* 巴士電子屏外框 */
+        .bus-screen {
+            background: #0a0a0a;
+            border: 12px solid #222;
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 720px;
+            box-shadow: 0 0 40px #ffcc0040;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #ffcc00;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        .route-title {
+            color: #ffcc00;
+            font-size: 36px;
+            font-weight: bold;
+        }
+        .station-name {
+            color: #fff;
+            font-size: 22px;
+            margin-top: 6px;
+        }
+        .direction-switch {
+            background: #222;
+            color: #ffcc00;
+            border: 2px solid #ffcc00;
+            padding: 8px 16px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .direction-switch:hover {
+            background: #ffcc00;
+            color: #000;
+        }
+        /* 到站列表 三班車 */
+        .eta-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .eta-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 16px;
+            border: 1px solid #ffcc0060;
+            border-radius: 10px;
+        }
+        .eta-number {
+            color: #ffcc00;
+            font-size: 42px;
+            width: 60px;
+        }
+        .eta-dest {
+            flex: 1;
+            color: #fff;
+            font-size: 24px;
+            margin-left: 20px;
+        }
+        .eta-time {
+            color: #ffcc00;
+            font-size: 46px;
+            font-weight: bold;
+        }
+        .loading-text {
+            color: #ffcc00;
+            text-align: center;
+            font-size: 26px;
+            padding: 60px 0;
+        }
+        .empty-text {
+            color: #ff6666;
+            text-align: center;
+            font-size: 24px;
+            padding: 60px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 16px;
+            border-top: 1px solid #ffcc0040;
+            color: #aaa;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
 </head>
-
 <body>
-
-    <div class="header-bar">
-        <div class="real-time" id="clock">00:00:00</div>
-        <div class="station-title">天祐苑交通綜合資訊屏</div>
-    </div>
-
-    <div class="main-content">
-        
-        <div class="left-col">
-            <div class="direction-group mtr-panel">
-                <div class="direction-title title-mtr">屯馬綫 往屯門方向</div>
-                <div class="train-list-container" id="tuen-mun-list">
-                    <div class="train-row" style="height:25%;"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                </div>
+    <div class="bus-screen">
+        <div class="header">
+            <div>
+                <div class="route-title">九巴 276A</div>
+                <div class="station-name">天祐苑 Tin Yau Court</div>
             </div>
-
-            <div class="direction-group mtr-panel">
-                <div class="direction-title title-mtr">屯馬綫 往烏溪沙方向</div>
-                <div class="train-list-container" id="wu-kai-sha-list">
-                    <div class="train-row" style="height:25%;"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                </div>
-            </div>
+            <button class="direction-switch" id="switchBtn">切換方向</button>
         </div>
 
-        <div class="right-col">
-            <div class="direction-group lrt-panel">
-                <div class="direction-title title-lrt">輕鐵 天慈站</div>
-                <div class="train-list-container" id="lrt-flat-list">
-                    </div>
-            </div>
-
-            <div class="direction-group bus-panel">
-                <div class="direction-title title-bus">九巴 276A 天祐苑站</div>
-                <div class="train-list-container" id="bus-flat-list">
-                    </div>
-            </div>
+        <div class="eta-list" id="etaContainer">
+            <div class="loading-text">正在載入實時到站數據…</div>
         </div>
 
+        <div class="footer">
+            <span>數據來源：香港運輸署開放數據</span>
+            <span>自動每30秒更新｜最多顯示3班車</span>
+        </div>
     </div>
 
-    <div class="footer-bar">
-        PIDS 智能資訊屏 | 輕鐵8班/九巴3班 聯網實時版 | 自動更新
-    </div>
+    <script>
+        // 天祐苑站 stop ID
+        const STOP_ID = "002148";
+        // 兩個行車方向：
+        // 1: 天恆邨 → 太平 (往上水太平)
+        // 2: 太平 → 天恆邨 (往天水圍天恆邨)
+        let currentDirection = 1;
+        const destName = {
+            1: "太平 Tai Ping",
+            2: "天恆邨 Tin Heng Estate"
+        };
 
-<script>
-var mtrLine = "TML";
-var mtrStation = "TIS";
+        const etaContainer = document.getElementById("etaContainer");
+        const switchBtn = document.getElementById("switchBtn");
 
-var stationNameMap = {
-    "TUM": "屯門", "SIH": "兆康", "TIS": "天水圍", "KSR": "錦上路",
-    "YUL": "元朗", "LOP": "朗屏", "TWW": "荃灣西", "MEF": "美孚",
-    "NAC": "南昌", "AUS": "柯士甸", "ETS": "尖東", "HUH": "紅磡",
-    "HOM": "何文田", "TKW": "土瓜灣", "SUW": "宋皇臺", "CKH": "啟德",
-    "DIH": "鑽石山", "HIK": "顯徑", "TAW": "大圍", "CKT": "車公廟",
-    "STW": "沙田圍", "CIO": "第一城", "SHM": "石門", "TSH": "大水坑",
-    "HEO": "恆安", "MOS": "馬鞍山", "WKS": "烏溪沙"
-};
+        // 切換方向按鈕
+        switchBtn.addEventListener("click", () => {
+            currentDirection = currentDirection === 1 ? 2 : 1;
+            loadBusETA();
+        });
 
-function padZero(num) {
-    return num < 10 ? '0' + num : num;
-}
-
-function updateClock() {
-    var clockEl = document.getElementById('clock');
-    if (!clockEl) return;
-    var now = new Date();
-    var hours = padZero(now.getHours());
-    var minutes = padZero(now.getMinutes());
-    var seconds = padZero(now.getSeconds());
-    clockEl.innerText = hours + ':' + minutes + ':' + seconds;
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-// ==========================================
-// 右邊上方：輕鐵 天慈站 (8 班車資料庫)
-// ==========================================
-var lrtTrains = [
-    { route: '706', dest: '天水圍', eta: 1 },
-    { route: '751', dest: '友愛', eta: 3 },
-    { route: '705', dest: '天水圍', eta: 6 },
-    { route: '751', dest: '天逸', eta: 9 },
-    { route: '706', dest: '天水圍', eta: 11 },
-    { route: '705', dest: '天水圍', eta: 14 },
-    { route: '751', dest: '友愛', eta: 17 },
-    { route: '706', dest: '天水圍', eta: 20 }
-];
-
-function renderLrtPIDS() {
-    var listContainer = document.getElementById('lrt-flat-list');
-    if (!listContainer) return;
-    listContainer.innerHTML = '';
-    
-    lrtTrains.sort(function(a, b) { return a.eta - b.eta; });
-
-    var htmlString = '';
-    for (var i = 0; i < lrtTrains.length; i++) {
-        var train = lrtTrains[i];
-        var etaDisplay = train.eta + ' 分鐘';
-        if (train.eta <= 0) {
-            etaDisplay = '<span class="status-flash">到達</span>';
-        }
-
-        var finalDest = "往" + train.dest;
-        if (train.route === '705') {
-            finalDest = "往天水圍(北)";
-        } else if (train.route === '706') {
-            finalDest = "往天水圍(南)";
-        }
-
-        htmlString += '<div class="train-row" style="height:12.5%;">' +
-            '<div class="seq">' + (i + 1) + '</div>' +
-            '<div class="lrt-no">' + train.route + '</div>' +
-            '<div class="dest dest-lrt">' + finalDest + '</div>' +
-            '<div class="arrival-time time-lrt">' + etaDisplay + '</div>' +
-            '</div>';
-    }
-    listContainer.innerHTML = htmlString;
-}
-
-var lrtTickCount = 0;
-function simulateLrtCountdown() {
-    lrtTickCount++;
-    if (lrtTickCount >= 6) { 
-        lrtTickCount = 0;
-        for (var i = 0; i < lrtTrains.length; i++) {
-            if (lrtTrains[i].eta > 0) {
-                lrtTrains[i].eta -= 1;
-            } else {
-                lrtTrains[i].eta = Math.floor(Math.random() * 6) + 16; 
-            }
-        }
-    }
-    renderLrtPIDS();
-}
-setInterval(simulateLrtCountdown, 10000); 
-renderLrtPIDS();
-
-
-// ==========================================
-// 右邊下方：九巴 276A 天祐苑站 (實時聯網數據)
-// ==========================================
-function loadBusSchedule() {
-    // 修正站點代碼為天祐苑往太平方向的正確編號：CA07-N-1050-0
-    var url = 'https://rt.data.gov.hk/v1/transport/kmb/stop-eta/CA07-N-1050-0';
-    
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
+        // 載入實時ETA
+        async function loadBusETA() {
+            etaContainer.innerHTML = `<div class="loading-text">載入${destName[currentDirection]}方向數據…</div>`;
             try {
-                var json = JSON.parse(xhr.responseText);
-                if (!json || !json.data) return;
-                
-                // 過濾出 276A 往上水(太平)方向的班次 (dir: "O" 代表去程 Outbound)
-                var filtered = json.data.filter(function(item) {
-                    return item.route === '276A' && item.dir === 'O';
-                });
-                
-                renderBusPIDS(filtered);
-            } catch (e) {
-                console.error("KMB API Parse Error");
-            }
-        }
-    };
-    xhr.send();
-}
+                // 官方API：取得該站+路線的預計到站
+                const res = await fetch(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${STOP_ID}/276A/1`);
+                const data = await res.json();
+                // 過濾對應方向班次
+                const targetEta = data.data.filter(item => item.dir == currentDirection);
 
-function renderBusPIDS(etaData) {
-    var listContainer = document.getElementById('bus-flat-list');
-    if (!listContainer) return;
-    listContainer.innerHTML = '';
-    
-    var htmlString = '';
-    for (var i = 0; i < 3; i++) {
-        var bus = etaData ? etaData[i] : null;
-        var destDisplay = "往上水(太平)";
-        var etaDisplay = "--:--";
-
-        if (bus && bus.eta) {
-            var now = new Date();
-            var etaTime = new Date(bus.eta);
-            var diffMins = Math.round((etaTime - now) / 1000 / 60);
-            
-            if (diffMins <= 0) {
-                etaDisplay = '<span class="status-flash">到站中</span>';
-            } else {
-                etaDisplay = diffMins + ' 分鐘';
-            }
-        } else if (i === 0) {
-            destDisplay = "暫無班次資料";
-        } else {
-            destDisplay = "--";
-        }
-
-        htmlString += '<div class="train-row" style="height:33.3%;">' +
-            '<div class="seq">' + (i + 1) + '</div>' +
-            '<div class="dest dest-bus">' + destDisplay + '</div>' +
-            '<div class="arrival-time time-bus">' + etaDisplay + '</div>' +
-            '</div>';
-    }
-    listContainer.innerHTML = htmlString;
-}
-
-// 每 10 秒自動與九巴數據中心同步一次
-loadBusSchedule();
-setInterval(loadBusSchedule, 10000);
-
-
-// ==========================================
-// 左邊：港鐵資料聯網核心
-// ==========================================
-function formatMtrTime(trainObj) {
-    if (!trainObj) return null;
-    var ttnt = parseInt(trainObj.ttnt, 10);
-    var timeDisplay = "";
-    if (ttnt === 0) {
-        timeDisplay = '<span class="status-flash">正在駛入</span>';
-    } else if (ttnt === 1) {
-        timeDisplay = '<span class="status-flash">即將抵達</span>';
-    } else {
-        timeDisplay = trainObj.time ? trainObj.time.substring(11, 16) : "--:--";
-    }
-    var rawDest = trainObj.dest;
-    var destName = stationNameMap[rawDest] || trainObj.dest_tch || rawDest;
-    return { dest: destName, time: timeDisplay };
-}
-
-function renderMtrDirection(dataArray, elementId) {
-    var container = document.getElementById(elementId);
-    if (!container) return;
-    
-    var htmlString = "";
-    for (var i = 0; i < 4; i++) {
-        if (dataArray && dataArray[i]) {
-            var info = formatMtrTime(dataArray[i]);
-            htmlString += '<div class="train-row" style="height:25%;">' +
-                '<div class="seq">' + (i + 1) + '</div>' +
-                '<div class="dest dest-mtr">' + info.dest + '</div>' +
-                '<div class="arrival-time time-mtr">' + info.time + '</div>' +
-                '</div>';
-        } else {
-            var defaultMsg = (i === 0) ? "班次已完結" : "--";
-            htmlString += '<div class="train-row" style="height:25%;">' +
-                '<div class="seq">' + (i + 1) + '</div>' +
-                '<div class="dest dest-mtr">' + defaultMsg + '</div>' +
-                '<div class="arrival-time time-mtr">--:--</div>' +
-                '</div>';
-        }
-    }
-    container.innerHTML = htmlString;
-}
-
-function loadMtrSchedule() {
-    var url = 'https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=' + mtrLine + '&sta=' + mtrStation;
-    
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-                try {
-                    var json = JSON.parse(xhr.responseText);
-                    if (!json || !json.data) return;
-                    var data = json.data[mtrLine + '-' + mtrStation];
-                    if (data) {
-                        renderMtrDirection(data.UP, "tuen-mun-list");       
-                        renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
-                    }
-                } catch (e) {
-                    console.error("JSON Parse Error");
+                if (targetEta.length === 0) {
+                    etaContainer.innerHTML = `<div class="empty-text">暫無即將到站班次</div>`;
+                    return;
                 }
+                // 只取頭3班
+                const top3 = targetEta.slice(0, 3);
+                let html = "";
+                top3.forEach((bus, idx) => {
+                    const minute = bus.eta_min;
+                    html += `
+                    <div class="eta-item">
+                        <div class="eta-number">${idx+1}</div>
+                        <div class="eta-dest">往 ${destName[currentDirection]}</div>
+                        <div class="eta-time">${minute} 分鐘</div>
+                    </div>
+                    `;
+                });
+                etaContainer.innerHTML = html;
+            } catch (err) {
+                etaContainer.innerHTML = `<div class="empty-text">數據載入失敗，請稍後重試</div>`;
+                console.error("API錯誤：", err);
             }
         }
-    };
-    xhr.send();
-}
 
-loadMtrSchedule();
-setInterval(loadMtrSchedule, 10000);
-</script>
-
+        // 開頁立即執行 + 每30秒自動刷新
+        loadBusETA();
+        setInterval(loadBusETA, 30000);
+    </script>
 </body>
 </html>
