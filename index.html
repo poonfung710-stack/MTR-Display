@@ -218,7 +218,7 @@ body {
             <div class="direction-group lrt-full-group">
                 <div class="direction-title title-lrt">輕鐵 天慈站 (下一班列車)</div>
                 <div id="lrt-flat-list">
-                    <div class="train-row lrt-row"><div class="seq">1</div><div class="lrt-no">--</div><div class="dest">正在解構即時班次...</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row lrt-row"><div class="seq">1</div><div class="lrt-no">--</div><div class="dest">正在讀取即時看板...</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
                     <div class="train-row lrt-row"><div class="seq">2</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
                     <div class="train-row lrt-row"><div class="seq">3</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
                     <div class="train-row lrt-row"><div class="seq">4</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
@@ -233,7 +233,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 運作中 | 實時直連舊版核心基準 | 自動更新: 10秒
+        PIDS 運作中 | 安全相容直連核心 | 自動更新: 10秒
     </div>
 
 <script>
@@ -299,81 +299,81 @@ function loadMtrSchedule() {
     windowXHR.open("GET", "https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=" + mtrLine + "&sta=" + mtrStation, true);
     windowXHR.onreadystatechange = function () {
         if (windowXHR.readyState === 4 && windowXHR.status === 200) {
-            try {
-                var json = JSON.parse(windowXHR.responseText);
+            var json = JSON.parse(windowXHR.responseText);
+            if (json && json.data) {
                 var data = json.data[mtrLine + "-" + mtrStation];
                 if (data) {
                     renderMtrDirection(data.UP, "tuen-mun-list");       
                     renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
                 }
-            } catch (e) {}
+            }
         }
     };
     windowXHR.send();
 }
 
-// 2. 輕鐵實時直連渲染 (移除所有進階排序，採用最安全的純計數器遍歷)
+// 2. 輕鐵實時直連渲染：完全參照成功代碼的變數架構與操作邏輯，拔除 try-catch 阻礙
 function loadLrtSchedule() {
     var windowLrtXHR = new XMLHttpRequest();
     windowLrtXHR.open("GET", "https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule.php?id=" + lrtStationId, true);
     windowLrtXHR.onreadystatechange = function () {
         if (windowLrtXHR.readyState === 4 && windowLrtXHR.status === 200) {
-            try {
-                var json = JSON.parse(windowLrtXHR.responseText);
-                if (!json || !json.platform_list) return;
-                
-                var platforms = json.platform_list;
-                var htmlContent = "";
-                var displayCount = 0; 
-                
-                // 完全借鑑地鐵的基礎 for 迴圈遍歷，保證舊 Safari 穩定解析
-                for (var p = 0; p < platforms.length; p++) {
-                    if (displayCount >= 8) break;
+            
+            var json = JSON.parse(windowLrtXHR.responseText);
+            if (!json || !json.platform_list) return;
+            
+            var platforms = json.platform_list;
+            var listContainer = document.getElementById("lrt-flat-list");
+            var htmlContent = "";
+            var displayCount = 0;
+            
+            // 採用純粹的傳統雙迴圈，完全與你提供的成功程式碼渲染邏輯一致
+            for (var p = 0; p < platforms.length; p++) {
+                var pObj = platforms[p];
+                if (pObj && pObj.route_list) {
+                    var routes = pObj.route_list;
                     
-                    var pObj = platforms[p];
-                    if (pObj && pObj.route_list) {
-                        var routes = pObj.route_list;
+                    for (var r = 0; r < routes.length; r++) {
+                        var rObj = routes[r];
                         
-                        for (var r = 0; r < routes.length; r++) {
-                            if (displayCount >= 8) break;
+                        if (rObj && rObj.route_no && displayCount < 8) {
+                            displayCount++;
                             
-                            var rObj = routes[r];
-                            if (rObj && rObj.route_no) {
-                                displayCount++; 
-                                
-                                var rTime = rObj.time_ch || "-- 分鐘";
-                                var displayTime = (rTime === "到達" || rTime === "即將抵達") ? 
-                                    '<span class="status-flash" style="color:#FF3333">' + rTime + '</span>' : rTime;
-                                
-                                var rNo = rObj.route_no;
-                                var rDest = rObj.dest_ch || "";
-                                
-                                // 回歸原創排版設計
-                                htmlContent += '<div class="train-row lrt-row">' +
-                                                    '<div class="seq">' + displayCount + '</div>' +
-                                                    '<div class="lrt-no">' + rNo + '</div>' +
-                                                    '<div class="dest">往' + rDest + '</div>' +
-                                                    '<div class="arrival-time time-lrt">' + displayTime + '</div>' +
-                                               '</div>';
+                            var rTime = rObj.time_ch || "-- 分鐘";
+                            var etaDisplay = rTime;
+                            
+                            // 閃爍效果處理
+                            if (rTime === "到達" || rTime === "即將抵達" || rTime === "0" || rTime === 0) {
+                                etaDisplay = '<span class="status-flash" style="color:#FF3333">' + rTime + '</span>';
                             }
+                            
+                            var routeNum = rObj.route_no;
+                            var destCh = rObj.dest_ch || "";
+                            
+                            // 保持原始排版樣式
+                            htmlContent += '<div class="train-row lrt-row">' +
+                                                '<div class="seq">' + displayCount + '</div>' +
+                                                '<div class="lrt-no">' + routeNum + '</div>' +
+                                                '<div class="dest">往' + destCh + '</div>' +
+                                                '<div class="arrival-time time-lrt">' + etaDisplay + '</div>' +
+                                           '</div>';
                         }
                     }
                 }
-                
-                // 補齊剩餘空白行
-                while (displayCount < 8) {
-                    displayCount++;
-                    htmlContent += '<div class="train-row lrt-row">' +
-                                        '<div class="seq">' + displayCount + '</div>' +
-                                        '<div class="lrt-no">--</div>' +
-                                        '<div class="dest">--</div>' +
-                                        '<div class="arrival-time time-lrt">-- 分鐘</div>' +
-                                   '</div>';
-                }
-                
-                document.getElementById("lrt-flat-list").innerHTML = htmlContent;
-                
-            } catch (e) {}
+            }
+            
+            // 用你代碼中愛用的平整補齊法，把不滿8行的格子用空白格填滿
+            while (displayCount < 8) {
+                displayCount++;
+                htmlContent += '<div class="train-row lrt-row">' +
+                                    '<div class="seq">' + displayCount + '</div>' +
+                                    '<div class="lrt-no">--</div>' +
+                                    '<div class="dest">--</div>' +
+                                    '<div class="arrival-time time-lrt">-- 分鐘</div>' +
+                               </div>';
+            }
+            
+            listContainer.innerHTML = htmlContent;
         }
     };
     windowLrtXHR.send();
