@@ -93,7 +93,8 @@ body {
 }
 
 .mtr-group { height: 43vh; }
-.lrt-full-group { height: 87.5vh; } 
+/* 修復：刪除固定高度，改用100%避免內容截斷 */
+.lrt-full-group { height: 100%; overflow: hidden; } 
 
 /* 標題樣式 */
 .direction-title {
@@ -298,82 +299,105 @@ function loadMtrSchedule() {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", "https://rt.data.gov.hk/v1/transport/mtr/getSchedule.php?line=" + mtrLine + "&sta=" + mtrStation, true);
     xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            try {
-                var json = JSON.parse(xhr.responseText);
-                var data = json.data[mtrLine + "-" + mtrStation];
-                if (data) {
-                    renderMtrDirection(data.UP, "tuen-mun-list");       
-                    renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                try {
+                    var json = JSON.parse(xhr.responseText);
+                    var data = json.data[mtrLine + "-" + mtrStation];
+                    if (data) {
+                        renderMtrDirection(data.UP, "tuen-mun-list");       
+                        renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
+                    }
+                } catch (e) {
+                    console.error("屯馬綫API錯誤：", e);
                 }
-            } catch (e) {}
+            } else {
+                console.error("屯馬綫請求失敗，狀態碼：", xhr.status);
+            }
         }
     };
     xhr.send();
 }
 
-// 2. 輕鐵反封鎖渲染：利用公共代理伺服器轉發請求，徹底繞過所有安全封鎖
+// 2. 【重寫修復版】輕鐵載入函數，替換失效代理、強化容錯
 function loadLrtSchedule() {
     var xhr = new XMLHttpRequest();
     var targetUrl = "https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule.php?id=" + lrtStationId;
+    // 替換穩定CORS代理 corsproxy.io，雙重編碼網址避免參數丟失
+    var proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(targetUrl);
     
-    // 使用專門幫舊型設備解封網域限制的公共轉運點
-    xhr.open("GET", "https://api.allorigins.win/get?url=" + encodeURIComponent(targetUrl), true);
+    xhr.open("GET", proxyUrl, true);
     
     xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
+        if (xhr.readyState === 4) {
+            if (xhr.status !== 200) {
+                console.error("輕鐵代理請求失敗，狀態碼：", xhr.status);
+                return;
+            }
             try {
-                var wrapperJson = JSON.parse(xhr.responseText);
-                // 代理伺服器會將原始結果打包在 .contents 屬性中
-                var json = JSON.parse(wrapperJson.contents);
-                
-                if (!json || !json.platform_list) return;
+                // corsproxy 直接返回原始JSON，不需要wrapperJson.contents（重點！舊allorigins需要，新代理不用）
+                var json = JSON.parse(xhr.responseText);
+                if (!json || !json.platform_list) {
+                    console.warn("輕鐵API無月台數據");
+                    return;
+                }
                 
                 var platforms = json.platform_list;
-                var htmlContent = "";
-                var displayCount = 0;
+                var allRoutes = [];
                 
-                // 最安全的土砲雙層迴圈提取，保證在舊引擎中不報錯
+                // 收集所有月台所有班次
                 for (var p = 0; p < platforms.length; p++) {
-                    if (displayCount >= 8) break;
                     var pObj = platforms[p];
-                    if (pObj && pObj.route_list) {
-                        var routes = pObj.route_list;
-                        for (var r = 0; r < routes.length; r++) {
-                            if (displayCount >= 8) break;
-                            var rObj = routes[r];
-                            if (rObj && rObj.route_no) {
-                                displayCount++;
-                                
-                                var rTime = rObj.time_ch || "-- 分鐘";
-                                var displayTime = (rTime === "到達" || rTime === "即將抵達") ? 
-                                    '<span class="status-flash" style="color:#FF3333">' + rTime + '</span>' : rTime;
-                                
-                                htmlContent += '<div class="train-row lrt-row">' +
-                                                    '<div class="seq">' + displayCount + '</div>' +
-                                                    '<div class="lrt-no">' + rObj.route_no + '</div>' +
-                                                    '<div class="dest">往' + (rObj.dest_ch || "") + '</div>' +
-                                                    '<div class="arrival-time time-lrt">' + displayTime + '</div>' +
-                                               '</div>';
-                            }
-                        }
+                    if (!pObj || !Array.isArray(pObj.route_list)) continue;
+                    var routes = pObj.route_list;
+                    for (var r = 0; r < routes.length; r++) {
+                        var rObj = routes[r];
+                        if (!rObj || !rObj.route_no) continue;
+                        allRoutes.push(rObj);
                     }
                 }
                 
-                // 補齊剩餘行數
-                while (displayCount < 8) {
-                    displayCount++;
-                    htmlContent += '<div class="train-row lrt-row">' +
-                                        '<div class="seq">' + displayCount + '</div>' +
-                                        '<div class="lrt-no">--</div>' +
-                                        '<div class="dest">--</div>' +
-                                        '<div class="arrival-time time-lrt">-- 分鐘</div>' +
-                                   '</div>';
+                // 最多只取8班
+                var showRoutes = allRoutes.slice(0,8);
+                var htmlContent = "";
+                
+                for (var i = 0; i < 8; i++) {
+                    if (showRoutes[i]) {
+                        var item = showRoutes[i];
+                        // 兼容 time_ch / time 兩個欄位
+                        var rTime = item.time_ch || item.time || "-- 分鐘";
+                        var destText = item.dest_ch || item.dest || "";
+                        var displayTime;
+                        
+                        if (rTime === "到達" || rTime === "即將抵達") {
+                            displayTime = '<span class="status-flash" style="color:#FF3333">' + rTime + '</span>';
+                        } else {
+                            displayTime = rTime;
+                        }
+                        
+                        htmlContent += `<div class="train-row lrt-row">
+                            <div class="seq">${i+1}</div>
+                            <div class="lrt-no">${item.route_no}</div>
+                            <div class="dest">往${destText}</div>
+                            <div class="arrival-time time-lrt">${displayTime}</div>
+                        </div>`;
+                    } else {
+                        // 空白補行
+                        htmlContent += `<div class="train-row lrt-row">
+                            <div class="seq">${i+1}</div>
+                            <div class="lrt-no">--</div>
+                            <div class="dest">--</div>
+                            <div class="arrival-time time-lrt">-- 分鐘</div>
+                        </div>`;
+                    }
                 }
                 
                 document.getElementById("lrt-flat-list").innerHTML = htmlContent;
+                console.log("輕鐵數據更新成功，載入班次：", showRoutes.length);
                 
-            } catch (e) {}
+            } catch (e) {
+                console.error("輕鐵JSON解析錯誤：", e, "回傳內容：", xhr.responseText);
+            }
         }
     };
     xhr.send();
