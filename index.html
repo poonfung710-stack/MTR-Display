@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>港鐵/輕鐵綜合乘客資訊顯示系統 (PIDS) - 天水圍 (月台解鎖版)</title>
+<title>港鐵/輕鐵綜合乘客資訊顯示系統 (PIDS) - 天水圍 (純線路扁平版)</title>
 
 <style>
 /* 基礎重設 */
@@ -90,8 +90,10 @@ body {
     padding: 1.2vh 2vw; 
     box-sizing: border-box;
     margin-bottom: 1.5vh;
-    height: 43vh; /* 四個區塊等高平衡 */
 }
+
+.mtr-group { height: 43vh; }
+.lrt-full-group { height: 87.5vh; } /* 右邊合併為一整塊大面板 */
 
 /* 標題樣式 */
 .direction-title {
@@ -101,8 +103,7 @@ body {
     line-height: 1.2;
 }
 .title-mtr { font-size: 3.5vh; color: #FFCC00; border-left: 6px solid #947A4D; }
-.title-lrt1 { font-size: 3.5vh; color: #FF9900; border-left: 6px solid #FF9900; }
-.title-lrt2 { font-size: 3.5vh; color: #FF6600; border-left: 6px solid #FF6600; }
+.title-lrt { font-size: 3.5vh; color: #FF9900; border-left: 6px solid #FF9900; }
 
 /* 列表行排版 */
 .train-row {
@@ -119,18 +120,34 @@ body {
 }
 .train-row:last-child { border-bottom: none; }
 
+/* 輕鐵專用大行高排版 (容納8班車) */
+.lrt-row {
+    height: 9.2vh;
+    line-height: 9.2vh;
+}
+
 .seq {
     font-size: 3.2vh;
     color: #666666;
     float: left;
-    width: 10%;
+    width: 8%;
 }
+
+/* 輕鐵線路號碼樣式 */
+.lrt-no {
+    font-size: 4vh;
+    color: #FF9900;
+    font-weight: bold;
+    float: left;
+    width: 15%;
+}
+
 .dest {
     font-size: 3.8vh;
     color: #FFFFFF;
     font-weight: bold;
     float: left;
-    width: 50%;
+    width: 47%;
     white-space: nowrap;
     overflow: hidden;
 }
@@ -140,10 +157,10 @@ body {
     font-family: monospace;
     float: right;
     text-align: right;
-    width: 40%;
+    width: 30%;
 }
 .time-mtr { font-size: 4.2vh; color: #00FF33; text-shadow: 0 0 10px rgba(0,255,51,0.8); }
-.time-lrt { font-size: 3.8vh; color: #FF9900; text-shadow: 0 0 8px rgba(255,153,0,0.8); }
+.time-lrt { font-size: 4vh; color: #FFCC00; text-shadow: 0 0 8px rgba(255,204,0,0.8); }
 
 /* 閃爍動畫 */
 .status-flash {
@@ -200,23 +217,17 @@ body {
         </div>
 
         <div class="right-col">
-            <div class="direction-group">
-                <div class="direction-title title-lrt1">輕鐵 天慈站 - 1 號月台 (往元朗方向)</div>
-                <div id="lrt-p1-list">
-                    <div class="train-row"><div class="seq">1</div><div class="dest" style="color:#FF9900">載入班次中...</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
-                    <div class="train-row"><div class="seq">2</div><div class="dest" style="color:#FF9900">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
-                    <div class="train-row"><div class="seq">3</div><div class="dest" style="color:#FF9900">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
-                    <div class="train-row"><div class="seq">4</div><div class="dest" style="color:#FF9900">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
-                </div>
-            </div>
-
-            <div class="direction-group">
-                <div class="direction-title title-lrt2">輕鐵 天慈站 - 2 號月台 (往天水圍循環綫)</div>
-                <div id="lrt-p2-list">
-                    <div class="train-row"><div class="seq">1</div><div class="dest" style="color:#FF6600">載入班次中...</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
-                    <div class="train-row"><div class="seq">2</div><div class="dest" style="color:#FF6600">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
-                    <div class="train-row"><div class="seq">3</div><div class="dest" style="color:#FF6600">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
-                    <div class="train-row"><div class="seq">4</div><div class="dest" style="color:#FF6600">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+            <div class="direction-group lrt-full-group">
+                <div class="direction-title title-lrt">輕鐵 天慈站 (下一班列車)</div>
+                <div id="lrt-flat-list">
+                    <div class="train-row lrt-row"><div class="seq">1</div><div class="lrt-no">...</div><div class="dest">正在解構即時班次...</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row lrt-row"><div class="seq">2</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row lrt-row"><div class="seq">3</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row lrt-row"><div class="seq">4</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row lrt-row"><div class="seq">5</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row lrt-row"><div class="seq">6</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row lrt-row"><div class="seq">7</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
+                    <div class="train-row lrt-row"><div class="seq">8</div><div class="lrt-no">--</div><div class="dest">--</div><div class="arrival-time time-lrt">-- 分鐘</div></div>
                 </div>
             </div>
         </div>
@@ -224,7 +235,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 運作中 | 輕鐵雙月台獨立原生直連架構 | 自動更新: 10秒
+        PIDS 運作中 | 輕鐵扁平化解構核心 | 自動更新: 10秒
     </div>
 
 <script>
@@ -253,7 +264,7 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// 1. 地鐵原生渲染邏輯 (保持完美運作)
+// 1. 地鐵原生直連
 function renderMtrDirection(dataArray, elementId) {
     var container = document.getElementById(elementId);
     var htmlContent = "";
@@ -303,78 +314,73 @@ function loadMtrSchedule() {
     xhr.send();
 }
 
-// 2. 輕鐵分月台解構渲染：拋棄多層物件混和，直接按月台原生ID定位，防禦 iOS 9 崩潰
-function renderLrtPlatform(platformData, elementId, destColor) {
-    var container = document.getElementById(elementId);
-    var htmlContent = "";
-    
-    // 如果該月台有數據且線路列表存在
-    if (platformData && platformData.route_list) {
-        var routes = platformData.route_list;
-        
-        for (var i = 0; i < 4; i++) {
-            if (routes[i]) {
-                var rTime = routes[i].time_ch || "";
-                var displayTime = (rTime === "到達" || rTime === "即將抵達") ? 
-                    '<span class="status-flash" style="color:#FF3333">' + rTime + '</span>' : rTime;
-                
-                var routeNo = routes[i].route_no || "";
-                var destCh = routes[i].dest_ch || "";
-                
-                htmlContent += '<div class="train-row">' +
-                                    '<div class="seq">' + (i + 1) + '</div>' +
-                                    '<div class="dest" style="color:' + destColor + '">' + routeNo + ' ' + destCh + '</div>' +
-                                    '<div class="arrival-time time-lrt">' + displayTime + '</div>' +
-                               '</div>';
-            } else {
-                htmlContent += '<div class="train-row">' +
-                                    '<div class="seq">' + (i + 1) + '</div>' +
-                                    '<div class="dest" style="color:#444">--</div>' +
-                                    '<div class="arrival-time time-lrt">-- 分鐘</div>' +
-                               '</div>';
-            }
-        }
-    } else {
-        // 兜底空白行
-        for (var j = 0; j < 4; j++) {
-            htmlContent += '<div class="train-row">' +
-                                '<div class="seq">' + (j + 1) + '</div>' +
-                                '<div class="dest" style="color:#444">暫無班次</div>' +
-                                '<div class="arrival-time time-lrt">-- 分鐘</div>' +
-                           '</div>';
-        }
-    }
-    container.innerHTML = htmlContent;
-}
-
+// 2. 輕鐵「終極扁平解構」：徹底跳過月台物件層級判斷，直搗資料核心
 function loadLrtSchedule() {
     var xhr = new XMLHttpRequest();
-    // 原生直連，與地鐵同域名，避開任何第三方代理阻擋
     xhr.open("GET", "https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule.php?id=" + lrtStationId, true);
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
             try {
                 var json = JSON.parse(xhr.responseText);
-                var platforms = json.platform_list;
                 
-                var p1Data = null;
-                var p2Data = null;
+                // 為了防禦 iOS 9，我們直接宣告一個安全容器
+                var rawPlatforms = json.platform_list || [];
+                var flatList = [];
                 
-                // 採用最安全的手動巡檢，找出 1 號和 2 號月台物件
-                if (platforms && platforms.length) {
-                    for (var k = 0; k < platforms.length; k++) {
-                        if (platforms[k] && platforms[k].platform_id === 1) {
-                            p1Data = platforms[k];
-                        }
-                        if (platforms[k] && platforms[k].platform_id === 2) {
-                            p2Data = platforms[k];
+                // 用最原始無害的 for 巡檢，不管順序，把所有車次通通丟進同一個扁平陣列
+                for (var p = 0; p < rawPlatforms.length; p++) {
+                    var currentPlatform = rawPlatforms[p];
+                    if (currentPlatform && currentPlatform.route_list) {
+                        var routes = currentPlatform.route_list;
+                        for (var r = 0; r < routes.length; r++) {
+                            var currentRoute = routes[r];
+                            if (currentRoute) {
+                                var rTime = currentRoute.time_ch || "";
+                                // 轉換數值以便進行安全排序
+                                var minutesNum = (rTime === "到達" || rTime === "即將抵達") ? 0 : parseInt(rTime, 10);
+                                if (isNaN(minutesNum)) minutesNum = 99;
+                                
+                                flatList.push({
+                                    routeNo: currentRoute.route_no || "",
+                                    destCh: currentRoute.dest_ch || "",
+                                    timeStr: rTime,
+                                    timeVal: minutesNum
+                                });
+                            }
                         }
                     }
                 }
                 
-                // 獨立分流渲染，徹底打碎多層排序迴圈
-                renderLrtPlatform(p1Data, "lrt-p1-list", "#FF9900");
-                renderLrtPlatform(p2Data, "lrt-p2-list", "#FF6600");
+                // 按到站時間從小到大做單層安全排序
+                flatList.sort(function(a, b) {
+                    return a.timeVal - b.timeVal;
+                });
+
+                // 渲染至介面，精準呈現：[班次號碼] 往[目的地] [時間]
+                var htmlContent = "";
+                for (var i = 0; i < 8; i++) {
+                    if (flatList[i]) {
+                        var item = flatList[i];
+                        var displayTime = (item.timeStr === "到達" || item.timeStr === "即將抵達") ? 
+                            '<span class="status-flash" style="color:#FF3333">' + item.timeStr + '</span>' : item.timeStr;
+                        
+                        htmlContent += '<div class="train-row lrt-row">' +
+                                            '<div class="seq">' + (i + 1) + '</div>' +
+                                            '<div class="lrt-no">' + item.routeNo + '</div>' +
+                                            '<div class="dest">往' + item.destCh + '</div>' +
+                                            '<div class="arrival-time time-lrt">' + displayTime + '</div>' +
+                                       '</div>';
+                    } else {
+                        // 空白兜底行
+                        htmlContent += '<div class="train-row lrt-row">' +
+                                            '<div class="seq">' + (i + 1) + '</div>' +
+                                            '<div class="lrt-no">--</div>' +
+                                            '<div class="dest">--</div>' +
+                                            '<div class="arrival-time time-lrt">-- 分鐘</div>' +
+                                       '</div>';
+                    }
+                }
+                document.getElementById("lrt-flat-list").innerHTML = htmlContent;
                 
             } catch (e) {}
         }
@@ -387,7 +393,7 @@ function updateAllData() {
     loadLrtSchedule();
 }
 
-// 初始化並開啟定時器
+// 執行
 updateAllData();
 setInterval(updateAllData, 10000); 
 </script>
