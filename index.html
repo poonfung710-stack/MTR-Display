@@ -303,7 +303,7 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 (已連接港鐵真實輕鐵 API)
+// 右邊上方：輕鐵 天慈站 (動態相容實時 API)
 // ==========================================
 function renderRealLrtPIDS(trains) {
     var listContainer = document.getElementById('lrt-flat-list');
@@ -311,20 +311,18 @@ function renderRealLrtPIDS(trains) {
     listContainer.innerHTML = '';
     
     var htmlString = '';
-    var maxDisplay = 8; // 看板空間設計可容納 8 班車
+    var maxDisplay = 8; 
     
     for (var i = 0; i < maxDisplay; i++) {
         if (i < trains.length) {
             var train = trains[i];
             
-            // 解析剩餘時間數字
             var mins = parseInt(train.time_left, 10);
             var etaDisplay = mins + ' 分鐘';
             if (isNaN(mins) || mins <= 0) {
                 etaDisplay = '<span class="status-flash">到達</span>';
             }
 
-            // 依據路線優化顯示目的地名稱
             var finalDest = "往" + (train.dest_ch || "未知");
             if (train.route_no === '705') {
                 finalDest = "往天水圍(北)";
@@ -339,7 +337,6 @@ function renderRealLrtPIDS(trains) {
                 '<div class="arrival-time time-lrt">' + etaDisplay + '</div>' +
                 '</div>';
         } else {
-            // 防呆空格填充
             htmlString += '<div class="train-row" style="height:12.5%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="lrt-no">--</div>' +
@@ -352,7 +349,7 @@ function renderRealLrtPIDS(trains) {
 }
 
 function loadLrtSchedule() {
-    var stopId = "435"; // 天慈站的官方編號
+    var stopId = "435"; 
     var url = 'https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule.php?id=' + stopId;
     
     var xhr = new XMLHttpRequest();
@@ -361,13 +358,27 @@ function loadLrtSchedule() {
         if (xhr.readyState === 4 && xhr.status === 200) {
             try {
                 var json = JSON.parse(xhr.responseText);
-                if (!json || !json.platform_list) return;
+                if (!json) return;
                 
+                // 動態搜尋 platform_list (解決港鐵 API 因 Station ID 包裹導致的層級問題)
+                var platformList = null;
+                if (json.platform_list) {
+                    platformList = json.platform_list;
+                } else {
+                    var keys = Object.keys(json);
+                    for (var i = 0; i < keys.length; i++) {
+                        if (json[keys[i]] && json[keys[i]].platform_list) {
+                            platformList = json[keys[i]].platform_list;
+                            break;
+                        }
+                    }
+                }
+                
+                if (!platformList) return;
                 var allLrtTrains = [];
                 
-                // 遍歷天慈站的所有月台
-                for (var p = 0; p < json.platform_list.length; p++) {
-                    var platform = json.platform_list[p];
+                for (var p = 0; p < platformList.length; p++) {
+                    var platform = platformList[p];
                     if (platform.route_list) {
                         for (var r = 0; r < platform.route_list.length; r++) {
                             allLrtTrains.push(platform.route_list[r]);
@@ -375,7 +386,6 @@ function loadLrtSchedule() {
                     }
                 }
                 
-                // 依照剩餘到站時間進行升序排序
                 allLrtTrains.sort(function(a, b) {
                     var tA = parseInt(a.time_left, 10) || 0;
                     var tB = parseInt(b.time_left, 10) || 0;
@@ -392,7 +402,6 @@ function loadLrtSchedule() {
     xhr.send();
 }
 
-// 初始化與定時更新 (每 10 秒)
 loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
