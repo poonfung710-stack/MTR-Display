@@ -303,7 +303,7 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 (8 班車資料庫) - 維持擬真倒數
+// 右邊上方：輕鐵 天慈站 (8 班車資料庫)
 // ==========================================
 var lrtTrains = [
     { route: '706', dest: '天水圍', eta: 1 },
@@ -368,20 +368,20 @@ renderLrtPIDS();
 
 
 // ==========================================
-// 右邊下方：九巴 天祐苑 (已成功對接真實九巴政府 API)
+// 右邊下方：九巴 天祐苑 (動態 API 獲取 + 智慧容錯過濾)
 // ==========================================
-var kmbStopId = "68C934751A2E8056"; // 天祐苑 往上水(太平)方向的九巴官方代碼
 var kmbRoute = "276A";
+var kmbDir = "outbound"; // 往上水(太平)方向官方方向
 var kmbServiceType = "1";
+var detectedStopId = null; // 動態獲取到的天祐苑 Stop ID
 
+// 渲染巴士數據到面板上
 function renderBusPIDS(etaList) {
     var listContainer = document.getElementById('bus-flat-list');
     if (!listContainer) return;
     listContainer.innerHTML = '';
     
     var htmlString = '';
-    
-    // 渲染最近 3 班車
     for (var i = 0; i < 3; i++) {
         if (etaList && etaList[i]) {
             var bus = etaList[i];
@@ -395,7 +395,6 @@ function renderBusPIDS(etaList) {
                 '<div class="arrival-time time-bus">' + etaDisplay + '</div>' +
                 '</div>';
         } else {
-            // 如果 API 沒有回傳足夠班次，顯示空白佔位
             var defaultMsg = (i === 0) ? "班次已完結" : "--";
             htmlString += '<div class="train-row" style="height:33.3%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
@@ -407,62 +406,113 @@ function renderBusPIDS(etaList) {
     listContainer.innerHTML = htmlString;
 }
 
-function loadKmbSchedule() {
-    var url = 'https://data.etabus.gov.hk/v1/transport/kmb/eta/' + kmbStopId + '/' + kmbRoute + '/' + kmbServiceType;
-    
+// 動態查詢天祐苑的實時 Stop ID
+function fetchKmbStopIdAndLoad() {
+    var url = 'https://data.etabus.gov.hk/v1/transport/kmb/route-stop/' + kmbRoute + '/' + kmbDir + '/' + kmbServiceType;
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-                try {
-                    var json = JSON.parse(xhr.responseText);
-                    if (!json || !json.data) return;
-                    
-                    var now = new Date();
-                    var processedEta = [];
-                    
-                    // 遍歷 API 回傳的每一條班次，轉換為剩餘分鐘數
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            try {
+                var json = JSON.parse(xhr.responseText);
+                if (json && json.data && json.data.length > 0) {
+                    // 在本路線的所有車站中，動態尋找「天祐苑」
                     for (var i = 0; i < json.data.length; i++) {
-                        var item = json.data[i];
-                        if (item.eta) {
-                            var etaTime = new Date(item.eta);
-                            var diffMs = etaTime - now;
-                            var diffMins = Math.floor(diffMs / 60000); // 計算剩餘分鐘數
-                            
-                            // 過濾掉已經駛離/過時的班次（大於等於 0 分鐘才顯示）
-                            if (diffMins >= 0) {
-                                processedEta.push({
-                                    dest: "上水(太平)", // 276A往上水的終點站名稱
-                                    eta: diffMins,
-                                    seq: item.eta_seq
-                                });
-                            }
+                        var stopObj = json.data[i];
+                        // 匹配天祐苑站點
+                        if (stopObj.name_tc.indexOf("天祐苑") !== -1 || stopObj.stop === "TN06-T-1000-0") {
+                            detectedStopId = stopObj.stop;
+                            console.log("成功匹配天祐苑 Stop ID:", detectedStopId);
+                            break;
                         }
                     }
-                    
-                    // 依照到站時間排序（由近至遠）
-                    processedEta.sort(function(a, b) {
-                        return a.eta - b.eta;
-                    });
-                    
-                    renderBusPIDS(processedEta);
-                } catch (e) {
-                    console.error("KMB JSON Parse Error", e);
+                    // 找到 Stop ID 後立即開始第一次載入
+                    if (detectedStopId) {
+                        loadKmbScheduleReal();
+                    } else {
+                        console.error("無法在車站列表中尋找到天祐苑站。");
+                    }
                 }
+            } catch (e) {
+                console.error("路線車站 API 解析出錯:", e);
             }
         }
     };
     xhr.send();
 }
 
-// 初次載入與定時更新（每 10 秒與港鐵同步拉取最新數據）
-loadKmbSchedule();
-setInterval(loadKmbSchedule, 10000);
+// 使用取得的正確 ID 獲取巴士 ETA 資料
+function loadKmbScheduleReal() {
+    if (!detectedStopId) return;
+    
+    var url = 'https://data.etabus.gov.hk/v1/transport/kmb/eta/' + detectedStopId + '/' + kmbRoute + '/' + kmbServiceType;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            try {
+                var json = JSON.parse(xhr.responseText);
+                console.log("276A 實時 ETA 回傳:", json);
+                
+                if (!json || !json.data || json.data.length === 0) {
+                    renderBusPIDS([]);
+                    return;
+                }
+                
+                var now = new Date();
+                var processedEta = [];
+                
+                for (var i = 0; i < json.data.length; i++) {
+                    var item = json.data[i];
+                    
+                    // 雙重驗證：確保是往上水方向的車，過濾非此方向的零星班次
+                    if (item.eta && item.dir === "O") { 
+                        var etaTime = new Date(item.eta);
+                        var diffMs = etaTime - now;
+                        
+                        // 使用四捨五入計算，當剩餘時間介於-30秒至30秒時顯示0分鐘（即到站中），防止班次被過早清除
+                        var diffMins = Math.round(diffMs / 60000); 
+                        
+                        // 只保留目前及未來的班次，容許小幅負數（例如即將開走的那一刻 -1 分鐘）顯示為到站中
+                        if (diffMins >= -1) {
+                            processedEta.push({
+                                dest: "上水(太平)", 
+                                eta: diffMins < 0 ? 0 : diffMins, // 小於0的負數以0(到站中)呈現
+                                seq: item.eta_seq
+                            });
+                        }
+                    }
+                }
+                
+                // 依照 ETA 從近到遠重新排序
+                processedEta.sort(function(a, b) {
+                    return a.eta - b.eta;
+                });
+                
+                renderBusPIDS(processedEta);
+            } catch (e) {
+                console.error("九巴 ETA API 解析出錯:", e);
+            }
+        }
+    };
+    xhr.send();
+}
+
+// 啟動加載程序
+fetchKmbStopIdAndLoad();
+
+// 每 15 秒更新一次九巴即時到站（避免過於頻繁請求，維持 API 高度穩定）
+setInterval(function() {
+    if (detectedStopId) {
+        loadKmbScheduleReal();
+    } else {
+        fetchKmbStopIdAndLoad();
+    }
+}, 15000);
 
 
 // ==========================================
-// 左邊：港鐵資料聯網核心 (4班真實即時資訊)
+// 左邊：港鐵資料聯網核心
 // ==========================================
 function formatMtrTime(trainObj) {
     if (!trainObj) return null;
