@@ -180,7 +180,7 @@ body {
 .dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 47%; }
 .time-lrt { font-size: 3.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 30%; color: #FFCC00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); }
 
-/* 右側巴士字體 */
+/* 右側巴士字體 (3班車版) */
 .dest-bus {
     font-size: 3.6vh; 
     color: #FFFFFF;
@@ -303,7 +303,7 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 (8 班車模擬資料庫，維持原狀)
+// 右邊上方：輕鐵 天慈站 (8 班車資料庫)
 // ==========================================
 var lrtTrains = [
     { route: '706', dest: '天水圍', eta: 1 },
@@ -366,115 +366,95 @@ function simulateLrtCountdown() {
 setInterval(simulateLrtCountdown, 10000); 
 renderLrtPIDS();
 
-
 // ==========================================
-// 右邊下方：九巴 天祐苑 (真正聯網獲取官方政府即時 ETA)
+// 右邊下方：九巴 276A 天祐苑站 (已連接真實 ETA API)
 // ==========================================
-var kmbStopId = "68C934751A2E8056"; // 276A 往上水方向在天祐苑站的確切官方唯一 ID
-var kmbRoute = "276A";
-var kmbServiceType = "1";
-
-function renderBusPIDS(etaList) {
+function renderRealBusPIDS(etas) {
     var listContainer = document.getElementById('bus-flat-list');
     if (!listContainer) return;
-    listContainer.innerHTML = '';
     
     var htmlString = '';
-    // 精準渲染前 3 班車
-    for (var i = 0; i < 3; i++) {
-        if (etaList && etaList[i]) {
-            var bus = etaList[i];
-            var etaDisplay = bus.eta + ' 分鐘';
-            if (bus.eta <= 0) {
+    var displayCount = 3; 
+    
+    for (var i = 0; i < displayCount; i++) {
+        if (i < etas.length) {
+            var item = etas[i];
+            
+            var etaDate = new Date(item.eta);
+            var now = new Date();
+            var diffMs = etaDate.getTime() - now.getTime();
+            var diffMins = Math.floor(diffMs / 60000);
+            
+            var etaDisplay = '';
+            if (diffMins <= 0) {
                 etaDisplay = '<span class="status-flash">到站中</span>';
+            } else {
+                etaDisplay = diffMins + ' 分鐘';
             }
+            
+            var destText = "上水"; 
+            if (item.dest_tc) {
+                destText = item.dest_tc.split('(')[0].split('（')[0].trim();
+            }
+
             htmlString += '<div class="train-row" style="height:33.3%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
-                '<div class="dest dest-bus">往' + bus.dest + '</div>' +
+                '<div class="dest dest-bus">往' + destText + '</div>' +
                 '<div class="arrival-time time-bus">' + etaDisplay + '</div>' +
                 '</div>';
         } else {
-            // 當 API 回傳班次不足 3 班，或者已收車時的安全降級顯示
-            var defaultMsg = (i === 0) ? "班次已完結" : "--";
+            var defaultMsg = (i === 0) ? "暫無班次" : "--";
             htmlString += '<div class="train-row" style="height:33.3%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-bus">' + defaultMsg + '</div>' +
-                '<div class="arrival-time time-bus">--:--</div>' +
+                '<div class="arrival-time time-bus">--</div>' +
                 '</div>';
         }
     }
     listContainer.innerHTML = htmlString;
 }
 
-function loadKmbScheduleReal() {
-    var url = 'https://data.etabus.gov.hk/v1/transport/kmb/eta/' + kmbStopId + '/' + kmbRoute + '/' + kmbServiceType;
+function loadBusSchedule() {
+    var route = "276A";
+    var url = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/' + route + '/1';
     
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-                try {
-                    var json = JSON.parse(xhr.responseText);
-                    if (!json || !json.data || json.data.length === 0) {
-                        renderBusPIDS([]);
-                        return;
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            try {
+                var json = JSON.parse(xhr.responseText);
+                if (!json || !json.data) return;
+                
+                var etas = [];
+                for (var i = 0; i < json.data.length; i++) {
+                    var item = json.data[i];
+                    
+                    var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
+                    if (item.dir === 'O' && item.seq == 9 && item.eta && !isCancelled) {
+                        etas.push(item);
                     }
-
-                    var now = new Date();
-                    var processedEta = [];
-
-                    for (var i = 0; i < json.data.length; i++) {
-                        var item = json.data[i];
-                        
-                        // 確保該欄位有有效的時間數據
-                        if (item.eta) {
-                            var etaTime = new Date(item.eta);
-                            var diffMs = etaTime - now;
-                            
-                            // 四捨五入精確計算剩餘分鐘數，防止最後一分鐘突變或漏車
-                            var diffMins = Math.round(diffMs / 60000); 
-
-                            // 雙重保險過濾：確保是去程（往上水方向），排除對向或零星回廠車干擾
-                            var isCorrectDir = (item.dir === "O" || (item.dest_tc && (item.dest_tc.indexOf("上水") !== -1 || item.dest_tc.indexOf("太平") !== -1)));
-                            
-                            if (isCorrectDir && diffMins >= -1) {
-                                processedEta.push({
-                                    dest: "上水(太平)", 
-                                    eta: diffMins < 0 ? 0 : diffMins, // 小於 0 分鐘統一顯示為 0（到站中）
-                                    seq: item.eta_seq || i
-                                });
-                            }
-                        }
-                    }
-
-                    // 依據到站時間由近到遠升序排序
-                    processedEta.sort(function(a, b) {
-                        return a.eta - b.eta;
-                    });
-
-                    renderBusPIDS(processedEta);
-
-                } catch (e) {
-                    console.error("解析九巴數據時發生錯誤:", e);
-                    renderBusPIDS([]); // 發生錯誤時安全降級，不讓網頁卡死
                 }
-            } else {
-                renderBusPIDS([]);
+                
+                etas.sort(function(a, b) {
+                    return new Date(a.eta) - new Date(b.eta);
+                });
+                
+                renderRealBusPIDS(etas.slice(0, 3));
+                
+            } catch (e) {
+                console.error("九巴 ETA API 解析錯誤:", e);
             }
         }
     };
     xhr.send();
 }
 
-// 首次加載九巴即時數據
-loadKmbScheduleReal();
-// 每 15 秒自動重新整理一次（與左側港鐵步調一致，且不會過度轟炸 API 伺服器）
-setInterval(loadKmbScheduleReal, 15000);
-
+loadBusSchedule();
+setInterval(loadBusSchedule, 10000);
 
 // ==========================================
-// 左邊：港鐵資料聯網核心 (維持原狀)
+// 左邊：港鐵資料聯網核心
 // ==========================================
 function formatMtrTime(trainObj) {
     if (!trainObj) return null;
