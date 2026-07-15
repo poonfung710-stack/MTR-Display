@@ -175,10 +175,11 @@ body {
 .left-col .dest-mtr { font-size: 4.2vh; color: #FFFFFF; font-weight: bold; width: 47%; white-space: nowrap; overflow: hidden; }
 .left-col .time-mtr { font-size: 4.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 30%; color: #00FF33; text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); }
 
-/* 右側輕鐵字體 (8班車版) */
+/* 右側輕鐵字體 (8班車版 - 調整寬度以容納月台欄位) */
 .lrt-no { font-size: 3.2vh; font-weight: bold; color: #FF9900; width: 15%; }
-.dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 47%; }
-.time-lrt { font-size: 3.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 30%; color: #FFCC00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); }
+.dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 37%; }
+.plat-lrt { font-size: 3.0vh; font-weight: bold; color: #00FFFF; text-align: center; width: 15%; text-shadow: 0 0 10px rgba(0, 255, 255, 0.6); }
+.time-lrt { font-size: 3.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 25%; color: #FFCC00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); }
 
 /* 右側巴士字體 (3班車版) */
 .dest-bus {
@@ -307,7 +308,7 @@ function renderRealLrtPIDS(trains) {
     listContainer.innerHTML = '';
     
     var htmlString = '';
-    var maxRows = 8; // 確保高度始終保持不變
+    var maxRows = 8; // 右上角資訊版固定 8 行
 
     for (var i = 0; i < maxRows; i++) {
         if (trains && i < trains.length) {
@@ -325,7 +326,7 @@ function renderRealLrtPIDS(trains) {
                 etaDisplay = train.rawTime || '--';
             }
 
-            // 目的地名稱轉換
+            // 目的地名稱特別轉換邏輯
             var finalDest = "";
             if (train.route === '705') {
                 finalDest = "往天水圍(北)";
@@ -337,19 +338,24 @@ function renderRealLrtPIDS(trains) {
                 finalDest = "--";
             }
 
+            // 顯示月台文字，例如 "1月台"、"2月台"
+            var platformDisplay = train.platform ? train.platform + '月台' : '--';
+
             htmlString += '<div class="train-row" style="height:12.5%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="lrt-no">' + train.route + '</div>' +
                 '<div class="dest dest-lrt">' + finalDest + '</div>' +
+                '<div class="plat-lrt">' + platformDisplay + '</div>' +
                 '<div class="arrival-time time-lrt">' + etaDisplay + '</div>' +
                 '</div>';
         } else {
-            // 如果沒班次或系統還在載入，使用預設空白排版頂住畫面
+            // 如果真實班次少於 8 班，以空白行補齊，確保介面比例完美不走樣
             var defaultMsg = (i === 0 && (!trains || trains.length === 0)) ? "資料更新中..." : "--";
             htmlString += '<div class="train-row" style="height:12.5%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="lrt-no">--</div>' +
                 '<div class="dest dest-lrt">' + defaultMsg + '</div>' +
+                '<div class="plat-lrt">--</div>' +
                 '<div class="arrival-time time-lrt">--</div>' +
                 '</div>';
         }
@@ -358,8 +364,8 @@ function renderRealLrtPIDS(trains) {
 }
 
 function loadLrtSchedule() {
-    // 天慈站代號為 435 (不需加 .php)
-    var url = 'https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=435';
+    // 天慈站代號為 435，加入 with_special=1 參數確保 751P 等特別班次能夠正常載入
+    var url = 'https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=435&with_special=1';
     
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
@@ -373,16 +379,17 @@ function loadLrtSchedule() {
                     if (json && json.platform_list && Array.isArray(json.platform_list)) {
                         for (var p = 0; p < json.platform_list.length; p++) {
                             var platform = json.platform_list[p];
+                            var platformId = platform.platform_id; // 取得 1 或 2 號月台編號
+                            
                             if (platform.route_list && Array.isArray(platform.route_list)) {
                                 for (var r = 0; r < platform.route_list.length; r++) {
                                     var route = platform.route_list[r];
                                     
-                                    // MTR 輕鐵時間欄位為 time_en 及 time_ch
+                                    // 讀取時間資訊
                                     var timeStrEn = route.time_en || "";
                                     var etaMin = 999;
                                     var timeLower = timeStrEn.toLowerCase();
                                     
-                                    // 將 "Arriving", "Departing", "-" 等字眼視為 0 分鐘以便置頂排序
                                     if (timeLower.indexOf('arriving') !== -1 || timeLower.indexOf('departing') !== -1 || timeStrEn === '-') {
                                         etaMin = 0;
                                     } else {
@@ -396,14 +403,15 @@ function loadLrtSchedule() {
                                         route: route.route_no || '--',
                                         dest: route.dest_ch || '--',
                                         eta: etaMin,
-                                        rawTime: route.time_ch || route.time_en
+                                        rawTime: route.time_ch || route.time_en,
+                                        platform: platformId // 將月台號碼一起打包保存
                                     });
                                 }
                             }
                         }
                     }
                     
-                    // 根據到達分鐘由少至多物理排序（混合兩個月台）
+                    // 根據到達時間（eta）由近至遠排序，混合一二號月台的所有班次
                     combinedTrains.sort(function(a, b) {
                         return a.eta - b.eta;
                     });
@@ -412,17 +420,17 @@ function loadLrtSchedule() {
                     
                 } catch (e) {
                     console.error("輕鐵 ETA API 解析錯誤:", e);
-                    renderRealLrtPIDS([]); // 出錯時也渲染空行防止黑屏
+                    renderRealLrtPIDS([]); 
                 }
             } else {
-                renderRealLrtPIDS([]); // 網路異常時渲染空行
+                renderRealLrtPIDS([]); 
             }
         }
     };
     xhr.send();
 }
 
-// 預先渲染空架構，避免網頁載入時資訊版全黑走位
+// 初始化預先渲染空白外框以避免黑屏，然後立即抓取數據
 renderRealLrtPIDS([]);
 loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
