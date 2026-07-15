@@ -175,10 +175,9 @@ body {
 .left-col .dest-mtr { font-size: 4.2vh; color: #FFFFFF; font-weight: bold; width: 47%; white-space: nowrap; overflow: hidden; }
 .left-col .time-mtr { font-size: 4.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 30%; color: #00FF33; text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); }
 
-/* 右側輕鐵字體 (8班車版 - 調整寬度以容納月台欄位) */
+/* 右側輕鐵字體 (取消月台後，放大目的地寬度，版面更乾淨) */
 .lrt-no { font-size: 3.2vh; font-weight: bold; color: #FF9900; width: 15%; }
-.dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 37%; }
-.plat-lrt { font-size: 3.0vh; font-weight: bold; color: #00FFFF; text-align: center; width: 15%; text-shadow: 0 0 10px rgba(0, 255, 255, 0.6); }
+.dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 52%; }
 .time-lrt { font-size: 3.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 25%; color: #FFCC00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); }
 
 /* 右側巴士字體 (3班車版) */
@@ -300,7 +299,7 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 (連接真實 MTR LRT API)
+// 右邊上方：輕鐵 天慈站
 // ==========================================
 function renderRealLrtPIDS(trains) {
     var listContainer = document.getElementById('lrt-flat-list');
@@ -338,24 +337,19 @@ function renderRealLrtPIDS(trains) {
                 finalDest = "--";
             }
 
-            // 顯示月台文字，例如 "1月台"、"2月台"
-            var platformDisplay = train.platform ? train.platform + '月台' : '--';
-
             htmlString += '<div class="train-row" style="height:12.5%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="lrt-no">' + train.route + '</div>' +
                 '<div class="dest dest-lrt">' + finalDest + '</div>' +
-                '<div class="plat-lrt">' + platformDisplay + '</div>' +
                 '<div class="arrival-time time-lrt">' + etaDisplay + '</div>' +
                 '</div>';
         } else {
-            // 如果真實班次少於 8 班，以空白行補齊，確保介面比例完美不走樣
+            // 如果真實班次少於 8 班，以空白行補齊
             var defaultMsg = (i === 0 && (!trains || trains.length === 0)) ? "資料更新中..." : "--";
             htmlString += '<div class="train-row" style="height:12.5%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="lrt-no">--</div>' +
                 '<div class="dest dest-lrt">' + defaultMsg + '</div>' +
-                '<div class="plat-lrt">--</div>' +
                 '<div class="arrival-time time-lrt">--</div>' +
                 '</div>';
         }
@@ -379,7 +373,6 @@ function loadLrtSchedule() {
                     if (json && json.platform_list && Array.isArray(json.platform_list)) {
                         for (var p = 0; p < json.platform_list.length; p++) {
                             var platform = json.platform_list[p];
-                            var platformId = platform.platform_id; // 取得 1 或 2 號月台編號
                             
                             if (platform.route_list && Array.isArray(platform.route_list)) {
                                 for (var r = 0; r < platform.route_list.length; r++) {
@@ -403,15 +396,14 @@ function loadLrtSchedule() {
                                         route: route.route_no || '--',
                                         dest: route.dest_ch || '--',
                                         eta: etaMin,
-                                        rawTime: route.time_ch || route.time_en,
-                                        platform: platformId // 將月台號碼一起打包保存
+                                        rawTime: route.time_ch || route.time_en
                                     });
                                 }
                             }
                         }
                     }
                     
-                    // 根據到達時間（eta）由近至遠排序，混合一二號月台的所有班次
+                    // 根據到達時間（eta）排序，混合一二號月台的所有班次
                     combinedTrains.sort(function(a, b) {
                         return a.eta - b.eta;
                     });
@@ -430,10 +422,10 @@ function loadLrtSchedule() {
     xhr.send();
 }
 
-// 初始化預先渲染空白外框以避免黑屏，然後立即抓取數據
+// 初始化預先渲染空白外框，然後立即抓取數據
 renderRealLrtPIDS([]);
 loadLrtSchedule();
-setInterval(loadLrtSchedule, 10000);
+setInterval(loadLrtSchedule, 10000); // 統一設為 10 秒更新
 
 // ==========================================
 // 右邊下方：九巴 276A 天祐苑站
@@ -528,7 +520,7 @@ function loadBusSchedule() {
 
 renderRealBusPIDS([]);
 loadBusSchedule();
-setInterval(loadBusSchedule, 10000);
+setInterval(loadBusSchedule, 10000); // 統一設為 10 秒更新
 
 // ==========================================
 // 左邊：港鐵資料聯網核心
@@ -614,7 +606,7 @@ function loadMtrSchedule() {
 renderMtrDirection([], "tuen-mun-list");
 renderMtrDirection([], "wu-kai-sha-list");
 loadMtrSchedule();
-setInterval(loadMtrSchedule, 10000);
+setInterval(loadMtrSchedule, 10000); // 統一設為 10 秒更新
 </script>
 
 </body>
