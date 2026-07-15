@@ -234,20 +234,14 @@ body {
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往屯門方向</div>
                 <div class="train-list-container" id="tuen-mun-list">
-                    <div class="train-row" style="height:25%;"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <!-- 初始預設空行 -->
                 </div>
             </div>
 
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往烏溪沙方向</div>
                 <div class="train-list-container" id="wu-kai-sha-list">
-                    <div class="train-row" style="height:25%;"><div class="seq">1</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">2</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">3</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
-                    <div class="train-row" style="height:25%;"><div class="seq">4</div><div class="dest dest-mtr">--</div><div class="arrival-time time-mtr">--:--</div></div>
+                    <!-- 初始預設空行 -->
                 </div>
             </div>
         </div>
@@ -256,13 +250,15 @@ body {
             <div class="direction-group lrt-panel">
                 <div class="direction-title title-lrt">輕鐵 天慈站</div>
                 <div class="train-list-container" id="lrt-flat-list">
-                    </div>
+                    <!-- 初始預設空行 -->
+                </div>
             </div>
 
             <div class="direction-group bus-panel">
                 <div class="direction-title title-bus">九巴 276A 天祐苑站</div>
                 <div class="train-list-container" id="bus-flat-list">
-                    </div>
+                    <!-- 初始預設空行 -->
+                </div>
             </div>
         </div>
 
@@ -311,24 +307,34 @@ function renderRealLrtPIDS(trains) {
     listContainer.innerHTML = '';
     
     var htmlString = '';
-    var maxRows = 8; // 右上角資訊版固定顯示 8 班車的高度排版
+    var maxRows = 8; // 確保高度始終保持不變
 
     for (var i = 0; i < maxRows; i++) {
-        if (i < trains.length) {
+        if (trains && i < trains.length) {
             var train = trains[i];
             
-            // 設定剩餘時間顯示
+            // 處理時間顯示與狀態閃爍
             var etaDisplay = train.eta + ' 分鐘';
-            if (train.eta <= 0) {
-                etaDisplay = '<span class="status-flash">到達</span>';
+            if (train.eta === 0) {
+                if (train.rawTime && (train.rawTime.indexOf('離開') !== -1 || train.rawTime.toLowerCase().indexOf('departing') !== -1)) {
+                    etaDisplay = '<span class="status-flash">離開中</span>';
+                } else {
+                    etaDisplay = '<span class="status-flash">到達</span>';
+                }
+            } else if (train.eta === 999) {
+                etaDisplay = train.rawTime || '--';
             }
 
-            // 目的地名稱特別轉換邏輯
-            var finalDest = "往" + train.dest;
+            // 目的地名稱轉換
+            var finalDest = "";
             if (train.route === '705') {
                 finalDest = "往天水圍(北)";
             } else if (train.route === '706') {
                 finalDest = "往天水圍(南)";
+            } else if (train.dest && train.dest !== '--') {
+                finalDest = "往" + train.dest;
+            } else {
+                finalDest = "--";
             }
 
             htmlString += '<div class="train-row" style="height:12.5%;">' +
@@ -338,8 +344,8 @@ function renderRealLrtPIDS(trains) {
                 '<div class="arrival-time time-lrt">' + etaDisplay + '</div>' +
                 '</div>';
         } else {
-            // 如果真實班次少於 8 班，以空白行補齊，確保介面比例正常
-            var defaultMsg = (i === 0) ? "暫無班次" : "--";
+            // 如果沒班次或系統還在載入，使用預設空白排版頂住畫面
+            var defaultMsg = (i === 0 && (!trains || trains.length === 0)) ? "資料更新中..." : "--";
             htmlString += '<div class="train-row" style="height:12.5%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="lrt-no">--</div>' +
@@ -352,64 +358,77 @@ function renderRealLrtPIDS(trains) {
 }
 
 function loadLrtSchedule() {
-    // 天慈站的輕鐵車站代號為 435
-    var url = 'https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule.php?station_id=435';
+    // 天慈站代號為 435 (不需加 .php)
+    var url = 'https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=435';
     
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            try {
-                var json = JSON.parse(xhr.responseText);
-                var combinedTrains = [];
-                
-                if (json && json.platform_list && Array.isArray(json.platform_list)) {
-                    // 遍歷所有月台 (1號月台及2號月台)
-                    for (var p = 0; p < json.platform_list.length; p++) {
-                        var platform = json.platform_list[p];
-                        if (platform.route_list && Array.isArray(platform.route_list)) {
-                            // 提取月台內的每一班列車
-                            for (var r = 0; r < platform.route_list.length; r++) {
-                                var route = platform.route_list[r];
-                                
-                                // 解析剩餘時間，轉換為數字
-                                var etaMin = parseInt(route.time_left, 10);
-                                if (isNaN(etaMin)) {
-                                    etaMin = 0; 
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                try {
+                    var json = JSON.parse(xhr.responseText);
+                    var combinedTrains = [];
+                    
+                    if (json && json.platform_list && Array.isArray(json.platform_list)) {
+                        for (var p = 0; p < json.platform_list.length; p++) {
+                            var platform = json.platform_list[p];
+                            if (platform.route_list && Array.isArray(platform.route_list)) {
+                                for (var r = 0; r < platform.route_list.length; r++) {
+                                    var route = platform.route_list[r];
+                                    
+                                    // MTR 輕鐵時間欄位為 time_en 及 time_ch
+                                    var timeStrEn = route.time_en || "";
+                                    var etaMin = 999;
+                                    var timeLower = timeStrEn.toLowerCase();
+                                    
+                                    // 將 "Arriving", "Departing", "-" 等字眼視為 0 分鐘以便置頂排序
+                                    if (timeLower.indexOf('arriving') !== -1 || timeLower.indexOf('departing') !== -1 || timeStrEn === '-') {
+                                        etaMin = 0;
+                                    } else {
+                                        var pTime = parseInt(timeStrEn, 10);
+                                        if (!isNaN(pTime)) {
+                                            etaMin = pTime;
+                                        }
+                                    }
+                                    
+                                    combinedTrains.push({
+                                        route: route.route_no || '--',
+                                        dest: route.dest_ch || '--',
+                                        eta: etaMin,
+                                        rawTime: route.time_ch || route.time_en
+                                    });
                                 }
-                                
-                                combinedTrains.push({
-                                    route: route.route_no || '--',
-                                    dest: route.destination_ch || '--',
-                                    eta: etaMin
-                                });
                             }
                         }
                     }
+                    
+                    // 根據到達分鐘由少至多物理排序（混合兩個月台）
+                    combinedTrains.sort(function(a, b) {
+                        return a.eta - b.eta;
+                    });
+                    
+                    renderRealLrtPIDS(combinedTrains.slice(0, 8));
+                    
+                } catch (e) {
+                    console.error("輕鐵 ETA API 解析錯誤:", e);
+                    renderRealLrtPIDS([]); // 出錯時也渲染空行防止黑屏
                 }
-                
-                // 將所有月台合併後的列車，按到站時間 (eta) 由少至多排序
-                combinedTrains.sort(function(a, b) {
-                    return a.eta - b.eta;
-                });
-                
-                // 傳入繪製函式（並僅顯示排名前 8 班車）
-                renderRealLrtPIDS(combinedTrains.slice(0, 8));
-                
-            } catch (e) {
-                console.error("輕鐵 ETA API 解析錯誤:", e);
+            } else {
+                renderRealLrtPIDS([]); // 網路異常時渲染空行
             }
         }
     };
     xhr.send();
 }
 
-// 首次加載與每 10 秒自動更新
+// 預先渲染空架構，避免網頁載入時資訊版全黑走位
+renderRealLrtPIDS([]);
 loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：九巴 276A 天祐苑站 (已連接真實 ETA API)
+// 右邊下方：九巴 276A 天祐苑站
 // ==========================================
 function renderRealBusPIDS(etas) {
     var listContainer = document.getElementById('bus-flat-list');
@@ -419,7 +438,7 @@ function renderRealBusPIDS(etas) {
     var displayCount = 3; 
     
     for (var i = 0; i < displayCount; i++) {
-        if (i < etas.length) {
+        if (etas && i < etas.length) {
             var item = etas[i];
             
             var etaDate = new Date(item.eta);
@@ -445,7 +464,7 @@ function renderRealBusPIDS(etas) {
                 '<div class="arrival-time time-bus">' + etaDisplay + '</div>' +
                 '</div>';
         } else {
-            var defaultMsg = (i === 0) ? "暫無班次" : "--";
+            var defaultMsg = (i === 0 && (!etas || etas.length === 0)) ? "資料更新中..." : "--";
             htmlString += '<div class="train-row" style="height:33.3%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-bus">' + defaultMsg + '</div>' +
@@ -463,35 +482,43 @@ function loadBusSchedule() {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            try {
-                var json = JSON.parse(xhr.responseText);
-                if (!json || !json.data) return;
-                
-                var etas = [];
-                for (var i = 0; i < json.data.length; i++) {
-                    var item = json.data[i];
-                    
-                    var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
-                    if (item.dir === 'O' && item.seq == 9 && item.eta && !isCancelled) {
-                        etas.push(item);
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                try {
+                    var json = JSON.parse(xhr.responseText);
+                    if (!json || !json.data) {
+                        renderRealBusPIDS([]);
+                        return;
                     }
+                    
+                    var etas = [];
+                    for (var i = 0; i < json.data.length; i++) {
+                        var item = json.data[i];
+                        var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
+                        if (item.dir === 'O' && item.seq == 9 && item.eta && !isCancelled) {
+                            etas.push(item);
+                        }
+                    }
+                    
+                    etas.sort(function(a, b) {
+                        return new Date(a.eta) - new Date(b.eta);
+                    });
+                    
+                    renderRealBusPIDS(etas.slice(0, 3));
+                    
+                } catch (e) {
+                    console.error("九巴 ETA API 解析錯誤:", e);
+                    renderRealBusPIDS([]);
                 }
-                
-                etas.sort(function(a, b) {
-                    return new Date(a.eta) - new Date(b.eta);
-                });
-                
-                renderRealBusPIDS(etas.slice(0, 3));
-                
-            } catch (e) {
-                console.error("九巴 ETA API 解析錯誤:", e);
+            } else {
+                renderRealBusPIDS([]);
             }
         }
     };
     xhr.send();
 }
 
+renderRealBusPIDS([]);
 loadBusSchedule();
 setInterval(loadBusSchedule, 10000);
 
@@ -528,7 +555,7 @@ function renderMtrDirection(dataArray, elementId) {
                 '<div class="arrival-time time-mtr">' + info.time + '</div>' +
                 '</div>';
         } else {
-            var defaultMsg = (i === 0) ? "班次已完結" : "--";
+            var defaultMsg = (i === 0 && (!dataArray || dataArray.length === 0)) ? "資料更新中..." : "--";
             htmlString += '<div class="train-row" style="height:25%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-mtr">' + defaultMsg + '</div>' +
@@ -549,21 +576,35 @@ function loadMtrSchedule() {
             if (xhr.status === 200) {
                 try {
                     var json = JSON.parse(xhr.responseText);
-                    if (!json || !json.data) return;
+                    if (!json || !json.data) {
+                        renderMtrDirection([], "tuen-mun-list");
+                        renderMtrDirection([], "wu-kai-sha-list");
+                        return;
+                    }
                     var data = json.data[mtrLine + '-' + mtrStation];
                     if (data) {
                         renderMtrDirection(data.UP, "tuen-mun-list");       
                         renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
+                    } else {
+                        renderMtrDirection([], "tuen-mun-list");
+                        renderMtrDirection([], "wu-kai-sha-list");
                     }
                 } catch (e) {
-                    console.error("JSON Parse Error");
+                    console.error("MTR API Parse Error", e);
+                    renderMtrDirection([], "tuen-mun-list");
+                    renderMtrDirection([], "wu-kai-sha-list");
                 }
+            } else {
+                renderMtrDirection([], "tuen-mun-list");
+                renderMtrDirection([], "wu-kai-sha-list");
             }
         }
     };
     xhr.send();
 }
 
+renderMtrDirection([], "tuen-mun-list");
+renderMtrDirection([], "wu-kai-sha-list");
 loadMtrSchedule();
 setInterval(loadMtrSchedule, 10000);
 </script>
