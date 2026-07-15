@@ -256,13 +256,14 @@ body {
             <div class="direction-group lrt-panel">
                 <div class="direction-title title-lrt">輕鐵 天慈站</div>
                 <div class="train-list-container" id="lrt-flat-list">
-                     <!-- 輕鐵數據渲染槽 -->
+                    <!-- 輕鐵班次將自動生成於此 -->
                 </div>
             </div>
 
             <div class="direction-group bus-panel">
                 <div class="direction-title title-bus">九巴 276A 天祐苑站</div>
                 <div class="train-list-container" id="bus-flat-list">
+                    <!-- 巴士班次將自動生成於此 -->
                 </div>
             </div>
         </div>
@@ -304,50 +305,67 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 (修復參數與過濾版)
+// 右邊上方：輕鐵 天慈站 (整合月台及真實 API)
 // ==========================================
-function renderLrtPIDS(trains) {
+
+// 專門處理目的地名稱的函式
+function getLrtDestName(routeNo, originalDest) {
+    if (routeNo === '705') {
+        return '天水圍（北）';
+    } else if (routeNo === '706') {
+        return '天水圍（南）';
+    }
+    return originalDest;
+}
+
+// 專門處理時間字串並轉為排序用數字的函式
+function parseLrtEta(timeTc) {
+    if (!timeTc || timeTc === '-') return 999;
+    if (timeTc.indexOf('分鐘') !== -1) {
+        var match = timeTc.match(/\d+/);
+        if (match) return parseInt(match[0], 10);
+    }
+    // 把即將抵達、正在駛入等狀態視為 0 分鐘
+    if (timeTc.indexOf('即將抵達') !== -1 || timeTc.indexOf('正在駛入') !== -1 || timeTc.indexOf('到達') !== -1 || timeTc.indexOf('正在離開') !== -1) {
+        return 0;
+    }
+    return 999;
+}
+
+function renderRealLrtPIDS(trains) {
     var listContainer = document.getElementById('lrt-flat-list');
     if (!listContainer) return;
-    listContainer.innerHTML = '';
-
     var htmlString = '';
-    var displayCount = 8; // 強制填充 8 個行位
-
-    if (!trains || !trains.length) {
-        trains = [];
-    }
+    var displayCount = 8; // 要求顯示 8 班車
 
     for (var i = 0; i < displayCount; i++) {
         if (i < trains.length) {
             var train = trains[i];
-            var etaDisplay = train.etaStr;
-
-            // 當列車狀態為到達、即將抵達或行駛入站時，切換為紅色閃爍特效
-            if (train.etaMins === 0 || train.etaStr.indexOf('到達') !== -1 || train.etaStr.indexOf('即將抵達') !== -1 || train.etaStr.indexOf('駛入') !== -1 || train.etaStr.indexOf('離開') !== -1) {
-                etaDisplay = '<span class="status-flash">' + train.etaStr + '</span>';
+            
+            // 處理時間顯示與紅色閃爍
+            var etaDisplay = train.eta + ' 分鐘';
+            if (train.eta <= 0) {
+                var statusText = train.time_tc.indexOf('離開') !== -1 ? '正在離開' : '即將抵達';
+                etaDisplay = '<span class="status-flash">' + statusText + '</span>';
+            } else if (train.eta === 999) {
+                etaDisplay = '--';
             }
 
-            // 特殊路線目的地本地化修正
-            var finalDest = "往" + train.dest;
-            if (train.route === '705') {
-                finalDest = "往天水圍(北)";
-            } else if (train.route === '706') {
-                finalDest = "往天水圍(南)";
-            }
+            var finalDest = "往" + getLrtDestName(train.route_no, train.dest_tc);
 
             htmlString += '<div class="train-row" style="height:12.5%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
-                '<div class="lrt-no">' + train.route + '</div>' +
+                '<div class="lrt-no">' + train.route_no + '</div>' +
                 '<div class="dest dest-lrt">' + finalDest + '</div>' +
                 '<div class="arrival-time time-lrt">' + etaDisplay + '</div>' +
                 '</div>';
         } else {
-            // 空白佔位處理
+            // 空白班次處理
             var defaultMsg = (i === 0) ? "暫無班次" : "--";
+            var defaultLrtNo = (i === 0) ? "-" : "";
             htmlString += '<div class="train-row" style="height:12.5%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
-                '<div class="lrt-no">--</div>' +
+                '<div class="lrt-no">' + defaultLrtNo + '</div>' +
                 '<div class="dest dest-lrt">' + defaultMsg + '</div>' +
                 '<div class="arrival-time time-lrt">--</div>' +
                 '</div>';
@@ -357,10 +375,8 @@ function renderLrtPIDS(trains) {
 }
 
 function loadLrtSchedule() {
-    var stationId = "435"; 
-    // 🚨 修正點：輕鐵官方要求參數名稱必須是 station_id 
-    var url = 'https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule.php?station_id=' + stationId;
-
+    // 天慈站的輕鐵車站代碼為 435
+    var url = 'https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=435';
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function() {
@@ -369,68 +385,56 @@ function loadLrtSchedule() {
                 try {
                     var json = JSON.parse(xhr.responseText);
                     
-                    // 輕鐵成功返回時會有 status: 1
-                    if (!json || json.status !== 1 || !json.platform_list) {
-                        renderLrtPIDS([]); 
+                    // 檢查 API 是否有回傳正確的 platform_list
+                    if (json.status !== 1 || !json.platform_list) {
+                        renderRealLrtPIDS([]); // 發生錯誤時清空/顯示暫無班次
                         return;
                     }
-
+                    
                     var allTrains = [];
+                    
+                    // 遍歷所有月台提取列車資料 (天慈站月台 1 及 2)
                     for (var p = 0; p < json.platform_list.length; p++) {
                         var platform = json.platform_list[p];
-                        if (!platform.route_list) continue;
-
-                        for (var r = 0; r < platform.route_list.length; r++) {
-                            var route = platform.route_list[r];
-                            
-                            var etaStr = route.time_ch || route.eta_ch || '';
-                            // 過濾掉沒時間或是顯示 "-" 的無效班次
-                            if (!etaStr || etaStr.trim() === '-') continue;
-
-                            var etaMins = 999;
-                            if (etaStr.indexOf('到達') !== -1 || etaStr.indexOf('即將抵達') !== -1 || etaStr.indexOf('駛入') !== -1 || etaStr.indexOf('離開') !== -1) {
-                                etaMins = 0;
-                            } else {
-                                var parsed = parseInt(etaStr, 10);
-                                if (!isNaN(parsed)) {
-                                    etaMins = parsed;
+                        if (platform.route_list && platform.route_list.length > 0) {
+                            for (var r = 0; r < platform.route_list.length; r++) {
+                                var train = platform.route_list[r];
+                                // 計算排序用的 ETA 數值
+                                train.eta = parseLrtEta(train.time_tc);
+                                // 過濾掉沒有有效 ETA 的異常班次
+                                if (train.eta !== 999) {
+                                    allTrains.push(train);
                                 }
                             }
-
-                            allTrains.push({
-                                route: route.route_no ? route.route_no.toString() : '--',
-                                dest: route.destination_ch ? route.destination_ch.trim() : '--',
-                                etaStr: etaStr.trim(),
-                                etaMins: etaMins
-                            });
                         }
                     }
-
-                    // 依據抵達時間進行全局升序重排
-                    allTrains.sort(function(a, b) {
-                        return a.etaMins - b.etaMins;
+                    
+                    // 按 ETA 數值由近至遠排序
+                    allTrains.sort(function(a, b) { 
+                        return a.eta - b.eta; 
                     });
-
-                    // 截取時間最接近的 8 班車上屏
-                    renderLrtPIDS(allTrains.slice(0, 8));
-
+                    
+                    // 將排序後的陣列交給 render 渲染
+                    renderRealLrtPIDS(allTrains);
+                    
                 } catch (e) {
-                    renderLrtPIDS([]); 
+                    console.error("輕鐵 ETA API 解析錯誤:", e);
+                    renderRealLrtPIDS([]);
                 }
             } else {
-                renderLrtPIDS([]); 
+                renderRealLrtPIDS([]); // 網路錯誤時的保底措施
             }
         }
     };
     xhr.send();
 }
 
-renderLrtPIDS([]);
+// 初次載入與每10秒自動更新
 loadLrtSchedule();
-setInterval(loadLrtSchedule, 10000); 
+setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：九巴 276A 天祐苑站
+// 右邊下方：九巴 276A 天祐苑站 (已連接真實 ETA API)
 // ==========================================
 function renderRealBusPIDS(etas) {
     var listContainer = document.getElementById('bus-flat-list');
@@ -506,6 +510,7 @@ function loadBusSchedule() {
                 renderRealBusPIDS(etas.slice(0, 3));
                 
             } catch (e) {
+                console.error("九巴 ETA API 解析錯誤:", e);
             }
         }
     };
@@ -576,6 +581,7 @@ function loadMtrSchedule() {
                         renderMtrDirection(data.DOWN, "wu-kai-sha-list");   
                     }
                 } catch (e) {
+                    console.error("JSON Parse Error");
                 }
             }
         }
