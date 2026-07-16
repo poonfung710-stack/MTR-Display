@@ -171,34 +171,18 @@ body {
     width: 8%;
 }
 
-/* 左側港鐵字體與欄位佈局：拆分為獨立欄位 */
-.left-col .dest-mtr { 
-    font-size: 4.2vh; 
-    color: #FFFFFF; 
-    font-weight: bold; 
-    width: 30%; 
-    white-space: nowrap; 
-    overflow: hidden; 
-}
-/* 獨立倒數分鐘欄位：字體稍微縮細（3.8vh），右對齊 */
-.left-col .countdown-mtr { 
-    font-size: 3.8vh; 
+/* 左側港鐵字體 (調整目的地與時間寬度，確保時間不換行) */
+.left-col .dest-mtr { font-size: 4.2vh; color: #FFFFFF; font-weight: bold; width: 30%; white-space: nowrap; overflow: hidden; }
+.left-col .time-mtr { font-size: 4.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 62%; color: #00FF33; text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); }
+
+/* 港鐵倒數分鐘：完全同步 24 小時制的字體樣式與大小，僅將顏色改為更醒目的黃金色發光效果 */
+.mtr-countdown { 
+    font-size: 4.4vh; 
     font-weight: bold; 
     font-family: monospace; 
     color: #FFCC00; 
     text-shadow: 0 0 12px rgba(255, 204, 0, 0.8); 
-    text-align: right; 
-    width: 27%; 
-}
-/* 港鐵到站時間欄位 */
-.left-col .time-mtr { 
-    font-size: 4.4vh; 
-    font-weight: bold; 
-    font-family: monospace; 
-    text-align: right; 
-    width: 35%; 
-    color: #00FF33; 
-    text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); 
+    margin-right: 15px; 
 }
 
 /* 右側輕鐵字體 */
@@ -561,14 +545,12 @@ function formatMtrTime(trainObj) {
     if (!trainObj) return null;
     var ttnt = parseInt(trainObj.ttnt, 10);
     var timeDisplay = "";
-    var countdownText = ""; // 倒數欄位的文字（如果是即將抵達則留空）
+    var countdownText = ""; 
 
     if (ttnt === 0) {
         timeDisplay = '<span class="status-flash">正在駛入</span>';
-        countdownText = ""; // 獨立欄位留空，交由時間欄位顯示閃爍狀態
     } else if (ttnt === 1) {
         timeDisplay = '<span class="status-flash">即將抵達</span>';
-        countdownText = ""; 
     } else {
         if (trainObj.time) {
             timeDisplay = trainObj.time.substring(11, 16); 
@@ -579,13 +561,11 @@ function formatMtrTime(trainObj) {
             var diffMins = Math.ceil(diffMs / 60000); 
 
             if (diffMins > 0) {
-                countdownText = diffMins + ' 分鐘';
-            } else {
-                countdownText = '--';
+                // 將「X 分鐘」套用與 24 小時制完全相同的樣式，顏色改為漂亮的黃金色
+                countdownText = '<span class="mtr-countdown">' + diffMins + ' 分鐘</span>';
             }
         } else {
             timeDisplay = "--:--";
-            countdownText = "--";
         }
     }
     
@@ -602,19 +582,16 @@ function renderMtrDirection(dataArray, elementId) {
     for (var i = 0; i < 4; i++) {
         if (dataArray && dataArray[i]) {
             var info = formatMtrTime(dataArray[i]);
-            // 拆分為四個獨立欄位：seq(8%) -> dest(30%) -> countdown(27%) -> time(35%)
             htmlString += '<div class="train-row" style="height:25%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-mtr">' + info.dest + '</div>' +
-                '<div class="countdown-mtr">' + info.countdown + '</div>' +
-                '<div class="arrival-time time-mtr">' + info.time + '</div>' +
+                '<div class="arrival-time time-mtr">' + info.countdown + info.time + '</div>' +
                 '</div>';
         } else {
             var defaultMsg = (i === 0 && (!dataArray || dataArray.length === 0)) ? "資料更新中..." : "--";
             htmlString += '<div class="train-row" style="height:25%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-mtr">' + defaultMsg + '</div>' +
-                '<div class="countdown-mtr">--</div>' +
                 '<div class="arrival-time time-mtr">--:--</div>' +
                 '</div>';
         }
