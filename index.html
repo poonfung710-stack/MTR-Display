@@ -171,18 +171,27 @@ body {
     width: 8%;
 }
 
-/* 左側港鐵字體 (調整寬度以容納「X 分鐘」與「(HH:mm)」) */
-.left-col .dest-mtr { font-size: 4.2vh; color: #FFFFFF; font-weight: bold; width: 35%; white-space: nowrap; overflow: hidden; }
-.left-col .time-mtr { font-size: 4.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 55%; color: #00FF33; text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); }
-.mtr-countdown { font-size: 3.2vh; color: #888888; font-weight: normal; margin-right: 12px; text-shadow: none; } /* 港鐵剩餘分鐘樣式 */
+/* 左側港鐵字體 (調整目的地與時間寬度，確保時間不換行) */
+.left-col .dest-mtr { font-size: 4.2vh; color: #FFFFFF; font-weight: bold; width: 30%; white-space: nowrap; overflow: hidden; }
+.left-col .time-mtr { font-size: 4.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 62%; color: #00FF33; text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); }
 
-/* 右側輕鐵字體 (放大括號 24 小時制時間) */
+/* 港鐵倒數分鐘：完全同步 24 小時制的字體樣式與大小，僅將顏色改為更醒目的黃金色發光效果 */
+.mtr-countdown { 
+    font-size: 4.4vh; 
+    font-weight: bold; 
+    font-family: monospace; 
+    color: #FFCC00; 
+    text-shadow: 0 0 12px rgba(255, 204, 0, 0.8); 
+    margin-right: 15px; 
+}
+
+/* 右側輕鐵字體 */
 .lrt-no { font-size: 3.2vh; font-weight: bold; color: #FF9900; width: 12%; }
 .dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 38%; }
 .time-lrt { font-size: 3.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 48%; color: #FFCC00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); }
-.time-real-sub { font-size: 2.9vh; color: #888888; font-weight: normal; margin-left: 6px; text-shadow: none; } /* 稍微放大括號時間 */
+.time-real-sub { font-size: 2.9vh; color: #888888; font-weight: normal; margin-left: 6px; text-shadow: none; }
 
-/* 右側巴士字體 (放大括號 24 小時制時間) */
+/* 右側巴士字體 */
 .dest-bus { font-size: 3.6vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 42%; }
 .time-bus { font-size: 3.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 48%; color: #FF99CC; text-shadow: 0 0 10px rgba(255, 51, 102, 0.8); }
 
@@ -309,18 +318,16 @@ function renderRealLrtPIDS(trains) {
     listContainer.innerHTML = '';
     
     var htmlString = '';
-    var maxRows = 8; // 右上角資訊版固定 8 行
+    var maxRows = 8; 
 
     for (var i = 0; i < maxRows; i++) {
         if (trains && i < trains.length) {
             var train = trains[i];
             
-            // 處理時間與到站真實時間計算
             var etaDisplay = '';
             var realTime24H = '';
 
             if (train.eta === 0) {
-                // 如果是到達中/離開中，真實時間就是現在
                 realTime24H = getTargetTime24H(0);
                 if (train.rawTime && (train.rawTime.indexOf('離開') !== -1 || train.rawTime.toLowerCase().indexOf('departing') !== -1)) {
                     etaDisplay = '<span class="status-flash">離開中</span>';
@@ -331,15 +338,12 @@ function renderRealLrtPIDS(trains) {
                 etaDisplay = train.rawTime || '--';
                 realTime24H = '--:--';
             } else {
-                // 根據相對分鐘數，推估真實到站時間
                 etaDisplay = train.eta + ' 分鐘';
                 realTime24H = getTargetTime24H(train.eta);
             }
 
-            // 附加上 24 小時制的括號真實時間 (已調大字體樣式)
             var realTimeSuffix = realTime24H !== '--:--' ? '<span class="time-real-sub">(' + realTime24H + ')</span>' : '';
 
-            // 目的地名稱特別轉換邏輯
             var finalDest = "";
             if (train.route === '705') {
                 finalDest = "往天水圍(北)";
@@ -358,7 +362,6 @@ function renderRealLrtPIDS(trains) {
                 '<div class="arrival-time time-lrt">' + etaDisplay + realTimeSuffix + '</div>' +
                 '</div>';
         } else {
-            // 空白行補齊
             var defaultMsg = (i === 0 && (!trains || trains.length === 0)) ? "資料更新中..." : "--";
             htmlString += '<div class="train-row" style="height:12.5%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
@@ -435,7 +438,7 @@ function loadLrtSchedule() {
 
 renderRealLrtPIDS([]);
 loadLrtSchedule();
-setInterval(loadLrtSchedule, 10000); // 10秒更新一次
+setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
 // 右邊下方：九巴 276A 天祐苑站
@@ -463,7 +466,6 @@ function renderRealBusPIDS(etas) {
                 etaDisplay = diffMins + ' 分鐘';
             }
 
-            // 九巴自帶精準到站時間，直接轉成 24H 格式 (已調大字體樣式)
             var realTime24H = formatIsoTo24H(item.eta);
             var realTimeSuffix = realTime24H !== '--:--' ? '<span class="time-real-sub">(' + realTime24H + ')</span>' : '';
             
@@ -534,7 +536,7 @@ function loadBusSchedule() {
 
 renderRealBusPIDS([]);
 loadBusSchedule();
-setInterval(loadBusSchedule, 10000); // 10秒更新一次
+setInterval(loadBusSchedule, 10000);
 
 // ==========================================
 // 左邊：港鐵資料聯網核心
@@ -543,25 +545,23 @@ function formatMtrTime(trainObj) {
     if (!trainObj) return null;
     var ttnt = parseInt(trainObj.ttnt, 10);
     var timeDisplay = "";
-    var countdownText = ""; // 用來儲存「X 分鐘」的文字
+    var countdownText = ""; 
 
     if (ttnt === 0) {
         timeDisplay = '<span class="status-flash">正在駛入</span>';
     } else if (ttnt === 1) {
         timeDisplay = '<span class="status-flash">即將抵達</span>';
     } else {
-        // 如果有具體時間，計算剩餘分鐘
-        // 港鐵 API 返回的 time 格式為 "YYYY-MM-DD HH:mm:ss"
         if (trainObj.time) {
-            timeDisplay = trainObj.time.substring(11, 16); // 24小時制時間如 "14:35"
+            timeDisplay = trainObj.time.substring(11, 16); 
             
-            // 計算與目前系統時間的分鐘差距
-            var trainTime = new Date(trainObj.time.replace(/-/g, "/")); // 相容舊瀏覽器的日期解析
+            var trainTime = new Date(trainObj.time.replace(/-/g, "/")); 
             var now = new Date();
             var diffMs = trainTime.getTime() - now.getTime();
-            var diffMins = Math.ceil(diffMs / 60000); // 向上取整
+            var diffMins = Math.ceil(diffMs / 60000); 
 
             if (diffMins > 0) {
+                // 將「X 分鐘」套用與 24 小時制完全相同的樣式，顏色改為漂亮的黃金色
                 countdownText = '<span class="mtr-countdown">' + diffMins + ' 分鐘</span>';
             }
         } else {
@@ -582,7 +582,6 @@ function renderMtrDirection(dataArray, elementId) {
     for (var i = 0; i < 4; i++) {
         if (dataArray && dataArray[i]) {
             var info = formatMtrTime(dataArray[i]);
-            // 拼接「剩餘分鐘」在「到站時間」的前面
             htmlString += '<div class="train-row" style="height:25%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-mtr">' + info.dest + '</div>' +
@@ -640,7 +639,7 @@ function loadMtrSchedule() {
 renderMtrDirection([], "tuen-mun-list");
 renderMtrDirection([], "wu-kai-sha-list");
 loadMtrSchedule();
-setInterval(loadMtrSchedule, 10000); // 10秒更新一次
+setInterval(loadMtrSchedule, 10000);
 </script>
 
 </body>
