@@ -30,7 +30,7 @@ body {
     padding: 1.5vh 2vw; 
 }
 
-/* 頂部資訊列：將底部的 4px 飾條修改為獨立、不搶色的深鋼灰色 */
+/* 頂部資訊列：深鋼灰色飾條 */
 .header-bar {
     height: 8vh; 
     border-bottom: 4px solid #444444; 
@@ -130,7 +130,7 @@ body {
     padding-left: 15px;
     line-height: 1.2;
 }
-/* 屯馬綫標題維持高對比的官方土赭色/金啡色，與倒數分鐘及頂部 header 完美區隔 */
+/* 屯馬綫標題維持高對比的官方土赭色/金啡色 */
 .title-mtr { color: #B29A6F; border-left: 8px solid #947A4D; }
 .title-lrt { color: #FF9900; border-left: 8px solid #FF9900; }
 .title-bus { color: #FF3366; border-left: 8px solid #FF3366; } 
@@ -172,7 +172,7 @@ body {
     width: 8%;
 }
 
-/* 左側港鐵字體與欄位佈局：拆分為獨立欄位 */
+/* 左側港鐵字體與欄位佈局 */
 .left-col .dest-mtr { 
     font-size: 4.2vh; 
     color: #FFFFFF; 
@@ -181,7 +181,6 @@ body {
     white-space: nowrap; 
     overflow: hidden; 
 }
-/* 獨立倒數分鐘欄位：字體稍微縮細（3.8vh），右對齊 */
 .left-col .countdown-mtr { 
     font-size: 3.8vh; 
     font-weight: bold; 
@@ -191,7 +190,6 @@ body {
     text-align: right; 
     width: 27%; 
 }
-/* 港鐵到站時間欄位 */
 .left-col .time-mtr { 
     font-size: 4.4vh; 
     font-weight: bold; 
@@ -299,6 +297,9 @@ function padZero(num) {
     return num < 10 ? '0' + num : num;
 }
 
+// 用來全域快取九巴最新的原始資料，以便於每一秒都能更精準地刷新「30秒過濾」倒數
+var cachedBusData = [];
+
 function updateClock() {
     var clockEl = document.getElementById('clock');
     if (!clockEl) return;
@@ -307,18 +308,21 @@ function updateClock() {
     var minutes = padZero(now.getMinutes());
     var seconds = padZero(now.getSeconds());
     clockEl.innerText = hours + ':' + minutes + ':' + seconds;
+    
+    // 每一秒鐘也同步重新渲染巴士介面，確保抵達超過 30 秒時能精準地在該秒直接消失，不需等待 10 秒的輪詢
+    if (cachedBusData && cachedBusData.length > 0) {
+        renderRealBusPIDS(cachedBusData);
+    }
 }
 setInterval(updateClock, 1000);
 updateClock();
 
-// 輔助函式：根據當前時間累加分鐘，並格式化為 24 小時制 (HH:mm)
 function getTargetTime24H(addMinutes) {
     var now = new Date();
     now.setMinutes(now.getMinutes() + addMinutes);
     return padZero(now.getHours()) + ":" + padZero(now.getMinutes());
 }
 
-// 輔助函式：將 ISO 日期字串轉換為本地 24 小時制 (HH:mm)
 function formatIsoTo24H(isoString) {
     if (!isoString) return "--:--";
     var date = new Date(isoString);
@@ -458,7 +462,7 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：九巴 276A 天祐苑站
+// 右邊下方：九巴 276A 天祐苑站（加入超過30秒自動隱藏邏輯）
 // ==========================================
 function renderRealBusPIDS(etas) {
     var listContainer = document.getElementById('bus-flat-list');
@@ -466,18 +470,32 @@ function renderRealBusPIDS(etas) {
     
     var htmlString = '';
     var displayCount = 3; 
+    var validEtas = [];
+    var nowTime = Date.now();
+
+    // 先過濾資料：如果當前時間已經比到站時間超過 30 秒 (即超過 30000 毫秒)，就直接丟棄不顯示
+    if (etas && etas.length > 0) {
+        for (var k = 0; k < etas.length; k++) {
+            var itemTime = new Date(etas[k].eta).getTime();
+            // 如果 itemTime 已經過去了，且過去的時間差大於 30000 毫秒(30秒)，則跳過
+            if (nowTime - itemTime > 30000) {
+                continue; 
+            }
+            validEtas.push(etas[k]);
+        }
+    }
     
     for (var i = 0; i < displayCount; i++) {
-        if (etas && i < etas.length) {
-            var item = etas[i];
+        if (i < validEtas.length) {
+            var item = validEtas[i];
             
             var etaDate = new Date(item.eta);
-            var now = new Date();
-            var diffMs = etaDate.getTime() - now.getTime();
+            var diffMs = etaDate.getTime() - nowTime;
             var diffMins = Math.floor(diffMs / 60000);
             
             var etaDisplay = '';
-            if (diffMins <= 0) {
+            // 如果時間差在 0 分鐘以內（包含負 30 秒內），均顯示「到站中」
+            if (diffMs <= 0) {
                 etaDisplay = '<span class="status-flash">到站中</span>';
             } else {
                 etaDisplay = diffMins + ' 分鐘';
@@ -497,7 +515,7 @@ function renderRealBusPIDS(etas) {
                 '<div class="arrival-time time-bus">' + etaDisplay + realTimeSuffix + '</div>' +
                 '</div>';
         } else {
-            var defaultMsg = (i === 0 && (!etas || etas.length === 0)) ? "資料更新中..." : "--";
+            var defaultMsg = (i === 0 && validEtas.length === 0) ? "資料更新中..." : "--";
             htmlString += '<div class="train-row" style="height:33.3%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-bus">' + defaultMsg + '</div>' +
@@ -520,6 +538,7 @@ function loadBusSchedule() {
                 try {
                     var json = JSON.parse(xhr.responseText);
                     if (!json || !json.data) {
+                        cachedBusData = [];
                         renderRealBusPIDS([]);
                         return;
                     }
@@ -537,13 +556,16 @@ function loadBusSchedule() {
                         return new Date(a.eta) - new Date(b.eta);
                     });
                     
-                    renderRealBusPIDS(etas.slice(0, 3));
+                    cachedBusData = etas; // 快取原始資料
+                    renderRealBusPIDS(cachedBusData);
                     
                 } catch (e) {
                     console.error("九巴 ETA API 解析錯誤:", e);
+                    cachedBusData = [];
                     renderRealBusPIDS([]);
                 }
             } else {
+                cachedBusData = [];
                 renderRealBusPIDS([]);
             }
         }
@@ -562,11 +584,11 @@ function formatMtrTime(trainObj) {
     if (!trainObj) return null;
     var ttnt = parseInt(trainObj.ttnt, 10);
     var timeDisplay = "";
-    var countdownText = ""; // 倒數欄位的文字（如果是即將抵達則留空）
+    var countdownText = ""; 
 
     if (ttnt === 0) {
         timeDisplay = '<span class="status-flash">正在駛入</span>';
-        countdownText = ""; // 獨立欄位留空，交由時間欄位顯示閃爍狀態
+        countdownText = ""; 
     } else if (ttnt === 1) {
         timeDisplay = '<span class="status-flash">即將抵達</span>';
         countdownText = ""; 
@@ -603,7 +625,6 @@ function renderMtrDirection(dataArray, elementId) {
     for (var i = 0; i < 4; i++) {
         if (dataArray && dataArray[i]) {
             var info = formatMtrTime(dataArray[i]);
-            // 拆分為四個獨立欄位：seq(8%) -> dest(30%) -> countdown(27%) -> time(35%)
             htmlString += '<div class="train-row" style="height:25%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="dest dest-mtr">' + info.dest + '</div>' +
