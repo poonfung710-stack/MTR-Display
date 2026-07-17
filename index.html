@@ -130,7 +130,6 @@ body {
     padding-left: 15px;
     line-height: 1.2;
 }
-/* 屯馬綫標題維持高對比的官方土赭色/金啡色 */
 .title-mtr { color: #B29A6F; border-left: 8px solid #947A4D; }
 .title-lrt { color: #FF9900; border-left: 8px solid #FF9900; }
 .title-bus { color: #FF3366; border-left: 8px solid #FF3366; } 
@@ -206,9 +205,54 @@ body {
 .time-lrt { font-size: 3.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 48%; color: #FFCC00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); }
 .time-real-sub { font-size: 2.9vh; color: #888888; font-weight: normal; margin-left: 6px; text-shadow: none; }
 
-/* 右側巴士字體 */
-.dest-bus { font-size: 3.6vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 42%; }
-.time-bus { font-size: 3.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 48%; color: #FF99CC; text-shadow: 0 0 10px rgba(255, 51, 102, 0.8); }
+/* ==========================================
+   新版巴士排版專屬 CSS 樣式
+   ========================================== */
+.bus-route-no {
+    font-size: 3.2vh;
+    font-weight: bold;
+    color: #FF3366;
+    width: 14%;
+}
+.dest-bus-new { 
+    font-size: 3.0vh; 
+    color: #FFFFFF; 
+    font-weight: bold; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    width: 16%; 
+}
+/* 三班車的水平大容器，佔據剩餘 62% 寬度 */
+.bus-eta-wrapper {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 62%;
+}
+/* 每班車獨立的小區塊 */
+.bus-eta-block {
+    width: 32%;
+    font-size: 2.5vh; /* 最佳化字體大小以切合水平排版 */
+    font-weight: bold;
+    font-family: monospace;
+    color: #FF99CC;
+    text-shadow: 0 0 10px rgba(255, 51, 102, 0.8);
+    text-align: right;
+    white-space: nowrap;
+}
+.bus-eta-block .time-real-sub {
+    font-size: 2.1vh;
+}
+/* 空置狀態樣式 */
+.bus-empty-msg {
+    font-size: 3vh;
+    color: #444444;
+}
 
 /* 紅色閃爍狀態 */
 .status-flash {
@@ -265,10 +309,11 @@ body {
                 </div>
             </div>
 
+            <!-- 修改標題為：九巴 天祐苑站 -->
             <div class="direction-group bus-panel">
-                <div class="direction-title title-bus">九巴 276A 天祐苑站</div>
+                <div class="direction-title title-bus">九巴 天祐苑站</div>
                 <div class="train-list-container" id="bus-flat-list">
-                    <!-- 初始預設空行 -->
+                    <!-- 核心第一列用來呈現 3 班車，另外兩列維持空置設計 -->
                 </div>
             </div>
         </div>
@@ -297,7 +342,6 @@ function padZero(num) {
     return num < 10 ? '0' + num : num;
 }
 
-// 用來全域快取九巴最新的原始資料，以便於每一秒都能更精準地刷新「30秒過濾」倒數
 var cachedBusData = [];
 
 function updateClock() {
@@ -309,7 +353,6 @@ function updateClock() {
     var seconds = padZero(now.getSeconds());
     clockEl.innerText = hours + ':' + minutes + ':' + seconds;
     
-    // 每一秒鐘也同步重新渲染巴士介面，確保抵達超過 30 秒時能精準地在該秒直接消失，不需等待 10 秒的輪詢
     if (cachedBusData && cachedBusData.length > 0) {
         renderRealBusPIDS(cachedBusData);
     }
@@ -462,67 +505,84 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：九巴 276A 天祐苑站（加入超過30秒自動隱藏邏輯）
+// 右邊下方：九巴大改版（第一列同時並排顯示三班車）
 // ==========================================
 function renderRealBusPIDS(etas) {
     var listContainer = document.getElementById('bus-flat-list');
     if (!listContainer) return;
     
-    var htmlString = '';
-    var displayCount = 3; 
-    var validEtas = [];
     var nowTime = Date.now();
+    var validEtas = [];
 
-    // 先過濾資料：如果當前時間已經比到站時間超過 30 秒 (即超過 30000 毫秒)，就直接丟棄不顯示
+    // 精確過濾：超過 30 秒抵達的直接消除
     if (etas && etas.length > 0) {
         for (var k = 0; k < etas.length; k++) {
             var itemTime = new Date(etas[k].eta).getTime();
-            // 如果 itemTime 已經過去了，且過去的時間差大於 30000 毫秒(30秒)，則跳過
             if (nowTime - itemTime > 30000) {
                 continue; 
             }
             validEtas.push(etas[k]);
         }
     }
+
+    var htmlString = '';
     
-    for (var i = 0; i < displayCount; i++) {
-        if (i < validEtas.length) {
-            var item = validEtas[i];
-            
-            var etaDate = new Date(item.eta);
-            var diffMs = etaDate.getTime() - nowTime;
-            var diffMins = Math.floor(diffMs / 60000);
-            
-            var etaDisplay = '';
-            // 如果時間差在 0 分鐘以內（包含負 30 秒內），均顯示「到站中」
-            if (diffMs <= 0) {
-                etaDisplay = '<span class="status-flash">到站中</span>';
+    // 【第一列】：核心資訊列，完整盛裝 276A 的三班車資訊
+    htmlString += '<div class="train-row" style="height:33.3%;">';
+    htmlString += '<div class="seq">1</div>';
+    htmlString += '<div class="bus-route-no">276A</div>';
+    htmlString += '<div class="dest-bus-new">往上水</div>';
+    
+    // 建立裝載三班車 ETA 的右側區塊
+    htmlString += '<div class="bus-eta-wrapper">';
+    
+    if (validEtas.length === 0) {
+        htmlString += '<div class="bus-empty-msg">資料更新中...</div>';
+    } else {
+        // 最多並排處理 3 班車
+        for (var b = 0; b < 3; b++) {
+            if (b < validEtas.length) {
+                var busItem = validEtas[b];
+                var etaDate = new Date(busItem.eta);
+                var diffMs = etaDate.getTime() - nowTime;
+                var diffMins = Math.floor(diffMs / 60000);
+                
+                var displayString = '';
+                if (diffMs <= 0) {
+                    displayString = '<span class="status-flash">到站中</span>';
+                } else {
+                    displayString = diffMins + '分';
+                }
+                
+                var time24H = formatIsoTo24H(busItem.eta);
+                displayString += '<span class="time-real-sub">(' + time24H + ')</span>';
+                
+                htmlString += '<div class="bus-eta-block">' + displayString + '</div>';
             } else {
-                etaDisplay = diffMins + ' 分鐘';
+                // 有班次但不足 3 班時補上空白符號
+                htmlString += '<div class="bus-eta-block">--</div>';
             }
-
-            var realTime24H = formatIsoTo24H(item.eta);
-            var realTimeSuffix = realTime24H !== '--:--' ? '<span class="time-real-sub">(' + realTime24H + ')</span>' : '';
-            
-            var destText = "上水"; 
-            if (item.dest_tc) {
-                destText = item.dest_tc.split('(')[0].split('（')[0].trim();
-            }
-
-            htmlString += '<div class="train-row" style="height:33.3%;">' +
-                '<div class="seq">' + (i + 1) + '</div>' +
-                '<div class="dest dest-bus">往' + destText + '</div>' +
-                '<div class="arrival-time time-bus">' + etaDisplay + realTimeSuffix + '</div>' +
-                '</div>';
-        } else {
-            var defaultMsg = (i === 0 && validEtas.length === 0) ? "資料更新中..." : "--";
-            htmlString += '<div class="train-row" style="height:33.3%;">' +
-                '<div class="seq">' + (i + 1) + '</div>' +
-                '<div class="dest dest-bus">' + defaultMsg + '</div>' +
-                '<div class="arrival-time time-bus">--</div>' +
-                '</div>';
         }
     }
+    htmlString += '</div>'; // .bus-eta-wrapper 結束
+    htmlString += '</div>'; // 第一列結束
+
+    // 【第二列】：暫時空置
+    htmlString += '<div class="train-row" style="height:33.3%;">' +
+        '<div class="seq">2</div>' +
+        '<div class="bus-route-no" style="color:#444;">--</div>' +
+        '<div class="dest-bus-new" style="color:#444;">--</div>' +
+        '<div class="bus-eta-wrapper"><div class="bus-eta-block" style="color:#444; width:100%;">--</div></div>' +
+        '</div>';
+
+    // 【第三列】：暫時空置
+    htmlString += '<div class="train-row" style="height:33.3%;">' +
+        '<div class="seq">3</div>' +
+        '<div class="bus-route-no" style="color:#444;">--</div>' +
+        '<div class="dest-bus-new" style="color:#444;">--</div>' +
+        '<div class="bus-eta-wrapper"><div class="bus-eta-block" style="color:#444; width:100%;">--</div></div>' +
+        '</div>';
+
     listContainer.innerHTML = htmlString;
 }
 
@@ -547,6 +607,7 @@ function loadBusSchedule() {
                     for (var i = 0; i < json.data.length; i++) {
                         var item = json.data[i];
                         var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
+                        // 取天祐苑站 (Seq 9) 往上水方向的即時班次
                         if (item.dir === 'O' && item.seq == 9 && item.eta && !isCancelled) {
                             etas.push(item);
                         }
@@ -556,7 +617,7 @@ function loadBusSchedule() {
                         return new Date(a.eta) - new Date(b.eta);
                     });
                     
-                    cachedBusData = etas; // 快取原始資料
+                    cachedBusData = etas;
                     renderRealBusPIDS(cachedBusData);
                     
                 } catch (e) {
