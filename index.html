@@ -206,24 +206,17 @@ body {
 .time-real-sub { font-size: 2.9vh; color: #888888; font-weight: normal; margin-left: 6px; text-shadow: none; }
 
 /* ==========================================
-   新版巴士排版專屬 CSS 樣式
+   全新優化：巴士無目的地、大字體排版
    ========================================== */
-.bus-route-no {
-    font-size: 3.2vh;
+.bus-route-no-large {
+    font-size: 4.4vh; /* 顯著放大路線號碼，更清晰目視 */
     font-weight: bold;
     color: #FF3366;
-    width: 14%;
+    width: 24%;
+    white-space: nowrap;
 }
-.dest-bus-new { 
-    font-size: 3.0vh; 
-    color: #FFFFFF; 
-    font-weight: bold; 
-    white-space: nowrap; 
-    overflow: hidden; 
-    width: 16%; 
-}
-/* 三班車的水平大容器，佔據剩餘 62% 寬度 */
-.bus-eta-wrapper {
+/* 移除了目的地後，ETA 大容器佔據剩餘 68% 的廣闊寬度 */
+.bus-eta-wrapper-full {
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -232,12 +225,12 @@ body {
     -webkit-flex-direction: row;
     flex-direction: row;
     justify-content: space-between;
-    width: 62%;
+    width: 68%;
 }
-/* 每班車獨立的小區塊 */
-.bus-eta-block {
+/* 放大後的三班車獨立時間區塊 */
+.bus-eta-block-large {
     width: 32%;
-    font-size: 2.5vh; /* 最佳化字體大小以切合水平排版 */
+    font-size: 3.2vh; /* 放大到站倒數時間 */
     font-weight: bold;
     font-family: monospace;
     color: #FF99CC;
@@ -245,12 +238,12 @@ body {
     text-align: right;
     white-space: nowrap;
 }
-.bus-eta-block .time-real-sub {
-    font-size: 2.1vh;
+.bus-eta-block-large .time-real-sub {
+    font-size: 2.5vh; /* 放大括號內真實時間 */
+    margin-left: 4px;
 }
-/* 空置狀態樣式 */
-.bus-empty-msg {
-    font-size: 3vh;
+.bus-empty-msg-large {
+    font-size: 3.2vh;
     color: #444444;
 }
 
@@ -309,11 +302,10 @@ body {
                 </div>
             </div>
 
-            <!-- 修改標題為：九巴 天祐苑站 -->
             <div class="direction-group bus-panel">
                 <div class="direction-title title-bus">九巴 天祐苑站</div>
                 <div class="train-list-container" id="bus-flat-list">
-                    <!-- 核心第一列用來呈現 3 班車，另外兩列維持空置設計 -->
+                    <!-- 核心第一列無目的地大字體改版，二三列留空 -->
                 </div>
             </div>
         </div>
@@ -505,7 +497,7 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：九巴大改版（第一列同時並排顯示三班車）
+// 右邊下方：九巴大改版（無目的地、超清晰大字體）
 // ==========================================
 function renderRealBusPIDS(etas) {
     var listContainer = document.getElementById('bus-flat-list');
@@ -527,19 +519,18 @@ function renderRealBusPIDS(etas) {
 
     var htmlString = '';
     
-    // 【第一列】：核心資訊列，完整盛裝 276A 的三班車資訊
+    // 【第一列】：核心資訊列，移除目的地，放大路線號碼與到站時間
     htmlString += '<div class="train-row" style="height:33.3%;">';
     htmlString += '<div class="seq">1</div>';
-    htmlString += '<div class="bus-route-no">276A</div>';
-    htmlString += '<div class="dest-bus-new">往上水</div>';
+    htmlString += '<div class="bus-route-no-large">276A</div>';
     
-    // 建立裝載三班車 ETA 的右側區塊
-    htmlString += '<div class="bus-eta-wrapper">';
+    // 建立裝載三班車 ETA 的右側滿寬度大容器
+    htmlString += '<div class="bus-eta-wrapper-full">';
     
     if (validEtas.length === 0) {
-        htmlString += '<div class="bus-empty-msg">資料更新中...</div>';
+        htmlString += '<div class="bus-empty-msg-large">資料更新中...</div>';
     } else {
-        // 最多並排處理 3 班車
+        // 並排處理 3 班車
         for (var b = 0; b < 3; b++) {
             if (b < validEtas.length) {
                 var busItem = validEtas[b];
@@ -557,30 +548,27 @@ function renderRealBusPIDS(etas) {
                 var time24H = formatIsoTo24H(busItem.eta);
                 displayString += '<span class="time-real-sub">(' + time24H + ')</span>';
                 
-                htmlString += '<div class="bus-eta-block">' + displayString + '</div>';
+                htmlString += '<div class="bus-eta-block-large">' + displayString + '</div>';
             } else {
-                // 有班次但不足 3 班時補上空白符號
-                htmlString += '<div class="bus-eta-block">--</div>';
+                htmlString += '<div class="bus-eta-block-large">--</div>';
             }
         }
     }
-    htmlString += '</div>'; // .bus-eta-wrapper 結束
+    htmlString += '</div>'; // .bus-eta-wrapper-full 結束
     htmlString += '</div>'; // 第一列結束
 
     // 【第二列】：暫時空置
     htmlString += '<div class="train-row" style="height:33.3%;">' +
         '<div class="seq">2</div>' +
-        '<div class="bus-route-no" style="color:#444;">--</div>' +
-        '<div class="dest-bus-new" style="color:#444;">--</div>' +
-        '<div class="bus-eta-wrapper"><div class="bus-eta-block" style="color:#444; width:100%;">--</div></div>' +
+        '<div class="bus-route-no-large" style="color:#444;">--</div>' +
+        '<div class="bus-eta-wrapper-full"><div class="bus-eta-block-large" style="color:#444; width:100%;">--</div></div>' +
         '</div>';
 
     // 【第三列】：暫時空置
     htmlString += '<div class="train-row" style="height:33.3%;">' +
         '<div class="seq">3</div>' +
-        '<div class="bus-route-no" style="color:#444;">--</div>' +
-        '<div class="dest-bus-new" style="color:#444;">--</div>' +
-        '<div class="bus-eta-wrapper"><div class="bus-eta-block" style="color:#444; width:100%;">--</div></div>' +
+        '<div class="bus-route-no-large" style="color:#444;">--</div>' +
+        '<div class="bus-eta-wrapper-full"><div class="bus-eta-block-large" style="color:#444; width:100%;">--</div></div>' +
         '</div>';
 
     listContainer.innerHTML = htmlString;
@@ -607,7 +595,6 @@ function loadBusSchedule() {
                     for (var i = 0; i < json.data.length; i++) {
                         var item = json.data[i];
                         var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
-                        // 取天祐苑站 (Seq 9) 往上水方向的即時班次
                         if (item.dir === 'O' && item.seq == 9 && item.eta && !isCancelled) {
                             etas.push(item);
                         }
