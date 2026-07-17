@@ -206,16 +206,15 @@ body {
 .time-real-sub { font-size: 2.9vh; color: #888888; font-weight: normal; margin-left: 6px; text-shadow: none; }
 
 /* ==========================================
-   全新優化：巴士無目的地、大字體排版
+   最新調整：優化字體級距與直接消失機制
    ========================================== */
-.bus-route-no-large {
-    font-size: 4.4vh; /* 顯著放大路線號碼，更清晰目視 */
+.bus-route-no-medium {
+    font-size: 3.2vh; /* 縮小班次號碼，視覺更協調 */
     font-weight: bold;
     color: #FF3366;
-    width: 24%;
+    width: 20%;
     white-space: nowrap;
 }
-/* 移除了目的地後，ETA 大容器佔據剩餘 68% 的廣闊寬度 */
 .bus-eta-wrapper-full {
     display: -webkit-box;
     display: -webkit-flex;
@@ -225,12 +224,11 @@ body {
     -webkit-flex-direction: row;
     flex-direction: row;
     justify-content: space-between;
-    width: 68%;
+    width: 72%;
 }
-/* 放大後的三班車獨立時間區塊 */
-.bus-eta-block-large {
+.bus-eta-block-xlarge {
     width: 32%;
-    font-size: 3.2vh; /* 放大到站倒數時間 */
+    font-size: 4.0vh; /* 放大到站剩餘時間 */
     font-weight: bold;
     font-family: monospace;
     color: #FF99CC;
@@ -238,9 +236,9 @@ body {
     text-align: right;
     white-space: nowrap;
 }
-.bus-eta-block-large .time-real-sub {
-    font-size: 2.5vh; /* 放大括號內真實時間 */
-    margin-left: 4px;
+.bus-eta-block-xlarge .time-real-sub {
+    font-size: 3.2vh; /* 同步放大真實時間 */
+    margin-left: 6px;
 }
 .bus-empty-msg-large {
     font-size: 3.2vh;
@@ -305,7 +303,7 @@ body {
             <div class="direction-group bus-panel">
                 <div class="direction-title title-bus">九巴 天祐苑站</div>
                 <div class="train-list-container" id="bus-flat-list">
-                    <!-- 核心第一列無目的地大字體改版，二三列留空 -->
+                    <!-- 巴士第一列優化排版 -->
                 </div>
             </div>
         </div>
@@ -497,7 +495,7 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：九巴大改版（無目的地、超清晰大字體）
+// 右邊下方：九巴大改版（字體最佳化、即時消失機制）
 // ==========================================
 function renderRealBusPIDS(etas) {
     var listContainer = document.getElementById('bus-flat-list');
@@ -506,11 +504,11 @@ function renderRealBusPIDS(etas) {
     var nowTime = Date.now();
     var validEtas = [];
 
-    // 精確過濾：超過 30 秒抵達的直接消除
+    // 精確過濾：只要到站時間小於或等於當前時間 (即抵達時間已到 0秒或已過)，就馬上消失隱藏
     if (etas && etas.length > 0) {
         for (var k = 0; k < etas.length; k++) {
             var itemTime = new Date(etas[k].eta).getTime();
-            if (nowTime - itemTime > 30000) {
+            if (nowTime >= itemTime) {
                 continue; 
             }
             validEtas.push(etas[k]);
@@ -519,18 +517,17 @@ function renderRealBusPIDS(etas) {
 
     var htmlString = '';
     
-    // 【第一列】：核心資訊列，移除目的地，放大路線號碼與到站時間
+    // 【第一列】：核心資訊列
     htmlString += '<div class="train-row" style="height:33.3%;">';
     htmlString += '<div class="seq">1</div>';
-    htmlString += '<div class="bus-route-no-large">276A</div>';
+    htmlString += '<div class="bus-route-no-medium">276A</div>';
     
-    // 建立裝載三班車 ETA 的右側滿寬度大容器
     htmlString += '<div class="bus-eta-wrapper-full">';
     
     if (validEtas.length === 0) {
         htmlString += '<div class="bus-empty-msg-large">資料更新中...</div>';
     } else {
-        // 並排處理 3 班車
+        // 並排盛裝 3 班車
         for (var b = 0; b < 3; b++) {
             if (b < validEtas.length) {
                 var busItem = validEtas[b];
@@ -538,37 +535,32 @@ function renderRealBusPIDS(etas) {
                 var diffMs = etaDate.getTime() - nowTime;
                 var diffMins = Math.floor(diffMs / 60000);
                 
-                var displayString = '';
-                if (diffMs <= 0) {
-                    displayString = '<span class="status-flash">到站中</span>';
-                } else {
-                    displayString = diffMins + '分';
-                }
-                
+                // 由於前面已經篩掉了 diffMs <= 0 的資料，這裡必定為正值分鐘數
+                var displayString = diffMins + '分';
                 var time24H = formatIsoTo24H(busItem.eta);
                 displayString += '<span class="time-real-sub">(' + time24H + ')</span>';
                 
-                htmlString += '<div class="bus-eta-block-large">' + displayString + '</div>';
+                htmlString += '<div class="bus-eta-block-xlarge">' + displayString + '</div>';
             } else {
-                htmlString += '<div class="bus-eta-block-large">--</div>';
+                htmlString += '<div class="bus-eta-block-xlarge">--</div>';
             }
         }
     }
-    htmlString += '</div>'; // .bus-eta-wrapper-full 結束
-    htmlString += '</div>'; // 第一列結束
+    htmlString += '</div>'; 
+    htmlString += '</div>'; 
 
     // 【第二列】：暫時空置
     htmlString += '<div class="train-row" style="height:33.3%;">' +
         '<div class="seq">2</div>' +
-        '<div class="bus-route-no-large" style="color:#444;">--</div>' +
-        '<div class="bus-eta-wrapper-full"><div class="bus-eta-block-large" style="color:#444; width:100%;">--</div></div>' +
+        '<div class="bus-route-no-medium" style="color:#444;">--</div>' +
+        '<div class="bus-eta-wrapper-full"><div class="bus-eta-block-xlarge" style="color:#444; width:100%;">--</div></div>' +
         '</div>';
 
     // 【第三列】：暫時空置
     htmlString += '<div class="train-row" style="height:33.3%;">' +
         '<div class="seq">3</div>' +
-        '<div class="bus-route-no-large" style="color:#444;">--</div>' +
-        '<div class="bus-eta-wrapper-full"><div class="bus-eta-block-large" style="color:#444; width:100%;">--</div></div>' +
+        '<div class="bus-route-no-medium" style="color:#444;">--</div>' +
+        '<div class="bus-eta-wrapper-full"><div class="bus-eta-block-xlarge" style="color:#444; width:100%;">--</div></div>' +
         '</div>';
 
     listContainer.innerHTML = htmlString;
