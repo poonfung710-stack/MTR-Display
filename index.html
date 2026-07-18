@@ -89,21 +89,23 @@ body {
     box-sizing: border-box;
 }
 
+/* 左側港鐵面板間距調緊 */
 .mtr-panel {
-    height: 48%;
-    margin-bottom: 4%;
+    height: 49%;
+    margin-bottom: 1.5vh;
 }
 .mtr-panel:last-child {
     margin-bottom: 0;
 }
 
+/* 右側輕鐵與巴士高度重新比例分配 */
 .lrt-panel {
-    height: 62%; 
-    margin-bottom: 4%;
+    height: 58%; /* 微調輕鐵高度佔比 */
+    margin-bottom: 1.5vh; /* 縮小中間的大段空隙與間距 */
 }
 
 .bus-panel {
-    height: 34%; 
+    height: 38%; /* 放大巴士面板，創造出容納第 4 行的垂直空間 */
     margin-bottom: 0;
 }
 
@@ -198,7 +200,7 @@ body {
     text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); 
 }
 
-/* 右側輕鐵優化：靠右緊湊排版 */
+/* 右側輕鐵欄位排版 */
 .lrt-no { font-size: 3.2vh; font-weight: bold; color: #FF9900; width: 12%; }
 .dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 38%; }
 .mins-lrt { 
@@ -208,19 +210,19 @@ body {
     color: #FFCC00; 
     text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); 
     text-align: right; 
-    width: 26%; /* 調整寬度並配合右側，讓它向右靠近 */
+    width: 26%; 
 }
 .time-lrt { 
-    font-size: 2.5vh; /* 縮細字體 */
+    font-size: 2.5vh; 
     font-weight: normal; 
     font-family: monospace; 
-    color: #888888; /* 改回與巴士一樣的暗灰色 */
-    text-shadow: none; /* 移除發光特效 */
+    color: #888888; 
+    text-shadow: none; 
     text-align: right; 
     width: 16%; 
 }
 
-/* 巴士優化：橫向一體化排版樣式 */
+/* 巴士優化：橫向排版樣式 */
 .bus-route-no-medium {
     font-size: 3.2vh; 
     font-weight: bold;
@@ -524,7 +526,7 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：巴士三路線
+// 右邊下方：巴士四路線核心 (高度自適應為 25% x 4)
 // ==========================================
 function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     var validEtas = [];
@@ -538,7 +540,7 @@ function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
         }
     }
 
-    var html = '<div class="train-row" style="height:33.3%;">';
+    var html = '<div class="train-row" style="height:25%;">'; /* 每行高度從 33.3% 轉為 25% */
     html += '<div class="seq">' + seqNumber + '</div>';
     html += '<div class="bus-route-no-medium">' + routeName + '</div>';
     html += '<div class="bus-eta-wrapper-full">';
@@ -579,9 +581,17 @@ function renderRealBusPIDS() {
     var nowTime = Date.now();
     var htmlString = '';
     
+    // 渲染前 3 項正常巴士路線
     htmlString += generateBusRowHtml(1, "276A", cachedBusData["276A"], nowTime);
     htmlString += generateBusRowHtml(2, "B1", cachedBusData["B1"], nowTime);
     htmlString += generateBusRowHtml(3, "A37", cachedBusData["A37"], nowTime);
+
+    // 渲染第 4 項：完全空白行，只留下序號 4 與底部虛線，高度完美對齊 25%
+    htmlString += '<div class="train-row" style="height:25%;">' +
+        '<div class="seq">4</div>' +
+        '<div class="bus-route-no-medium" style="color:#333;">--</div>' +
+        '<div class="bus-eta-wrapper-full"></div>' +
+        '</div>';
 
     listContainer.innerHTML = htmlString;
 }
