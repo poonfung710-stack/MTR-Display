@@ -206,7 +206,7 @@ body {
 .time-real-sub { font-size: 2.9vh; color: #888888; font-weight: normal; margin-left: 6px; text-shadow: none; }
 
 /* ==========================================
-   方案 A：九巴區塊全新上下雙層排版樣式
+   方案 A：九巴區塊上下雙層排版樣式
    ========================================== */
 .bus-route-no-medium {
     font-size: 3.2vh; 
@@ -226,7 +226,7 @@ body {
     justify-content: space-between;
     width: 74%;
 }
-/* 每一班車的獨立容器：改為上下堆疊 */
+/* 每一班車的獨立容器：上下堆疊 */
 .bus-time-stack {
     width: 33.33%;
     display: -webkit-box;
@@ -257,7 +257,7 @@ body {
     font-weight: normal;
     font-family: monospace;
     line-height: 1.1;
-    margin-top: 0.4vh; /* 增加上下微小間距 */
+    margin-top: 0.4vh;
     white-space: nowrap;
 }
 .bus-empty-msg-large {
@@ -323,7 +323,7 @@ body {
             <div class="direction-group bus-panel">
                 <div class="direction-title title-bus">九巴 天祐苑站</div>
                 <div class="train-list-container" id="bus-flat-list">
-                    <!-- 巴士第一列優化排版 -->
+                    <!-- 巴士優化排版（支援 276A 及 B1） -->
                 </div>
             </div>
         </div>
@@ -331,7 +331,7 @@ body {
     </div>
 
     <div class="footer-bar">
-        PIDS 智能資訊屏 | 輕鐵8班/九巴3班 最佳化版 | 自動更新
+        PIDS 智能資訊屏 | 輕鐵8班/九巴雙路線最佳化版 | 自動更新
     </div>
 
 <script>
@@ -352,7 +352,11 @@ function padZero(num) {
     return num < 10 ? '0' + num : num;
 }
 
-var cachedBusData = [];
+// 支援多路線的巴士快取結構
+var cachedBusData = {
+    "276A": [],
+    "B1": []
+};
 
 function updateClock() {
     var clockEl = document.getElementById('clock');
@@ -363,9 +367,8 @@ function updateClock() {
     var seconds = padZero(now.getSeconds());
     clockEl.innerText = hours + ':' + minutes + ':' + seconds;
     
-    if (cachedBusData && cachedBusData.length > 0) {
-        renderRealBusPIDS(cachedBusData);
-    }
+    // 同時渲染快取中的巴士數據
+    renderRealBusPIDS();
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -515,38 +518,26 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：九巴（方案 A 上下雙層渲染邏輯）
+// 右邊下方：九巴雙路線優化渲染（276A & B1）
 // ==========================================
-function renderRealBusPIDS(etas) {
-    var listContainer = document.getElementById('bus-flat-list');
-    if (!listContainer) return;
-    
-    var nowTime = Date.now();
+function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     var validEtas = [];
-
-    if (etas && etas.length > 0) {
-        for (var k = 0; k < etas.length; k++) {
-            var itemTime = new Date(etas[k].eta).getTime();
-            if (nowTime >= itemTime) {
-                continue; 
-            }
-            validEtas.push(etas[k]);
+    if (rawEtas && rawEtas.length > 0) {
+        for (var k = 0; k < rawEtas.length; k++) {
+            var itemTime = new Date(rawEtas[k].eta).getTime();
+            if (nowTime >= itemTime) continue; 
+            validEtas.push(rawEtas[k]);
         }
     }
 
-    var htmlString = '';
-    
-    // 【第一列】：核心資訊列
-    htmlString += '<div class="train-row" style="height:33.3%;">';
-    htmlString += '<div class="seq">1</div>';
-    htmlString += '<div class="bus-route-no-medium">276A</div>';
-    
-    htmlString += '<div class="bus-eta-wrapper-full">';
+    var html = '<div class="train-row" style="height:33.3%;">';
+    html += '<div class="seq">' + seqNumber + '</div>';
+    html += '<div class="bus-route-no-medium">' + routeName + '</div>';
+    html += '<div class="bus-eta-wrapper-full">';
     
     if (validEtas.length === 0) {
-        htmlString += '<div class="bus-empty-msg-large" style="width:100%; text-align:right;">資料更新中...</div>';
+        html += '<div class="bus-empty-msg-large" style="width:100%; text-align:right;">資料更新中...</div>';
     } else {
-        // 並排盛裝 3 班車，內部採雙層堆疊
         for (var b = 0; b < 3; b++) {
             if (b < validEtas.length) {
                 var busItem = validEtas[b];
@@ -557,29 +548,34 @@ function renderRealBusPIDS(etas) {
                 var topMinsText = diffMins + '分';
                 var bottomTimeText = formatIsoTo24H(busItem.eta);
                 
-                htmlString += '<div class="bus-time-stack">';
-                htmlString += '  <div class="bus-mins-top">' + topMinsText + '</div>';
-                htmlString += '  <div class="bus-real-bottom">' + bottomTimeText + '</div>';
-                htmlString += '</div>';
+                html += '<div class="bus-time-stack">';
+                html += '  <div class="bus-mins-top">' + topMinsText + '</div>';
+                html += '  <div class="bus-real-bottom">' + bottomTimeText + '</div>';
+                html += '</div>';
             } else {
-                htmlString += '<div class="bus-time-stack">';
-                htmlString += '  <div class="bus-mins-top">--</div>';
-                htmlString += '  <div class="bus-real-bottom">--:--</div>';
+                html += '<div class="bus-time-stack">';
+                html += '  <div class="bus-mins-top">--</div>';
+                html += '  <div class="bus-real-bottom">--:--</div>';
                 htmlString += '</div>';
             }
         }
     }
-    htmlString += '</div>'; 
-    htmlString += '</div>'; 
+    html += '</div></div>';
+    return html;
+}
 
-    // 【第二列】：暫時空置
-    htmlString += '<div class="train-row" style="height:33.3%;">' +
-        '<div class="seq">2</div>' +
-        '<div class="bus-route-no-medium" style="color:#444;">--</div>' +
-        '<div class="bus-eta-wrapper-full">' +
-        '  <div class="bus-time-stack"><div class="bus-mins-top" style="color:#444;">--</div><div class="bus-real-bottom" style="color:#222;">--:--</div></div>' +
-        '</div>' +
-        '</div>';
+function renderRealBusPIDS() {
+    var listContainer = document.getElementById('bus-flat-list');
+    if (!listContainer) return;
+    
+    var nowTime = Date.now();
+    var htmlString = '';
+    
+    // 【第一列】：276A
+    htmlString += generateBusRowHtml(1, "276A", cachedBusData["276A"], nowTime);
+
+    // 【第二列】：B1 
+    htmlString += generateBusRowHtml(2, "B1", cachedBusData["B1"], nowTime);
 
     // 【第三列】：暫時空置
     htmlString += '<div class="train-row" style="height:33.3%;">' +
@@ -593,8 +589,8 @@ function renderRealBusPIDS(etas) {
     listContainer.innerHTML = htmlString;
 }
 
-function loadBusSchedule() {
-    var route = "276A";
+// 支援多路線異步讀取
+function loadSingleBusRoute(route, seqId, dirCode) {
     var url = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/' + route + '/1';
     
     var xhr = new XMLHttpRequest();
@@ -605,8 +601,7 @@ function loadBusSchedule() {
                 try {
                     var json = JSON.parse(xhr.responseText);
                     if (!json || !json.data) {
-                        cachedBusData = [];
-                        renderRealBusPIDS([]);
+                        cachedBusData[route] = [];
                         return;
                     }
                     
@@ -614,7 +609,8 @@ function loadBusSchedule() {
                     for (var i = 0; i < json.data.length; i++) {
                         var item = json.data[i];
                         var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
-                        if (item.dir === 'O' && item.seq == 9 && item.eta && !isCancelled) {
+                        // 276A 天祐苑為往上水方向 seq 9; B1 天祐苑為往落馬洲方向 seq 9
+                        if (item.dir === dirCode && item.seq == seqId && item.eta && !isCancelled) {
                             etas.push(item);
                         }
                     }
@@ -623,26 +619,29 @@ function loadBusSchedule() {
                         return new Date(a.eta) - new Date(b.eta);
                     });
                     
-                    cachedBusData = etas;
-                    renderRealBusPIDS(cachedBusData);
+                    cachedBusData[route] = etas;
                     
                 } catch (e) {
-                    console.error("九巴 ETA API 解析錯誤:", e);
-                    cachedBusData = [];
-                    renderRealBusPIDS([]);
+                    console.error(route + " ETA API 解析錯誤:", e);
+                    cachedBusData[route] = [];
                 }
             } else {
-                cachedBusData = [];
-                renderRealBusPIDS([]);
+                cachedBusData[route] = [];
             }
         }
     };
     xhr.send();
 }
 
-renderRealBusPIDS([]);
-loadBusSchedule();
-setInterval(loadBusSchedule, 10000);
+function loadAllBusSchedules() {
+    // 讀取 276A (去程 O, 天祐苑站序 9)
+    loadSingleBusRoute("276A", 9, "O");
+    // 讀取 B1 (去程 O, 天祐苑站序 9)
+    loadSingleBusRoute("B1", 9, "O");
+}
+
+loadAllBusSchedules();
+setInterval(loadAllBusSchedules, 10000);
 
 // ==========================================
 // 左邊：港鐵資料聯網核心
