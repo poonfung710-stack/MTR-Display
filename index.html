@@ -564,7 +564,7 @@ function renderRealBusPIDS() {
 }
 
 function loadAllBusSchedules() {
-    // 1. 276A 成功核心程式碼（保持 100% 不變）
+    // 1. 276A 成功核心程式碼（完美保留不變）
     var url276A = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/276A/1';
     var xhr276A = new XMLHttpRequest();
     xhr276A.open('GET', url276A, true);
@@ -591,7 +591,7 @@ function loadAllBusSchedules() {
     };
     xhr276A.send();
 
-    // 2. B1 改版：完全複製 276A 邏輯的「單一實體站牌自動錨定法」，消滅重複時間
+    // 2. B1 改版：修正精確鎖定為第四個車站 (seq == 4)
     loadB1PerfectSchedule();
 }
 
@@ -607,39 +607,39 @@ function loadB1PerfectSchedule() {
                     var filteredB1 = [];
                     var targetStopId = "";
                     
-                    // 【步驟一】：從常規去程中，自動找出天祐苑站的唯一實體站牌 ID（固定為第 2 站）
+                    // 【步驟一】：從常規去程中，自動找出天祐苑站的唯一實體站牌 ID（精確修正為第 4 站）
                     for (var i = 0; i < json.data.length; i++) {
                         var item = json.data[i];
-                        if (item.dir === "O" && item.seq == 2) {
-                            targetStopId = item.stop; // 鎖定該物理站牌的專屬 Hash 代碼
+                        if (item.dir === "O" && item.seq == 4) {
+                            targetStopId = item.stop; // 鎖定天祐苑物理站牌的專屬 Hash 代碼
                             break;
                         }
                     }
 
-                    // 【步驟二】：用這個唯一的實體站牌 ID 做精確過濾，徹底解決「一車多報」導致每分鐘都有車的 Bug
+                    // 【步驟二】：用這個唯一的實體站牌 ID 做單點過濾，消滅一車多報的重疊 Bug
                     for (var i = 0; i < json.data.length; i++) {
                         var item = json.data[i];
                         var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
                         
                         if (item.eta && !isCancelled) {
                             if (targetStopId) {
-                                // 只要站牌 ID 完全一致就採信（這樣能完美兼顧常規與特別班次，且各計為一輛車）
+                                // 只要站牌 ID 完全一致就採信（可完美兼容各班次，且一車只計一次）
                                 if (item.stop === targetStopId) {
                                     filteredB1.push(item);
                                 }
                             } else {
-                                // 極端防禦 fallback：如果沒抓到 ID，就直接學 276A 鎖定單一序號 2
-                                if (item.dir === "O" && item.seq == 2) {
+                                // 極端防禦 fallback：如果沒抓到 ID，就直接鎖定單一序號 4
+                                if (item.dir === "O" && item.seq == 4) {
                                     filteredB1.push(item);
                                 }
                             }
                         }
                     }
 
-                    // 依時間線性排序（完美對齊下三班車）
+                    // 依時間線性排序（精準對齊下三班車）
                     filteredB1.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
                     
-                    // 為了確保萬無一失，利用物件做時間去重（同一分鐘只保留最早的那筆資料）
+                    // 利用時間去重（同一分鐘只保留最早的那筆資料，確保面板數據純淨）
                     var finalB1 = [];
                     var seenTimes = {};
                     for (var j = 0; j < filteredB1.length; j++) {
