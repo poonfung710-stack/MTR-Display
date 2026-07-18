@@ -60,9 +60,9 @@ body {
     line-height: 1.2; 
 }
 
-/* 主要分欄區域 */
+/* 主要分欄區域：高度調整為 90.5vh 填補移除頁尾後的空間 */
 .main-content {
-    height: 88vh; 
+    height: 90.5vh; 
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -275,15 +275,6 @@ body {
 
 @-webkit-keyframes blink { 0% { opacity: 1.0; } 50% { opacity: 0.3; } 100% { opacity: 1.0; } }
 @keyframes blink { 0% { opacity: 1.0; } 50% { opacity: 0.3; } 100% { opacity: 1.0; } }
-
-.footer-bar {
-    height: 3vh;
-    line-height: 3vh;
-    text-align: right;
-    font-size: 1.6vh;
-    color: #444;
-    box-sizing: border-box;
-}
 </style>
 </head>
 
@@ -328,10 +319,6 @@ body {
             </div>
         </div>
 
-    </div>
-
-    <div class="footer-bar">
-        PIDS 智能資訊屏 | 輕鐵8班/九巴雙路線最佳化版 | 自動更新
     </div>
 
 <script>
@@ -556,7 +543,7 @@ function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
                 html += '<div class="bus-time-stack">';
                 html += '  <div class="bus-mins-top">--</div>';
                 html += '  <div class="bus-real-bottom">--:--</div>';
-                htmlString += '</div>';
+                html += '</div>';
             }
         }
     }
@@ -609,7 +596,6 @@ function loadSingleBusRoute(route, seqId, dirCode) {
                     for (var i = 0; i < json.data.length; i++) {
                         var item = json.data[i];
                         var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
-                        // 276A 天祐苑為往上水方向 seq 9; B1 天祐苑為往落馬洲方向 seq 9
                         if (item.dir === dirCode && item.seq == seqId && item.eta && !isCancelled) {
                             etas.push(item);
                         }
@@ -634,9 +620,7 @@ function loadSingleBusRoute(route, seqId, dirCode) {
 }
 
 function loadAllBusSchedules() {
-    // 讀取 276A (去程 O, 天祐苑站序 9)
     loadSingleBusRoute("276A", 9, "O");
-    // 讀取 B1 (去程 O, 天祐苑站序 9)
     loadSingleBusRoute("B1", 9, "O");
 }
 
