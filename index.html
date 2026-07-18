@@ -285,15 +285,13 @@ body {
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往屯門方向</div>
                 <div class="train-list-container" id="tuen-mun-list">
-                    <!-- 初始預設空行 -->
-                </div>
+                    </div>
             </div>
 
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往烏溪沙方向</div>
                 <div class="train-list-container" id="wu-kai-sha-list">
-                    <!-- 初始預設空行 -->
-                </div>
+                    </div>
             </div>
         </div>
 
@@ -301,15 +299,13 @@ body {
             <div class="direction-group lrt-panel">
                 <div class="direction-title title-lrt">輕鐵 天慈站</div>
                 <div class="train-list-container" id="lrt-flat-list">
-                    <!-- 初始預設空行 -->
-                </div>
+                    </div>
             </div>
 
             <div class="direction-group bus-panel">
-                <div class="direction-title title-bus">巴士綜合資訊板</div>
+                <div class="direction-title title-bus">巴士 天祐苑站</div>
                 <div class="train-list-container" id="bus-flat-list">
-                    <!-- 巴士優化排版 -->
-                </div>
+                    </div>
             </div>
         </div>
 
@@ -502,8 +498,8 @@ function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
         for (var k = 0; k < rawEtas.length; k++) {
             var itemTime = new Date(rawEtas[k].eta).getTime();
             
-            // 如果當前時間大於巴士預計到站時間「30秒 (30000毫秒)」以上，則過濾清除
-            if (nowTime >= (itemTime + 30000)) {
+            // 核心修正：當前時間如果大於預計到站時間「10秒 (10000毫秒)」以上，則過濾清除
+            if (nowTime >= (itemTime + 10000)) {
                 continue; 
             }
             validEtas.push(rawEtas[k]);
@@ -557,7 +553,7 @@ function renderRealBusPIDS() {
     // 第二列：B1 (天祐苑站)
     htmlString += generateBusRowHtml(2, "B1", cachedBusData["B1"], nowTime);
 
-    // 第三列：A37 (聚星樓站 - 精確對齊第 14 站)
+    // 第三列：A37 (聚星樓站)
     htmlString += generateBusRowHtml(3, "A37", cachedBusData["A37"], nowTime);
 
     listContainer.innerHTML = htmlString;
@@ -636,7 +632,6 @@ function loadAllBusSchedules() {
 
                     filteredA37.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
                     
-                    // 去除同時間重複班次
                     var finalA37 = [];
                     var seenTimes = {};
                     for (var j = 0; j < filteredA37.length; j++) {
