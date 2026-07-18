@@ -62,7 +62,7 @@ body {
 
 /* 主要分欄區域 */
 .main-content {
-    height: 88vh; /* 微調高度給足下方緩衝空間 */
+    height: 90.5vh; 
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -71,7 +71,7 @@ body {
     -webkit-flex-direction: row;
     flex-direction: row;
     justify-content: space-between;
-    margin: 2vh 0 0 0; 
+    margin: 1.5vh 0 0 0; 
     box-sizing: border-box;
 }
 
@@ -89,27 +89,23 @@ body {
     box-sizing: border-box;
 }
 
-/* 左側港鐵面板平衡 */
+/* 左側港鐵面板間距 */
 .mtr-panel {
     height: 49%;
-    margin-bottom: 2vh;
+    margin-bottom: 1.5vh;
 }
 .mtr-panel:last-child {
     margin-bottom: 0;
 }
 
-/* 【關鍵對齊修正】右側改用 flex 權重分配，保證總高度與左側百分之百齊平 */
+/* 【關鍵修正】重新微調右側高度比例，確保 4 行巴士與左側精準對齊 */
 .lrt-panel {
-    -webkit-box-flex: 1.25;
-    -webkit-flex: 1.25;
-    flex: 1.25; /* 輕鐵佔比 */
-    margin-bottom: 2vh; 
+    height: 55%; 
+    margin-bottom: 1.5vh; 
 }
 
 .bus-panel {
-    -webkit-box-flex: 1;
-    -webkit-flex: 1;
-    flex: 1; /* 巴士佔比，此比例比之前大，成功將巴士版面稍微放大 */
+    height: 42%; 
     margin-bottom: 0;
 }
 
@@ -142,9 +138,7 @@ body {
 
 /* 列表容器 */
 .train-list-container {
-    -webkit-box-flex: 1;
-    -webkit-flex: 1;
-    flex: 1; /* 讓列表自動填滿剩餘的卡片空間 */
+    height: 88%; 
     display: -webkit-box;
     display: -webkit-flex;
     display: flex;
@@ -228,9 +222,9 @@ body {
     width: 16%; 
 }
 
-/* 巴士橫向排版樣式（微調字體放大，搭配面板放大效果） */
+/* 巴士橫向排版樣式 */
 .bus-route-no-medium {
-    font-size: 3.5vh; /* 從 3.2vh 放大至 3.5vh */
+    font-size: 3.2vh; 
     font-weight: bold;
     color: #FF3366;
     width: 16%;
@@ -262,7 +256,7 @@ body {
     padding-right: 4px;
 }
 .bus-mins-inline {
-    font-size: 3.2vh; /* 從 2.9vh 放大至 3.2vh */
+    font-size: 2.9vh; 
     font-weight: bold;
     font-family: monospace;
     color: #FF99CC;
@@ -270,7 +264,7 @@ body {
     white-space: nowrap;
 }
 .bus-real-inline {
-    font-size: 2.6vh; /* 從 2.4vh 放大至 2.6vh */
+    font-size: 2.4vh; 
     color: #888888; 
     font-weight: normal;
     font-family: monospace;
@@ -278,7 +272,7 @@ body {
     white-space: nowrap;
 }
 .bus-empty-msg-large {
-    font-size: 3.5vh;
+    font-size: 3.2vh;
     color: #444444;
 }
 
@@ -356,7 +350,7 @@ function padZero(num) {
     return num < 10 ? '0' + num : num;
 }
 
-// 全局數據快取
+// 全局數據快取（加入了第四個巴士 269D 作為範例，可自行替換）
 var cachedLrtData = [];
 var cachedBusData = { "276A": [], "B1": [], "A37": [], "269D": [] };
 var cachedMtrData = { UP: [], DOWN: [] }; 
@@ -655,7 +649,7 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：巴士四路線動態刷新（極致對齊版）
+// 右邊下方：巴士四路線動態刷新（精準對齊版）
 // ==========================================
 function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     var validEtas = [];
@@ -669,6 +663,7 @@ function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
         }
     }
 
+    // 高度強制設為 25%，四行剛好 100% 填滿面板
     var html = '<div class="train-row" style="height:25%;">'; 
     html += '<div class="seq">' + seqNumber + '</div>';
     html += '<div class="bus-route-no-medium">' + routeName + '</div>';
@@ -710,10 +705,11 @@ function renderRealBusPIDS() {
     var nowTime = Date.now();
     var htmlString = '';
     
+    // 輸出完全對齊的 4 個巴士項目
     htmlString += generateBusRowHtml(1, "276A", cachedBusData["276A"], nowTime);
     htmlString += generateBusRowHtml(2, "B1", cachedBusData["B1"], nowTime);
     htmlString += generateBusRowHtml(3, "A37", cachedBusData["A37"], nowTime);
-    htmlString += generateBusRowHtml(4, "269D", cachedBusData["269D"], nowTime);
+    htmlString += generateBusRowHtml(4, "269D", cachedBusData["269D"], nowTime); // 第四項（範例使用269D，可改為其他路線）
 
     listContainer.innerHTML = htmlString;
 }
@@ -802,7 +798,7 @@ function loadAllBusSchedules() {
     };
     xhrA37.send();
 
-    // 269D API
+    // 269D API（第四項數據抓取示範）
     var url269D = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/269D/1';
     var xhr269D = new XMLHttpRequest();
     xhr269D.open('GET', url269D, true);
@@ -815,6 +811,7 @@ function loadAllBusSchedules() {
                     for (var i = 0; i < json.data.length; i++) {
                         var item = json.data[i];
                         var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
+                        // 這裡可以依天祐苑實際 seq/dir 調整，以下為通用過濾
                         if (item.dir === "I" && item.eta && !isCancelled) {
                             etas.push(item);
                         }
