@@ -339,6 +339,7 @@ var cachedBusData = {
     "B1": []
 };
 
+// 每 1 秒刷新右上角時鐘，並同步驅動巴士面板的倒數變化（確保到站 30 秒後能立刻消失）
 function updateClock() {
     var clockEl = document.getElementById('clock');
     if (!clockEl) return;
@@ -489,17 +490,22 @@ function loadLrtSchedule() {
 
 renderRealLrtPIDS([]);
 loadLrtSchedule();
+// 【修正】輕鐵改為每 10 秒刷新一次 API
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：九巴雙路線（高穩定精準渲染）
+// 右邊下方：九巴雙路線（到站過期 30 秒自動切除）
 // ==========================================
 function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     var validEtas = [];
     if (rawEtas && rawEtas.length > 0) {
         for (var k = 0; k < rawEtas.length; k++) {
             var itemTime = new Date(rawEtas[k].eta).getTime();
-            if (nowTime >= itemTime) continue; 
+            
+            // 【核心修正】如果當前時間已經大於巴士預計到站時間「30秒 (30000毫秒)」以上，直接判定已離站跳過
+            if (nowTime >= (itemTime + 30000)) {
+                continue; 
+            }
             validEtas.push(rawEtas[k]);
         }
     }
@@ -519,6 +525,7 @@ function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
                 var diffMs = etaDate.getTime() - nowTime;
                 var diffMins = Math.floor(diffMs / 60000);
                 
+                // 只要倒數少於 0 分鐘（但在 30 秒以內），就顯示為「到達」閃爍狀態
                 var topMinsText = diffMins <= 0 ? '<span class="status-flash">到達</span>' : diffMins + '分';
                 var bottomTimeText = formatIsoTo24H(busItem.eta);
                 
@@ -545,10 +552,10 @@ function renderRealBusPIDS() {
     var nowTime = Date.now();
     var htmlString = '';
     
-    // 【第一列】：276A 穩定渲染
+    // 【第一列】：276A 渲染
     htmlString += generateBusRowHtml(1, "276A", cachedBusData["276A"], nowTime);
 
-    // 【第二列】：B1 穩定渲染
+    // 【第二列】：B1 渲染
     htmlString += generateBusRowHtml(2, "B1", cachedBusData["B1"], nowTime);
 
     // 【第三列】：留空占位面板
@@ -564,7 +571,7 @@ function renderRealBusPIDS() {
 }
 
 function loadAllBusSchedules() {
-    // 1. 276A 成功核心程式碼（完美保留不變）
+    // 1. 276A API 請求
     var url276A = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/276A/1';
     var xhr276A = new XMLHttpRequest();
     xhr276A.open('GET', url276A, true);
@@ -591,7 +598,7 @@ function loadAllBusSchedules() {
     };
     xhr276A.send();
 
-    // 2. B1 改版：修正精確鎖定為第四個車站 (seq == 4)
+    // 2. B1 API 請求 (精確錨定天祐苑第 4 站)
     loadB1PerfectSchedule();
 }
 
@@ -607,28 +614,24 @@ function loadB1PerfectSchedule() {
                     var filteredB1 = [];
                     var targetStopId = "";
                     
-                    // 【步驟一】：從常規去程中，自動找出天祐苑站的唯一實體站牌 ID（精確修正為第 4 站）
                     for (var i = 0; i < json.data.length; i++) {
                         var item = json.data[i];
                         if (item.dir === "O" && item.seq == 4) {
-                            targetStopId = item.stop; // 鎖定天祐苑物理站牌的專屬 Hash 代碼
+                            targetStopId = item.stop; 
                             break;
                         }
                     }
 
-                    // 【步驟二】：用這個唯一的實體站牌 ID 做單點過濾，消滅一車多報的重疊 Bug
                     for (var i = 0; i < json.data.length; i++) {
                         var item = json.data[i];
                         var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
                         
                         if (item.eta && !isCancelled) {
                             if (targetStopId) {
-                                // 只要站牌 ID 完全一致就採信（可完美兼容各班次，且一車只計一次）
                                 if (item.stop === targetStopId) {
                                     filteredB1.push(item);
                                 }
                             } else {
-                                // 極端防禦 fallback：如果沒抓到 ID，就直接鎖定單一序號 4
                                 if (item.dir === "O" && item.seq == 4) {
                                     filteredB1.push(item);
                                 }
@@ -636,10 +639,8 @@ function loadB1PerfectSchedule() {
                         }
                     }
 
-                    // 依時間線性排序（精準對齊下三班車）
                     filteredB1.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
                     
-                    // 利用時間去重（同一分鐘只保留最早的那筆資料，確保面板數據純淨）
                     var finalB1 = [];
                     var seenTimes = {};
                     for (var j = 0; j < filteredB1.length; j++) {
@@ -663,6 +664,7 @@ function loadB1PerfectSchedule() {
 
 // 首次加載與定時循環
 loadAllBusSchedules();
+// 【修正】九巴改為每 10 秒刷新一次 API
 setInterval(loadAllBusSchedules, 10000);
 
 // ==========================================
@@ -771,6 +773,7 @@ function loadMtrSchedule() {
 renderMtrDirection([], "tuen-mun-list");
 renderMtrDirection([], "wu-kai-sha-list");
 loadMtrSchedule();
+// 【修正】屯馬綫改為每 10 秒刷新一次 API
 setInterval(loadMtrSchedule, 10000);
 </script>
 
