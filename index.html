@@ -206,7 +206,7 @@ body {
 .time-real-sub { font-size: 2.9vh; color: #888888; font-weight: normal; margin-left: 6px; text-shadow: none; }
 
 /* ==========================================
-   最新調整：完美收納九巴第一欄時間比例
+   方案 A：九巴區塊全新上下雙層排版樣式
    ========================================== */
 .bus-route-no-medium {
     font-size: 3.2vh; 
@@ -226,19 +226,39 @@ body {
     justify-content: space-between;
     width: 74%;
 }
-.bus-eta-block-xlarge {
+/* 每一班車的獨立容器：改為上下堆疊 */
+.bus-time-stack {
     width: 33.33%;
-    font-size: 3.4vh; /* 微調到站剩餘時間，避免過大擠壓 */
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    align-items: flex-end; /* 右對齊 */
+    justify-content: center;
+    box-sizing: border-box;
+}
+/* 上排：剩餘分鐘 */
+.bus-mins-top {
+    font-size: 3.4vh; 
     font-weight: bold;
     font-family: monospace;
     color: #FF99CC;
     text-shadow: 0 0 10px rgba(255, 51, 102, 0.8);
-    text-align: right;
+    line-height: 1.1;
     white-space: nowrap;
 }
-.bus-eta-block-xlarge .time-real-sub {
-    font-size: 2.6vh; /* 微調真實時間，達成完美比例 */
-    margin-left: 4px;
+/* 下排：真實時間 */
+.bus-real-bottom {
+    font-size: 2.5vh; 
+    color: #888888; 
+    font-weight: normal;
+    font-family: monospace;
+    line-height: 1.1;
+    margin-top: 0.4vh; /* 增加上下微小間距 */
+    white-space: nowrap;
 }
 .bus-empty-msg-large {
     font-size: 3.2vh;
@@ -495,7 +515,7 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：九巴大改版（完美收納時間比例）
+// 右邊下方：九巴（方案 A 上下雙層渲染邏輯）
 // ==========================================
 function renderRealBusPIDS(etas) {
     var listContainer = document.getElementById('bus-flat-list');
@@ -504,7 +524,6 @@ function renderRealBusPIDS(etas) {
     var nowTime = Date.now();
     var validEtas = [];
 
-    // 精確過濾：只要到站時間小於或等於當前時間，就馬上消失隱藏
     if (etas && etas.length > 0) {
         for (var k = 0; k < etas.length; k++) {
             var itemTime = new Date(etas[k].eta).getTime();
@@ -525,9 +544,9 @@ function renderRealBusPIDS(etas) {
     htmlString += '<div class="bus-eta-wrapper-full">';
     
     if (validEtas.length === 0) {
-        htmlString += '<div class="bus-empty-msg-large">資料更新中...</div>';
+        htmlString += '<div class="bus-empty-msg-large" style="width:100%; text-align:right;">資料更新中...</div>';
     } else {
-        // 並排盛裝 3 班車
+        // 並排盛裝 3 班車，內部採雙層堆疊
         for (var b = 0; b < 3; b++) {
             if (b < validEtas.length) {
                 var busItem = validEtas[b];
@@ -535,13 +554,18 @@ function renderRealBusPIDS(etas) {
                 var diffMs = etaDate.getTime() - nowTime;
                 var diffMins = Math.floor(diffMs / 60000);
                 
-                var displayString = diffMins + '分';
-                var time24H = formatIsoTo24H(busItem.eta);
-                displayString += '<span class="time-real-sub">(' + time24H + ')</span>';
+                var topMinsText = diffMins + '分';
+                var bottomTimeText = formatIsoTo24H(busItem.eta);
                 
-                htmlString += '<div class="bus-eta-block-xlarge">' + displayString + '</div>';
+                htmlString += '<div class="bus-time-stack">';
+                htmlString += '  <div class="bus-mins-top">' + topMinsText + '</div>';
+                htmlString += '  <div class="bus-real-bottom">' + bottomTimeText + '</div>';
+                htmlString += '</div>';
             } else {
-                htmlString += '<div class="bus-eta-block-xlarge">--</div>';
+                htmlString += '<div class="bus-time-stack">';
+                htmlString += '  <div class="bus-mins-top">--</div>';
+                htmlString += '  <div class="bus-real-bottom">--:--</div>';
+                htmlString += '</div>';
             }
         }
     }
@@ -552,14 +576,18 @@ function renderRealBusPIDS(etas) {
     htmlString += '<div class="train-row" style="height:33.3%;">' +
         '<div class="seq">2</div>' +
         '<div class="bus-route-no-medium" style="color:#444;">--</div>' +
-        '<div class="bus-eta-wrapper-full"><div class="bus-eta-block-xlarge" style="color:#444; width:100%;">--</div></div>' +
+        '<div class="bus-eta-wrapper-full">' +
+        '  <div class="bus-time-stack"><div class="bus-mins-top" style="color:#444;">--</div><div class="bus-real-bottom" style="color:#222;">--:--</div></div>' +
+        '</div>' +
         '</div>';
 
     // 【第三列】：暫時空置
     htmlString += '<div class="train-row" style="height:33.3%;">' +
         '<div class="seq">3</div>' +
         '<div class="bus-route-no-medium" style="color:#444;">--</div>' +
-        '<div class="bus-eta-wrapper-full"><div class="bus-eta-block-xlarge" style="color:#444; width:100%;">--</div></div>' +
+        '<div class="bus-eta-wrapper-full">' +
+        '  <div class="bus-time-stack"><div class="bus-mins-top" style="color:#444;">--</div><div class="bus-real-bottom" style="color:#222;">--:--</div></div>' +
+        '</div>' +
         '</div>';
 
     listContainer.innerHTML = htmlString;
