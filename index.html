@@ -198,13 +198,29 @@ body {
     text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); 
 }
 
-/* 右側輕鐵字體 */
+/* 右側輕鐵優化：獨立欄位排版 */
 .lrt-no { font-size: 3.2vh; font-weight: bold; color: #FF9900; width: 12%; }
-.dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 38%; }
-.time-lrt { font-size: 3.4vh; font-weight: bold; font-family: monospace; text-align: right; width: 48%; color: #FFCC00; text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); }
-.time-real-sub { font-size: 2.9vh; color: #888888; font-weight: normal; margin-left: 6px; text-shadow: none; }
+.dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 28%; }
+.mins-lrt { 
+    font-size: 3.4vh; 
+    font-weight: bold; 
+    font-family: monospace; 
+    color: #FFCC00; 
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); 
+    text-align: right; 
+    width: 24%; 
+}
+.time-lrt { 
+    font-size: 3.6vh; /* 稍微放大一點 */
+    font-weight: bold; 
+    font-family: monospace; 
+    color: #00FF33; /* 維持原本顏色 */
+    text-shadow: 0 0 10px rgba(0, 255, 51, 0.8); 
+    text-align: right; 
+    width: 28%; 
+}
 
-/* 巴士優化：全新橫向一體化排版樣式 */
+/* 巴士優化：橫向一體化排版樣式 */
 .bus-route-no-medium {
     font-size: 3.2vh; 
     font-weight: bold;
@@ -284,13 +300,15 @@ body {
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往屯門方向</div>
                 <div class="train-list-container" id="tuen-mun-list">
-                    </div>
+                    <!-- 初始預設空行 -->
+                </div>
             </div>
 
             <div class="direction-group mtr-panel">
                 <div class="direction-title title-mtr">屯馬綫 往烏溪沙方向</div>
                 <div class="train-list-container" id="wu-kai-sha-list">
-                    </div>
+                    <!-- 初始預設空行 -->
+                </div>
             </div>
         </div>
 
@@ -298,13 +316,15 @@ body {
             <div class="direction-group lrt-panel">
                 <div class="direction-title title-lrt">輕鐵 天慈站</div>
                 <div class="train-list-container" id="lrt-flat-list">
-                    </div>
+                    <!-- 初始預設空行 -->
+                </div>
             </div>
 
             <div class="direction-group bus-panel">
                 <div class="direction-title title-bus">巴士 天祐苑站</div>
                 <div class="train-list-container" id="bus-flat-list">
-                    </div>
+                    <!-- 巴士優化排版 -->
+                </div>
             </div>
         </div>
 
@@ -366,7 +386,7 @@ function formatIsoTo24H(isoString) {
 }
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 (加入 10秒過期清除機制)
+// 右邊上方：輕鐵 天慈站 (拆分獨立雙欄位 + 10秒過期清除)
 // ==========================================
 function renderRealLrtPIDS() {
     var listContainer = document.getElementById('lrt-flat-list');
@@ -378,7 +398,6 @@ function renderRealLrtPIDS() {
     if (cachedLrtData && cachedLrtData.length > 0) {
         for (var k = 0; k < cachedLrtData.length; k++) {
             var train = cachedLrtData[k];
-            // 如果輕鐵有精確時間戳則比對時間戳，否則根據預估分鐘換算成目標過期時間
             var expireTime = nowTime + 999999; 
             if (train.absTimestamp) {
                 expireTime = train.absTimestamp;
@@ -386,7 +405,7 @@ function renderRealLrtPIDS() {
                 expireTime = nowTime + (train.eta * 60000);
             }
             
-            // 核心需求：到達/預定時間過後 10秒 內清除
+            // 到達/預定時間過後 10秒 內清除
             if (nowTime >= (expireTime + 10000)) {
                 continue; 
             }
@@ -418,8 +437,6 @@ function renderRealLrtPIDS() {
                 realTime24H = getTargetTime24H(train.eta);
             }
 
-            var realTimeSuffix = realTime24H !== '--:--' ? '<span class="time-real-sub">(' + realTime24H + ')</span>' : '';
-
             var finalDest = "";
             if (train.route === '705') {
                 finalDest = "往天水圍(北)";
@@ -431,11 +448,13 @@ function renderRealLrtPIDS() {
                 finalDest = "--";
             }
 
+            // 拆分為獨立的 .mins-lrt 與 .time-lrt 欄位，且取消括號
             htmlString += '<div class="train-row" style="height:12.5%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="lrt-no">' + train.route + '</div>' +
                 '<div class="dest dest-lrt">' + finalDest + '</div>' +
-                '<div class="arrival-time time-lrt">' + etaDisplay + realTimeSuffix + '</div>' +
+                '<div class="mins-lrt">' + etaDisplay + '</div>' +
+                '<div class="time-lrt">' + realTime24H + '</div>' +
                 '</div>';
         } else {
             var defaultMsg = (i === 0 && validTrains.length === 0) ? "資料更新中..." : "--";
@@ -443,7 +462,8 @@ function renderRealLrtPIDS() {
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="lrt-no">--</div>' +
                 '<div class="dest dest-lrt">' + defaultMsg + '</div>' +
-                '<div class="arrival-time time-lrt">--</div>' +
+                '<div class="mins-lrt">--</div>' +
+                '<div class="time-lrt">--:--</div>' +
                 '</div>';
         }
     }
@@ -506,14 +526,13 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：巴士三路線 (完美打橫排版 + 10秒消失)
+// 右邊下方：巴士三路線
 // ==========================================
 function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     var validEtas = [];
     if (rawEtas && rawEtas.length > 0) {
         for (var k = 0; k < rawEtas.length; k++) {
             var itemTime = new Date(rawEtas[k].eta).getTime();
-            // 到達預定時間過後 10 秒（10000 毫秒）即自動移除
             if (nowTime >= (itemTime + 10000)) {
                 continue; 
             }
@@ -539,7 +558,6 @@ function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
                 var minsText = diffMins <= 0 ? '<span class="status-flash">到達</span>' : diffMins + '分';
                 var timeText = formatIsoTo24H(busItem.eta);
                 
-                // 統一打橫排版顯示「剩餘分鐘」和「真實時間」
                 html += '<div class="bus-time-inline-block">';
                 html += '  <span class="bus-mins-inline">' + minsText + '</span>';
                 html += '  <span class="bus-real-inline">' + timeText + '</span>';
