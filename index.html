@@ -333,14 +333,14 @@ function padZero(num) {
     return num < 10 ? '0' + num : num;
 }
 
-// 巴士三路線即時數據結構（加入 A37）
+// 巴士三路線即時數據結構
 var cachedBusData = {
     "276A": [],
     "B1": [],
     "A37": []
 };
 
-// 每 1 秒刷新右上角時鐘，並同步驅動巴士面板的倒數與 30秒過期清除機制
+// 每 1 秒刷新右上角時鐘，並同步驅動巴士面板的倒數與過期清除機制
 function updateClock() {
     var clockEl = document.getElementById('clock');
     if (!clockEl) return;
@@ -494,7 +494,7 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：巴士三路線（包含 276A、B1、A37）
+// 右邊下方：巴士三路線（276A、B1、A37）
 // ==========================================
 function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     var validEtas = [];
@@ -502,7 +502,7 @@ function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
         for (var k = 0; k < rawEtas.length; k++) {
             var itemTime = new Date(rawEtas[k].eta).getTime();
             
-            // 如果當前時間已經大於巴士預計到站時間「30秒 (30000毫秒)」以上，則過濾清除
+            // 如果當前時間大於巴士預計到站時間「30秒 (30000毫秒)」以上，則過濾清除
             if (nowTime >= (itemTime + 30000)) {
                 continue; 
             }
@@ -557,7 +557,7 @@ function renderRealBusPIDS() {
     // 第二列：B1 (天祐苑站)
     htmlString += generateBusRowHtml(2, "B1", cachedBusData["B1"], nowTime);
 
-    // 第三列：A37 (聚星樓站)
+    // 第三列：A37 (聚星樓站 - 精確對齊第 14 站)
     htmlString += generateBusRowHtml(3, "A37", cachedBusData["A37"], nowTime);
 
     listContainer.innerHTML = htmlString;
@@ -596,7 +596,7 @@ function loadAllBusSchedules() {
     // 2. B1 API 請求
     loadB1PerfectSchedule();
 
-    // 3. A37 API 請求 (聚星樓站為往機場方向第 2 站)
+    // 3. A37 API 請求 (聚星樓站為往機場方向第 14 站)
     var urlA37 = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/A37/1';
     var xhrA37 = new XMLHttpRequest();
     xhrA37.open('GET', urlA37, true);
@@ -608,10 +608,10 @@ function loadAllBusSchedules() {
                     var filteredA37 = [];
                     var targetStopId = "";
                     
-                    // 尋找 seq == 2 (聚星樓) 的精確 stop id
+                    // 尋找 seq == 14 (聚星樓) 的精確 stop id
                     for (var i = 0; i < json.data.length; i++) {
                         var item = json.data[i];
-                        if (item.dir === "O" && item.seq == 2) {
+                        if (item.dir === "O" && item.seq == 14) {
                             targetStopId = item.stop; 
                             break;
                         }
@@ -627,7 +627,7 @@ function loadAllBusSchedules() {
                                     filteredA37.push(item);
                                 }
                             } else {
-                                if (item.dir === "O" && item.seq == 2) {
+                                if (item.dir === "O" && item.seq == 14) {
                                     filteredA37.push(item);
                                 }
                             }
