@@ -206,13 +206,13 @@ body {
 .time-real-sub { font-size: 2.9vh; color: #888888; font-weight: normal; margin-left: 6px; text-shadow: none; }
 
 /* ==========================================
-   最新調整：優化字體級距與直接消失機制
+   最新調整：完美收納九巴第一欄時間比例
    ========================================== */
 .bus-route-no-medium {
-    font-size: 3.2vh; /* 縮小班次號碼，視覺更協調 */
+    font-size: 3.2vh; 
     font-weight: bold;
     color: #FF3366;
-    width: 20%;
+    width: 18%;
     white-space: nowrap;
 }
 .bus-eta-wrapper-full {
@@ -224,11 +224,11 @@ body {
     -webkit-flex-direction: row;
     flex-direction: row;
     justify-content: space-between;
-    width: 72%;
+    width: 74%;
 }
 .bus-eta-block-xlarge {
-    width: 32%;
-    font-size: 4.0vh; /* 放大到站剩餘時間 */
+    width: 33.33%;
+    font-size: 3.4vh; /* 微調到站剩餘時間，避免過大擠壓 */
     font-weight: bold;
     font-family: monospace;
     color: #FF99CC;
@@ -237,8 +237,8 @@ body {
     white-space: nowrap;
 }
 .bus-eta-block-xlarge .time-real-sub {
-    font-size: 3.2vh; /* 同步放大真實時間 */
-    margin-left: 6px;
+    font-size: 2.6vh; /* 微調真實時間，達成完美比例 */
+    margin-left: 4px;
 }
 .bus-empty-msg-large {
     font-size: 3.2vh;
@@ -495,7 +495,7 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：九巴大改版（字體最佳化、即時消失機制）
+// 右邊下方：九巴大改版（完美收納時間比例）
 // ==========================================
 function renderRealBusPIDS(etas) {
     var listContainer = document.getElementById('bus-flat-list');
@@ -504,7 +504,7 @@ function renderRealBusPIDS(etas) {
     var nowTime = Date.now();
     var validEtas = [];
 
-    // 精確過濾：只要到站時間小於或等於當前時間 (即抵達時間已到 0秒或已過)，就馬上消失隱藏
+    // 精確過濾：只要到站時間小於或等於當前時間，就馬上消失隱藏
     if (etas && etas.length > 0) {
         for (var k = 0; k < etas.length; k++) {
             var itemTime = new Date(etas[k].eta).getTime();
@@ -535,7 +535,6 @@ function renderRealBusPIDS(etas) {
                 var diffMs = etaDate.getTime() - nowTime;
                 var diffMins = Math.floor(diffMs / 60000);
                 
-                // 由於前面已經篩掉了 diffMs <= 0 的資料，這裡必定為正值分鐘數
                 var displayString = diffMins + '分';
                 var time24H = formatIsoTo24H(busItem.eta);
                 displayString += '<span class="time-real-sub">(' + time24H + ')</span>';
