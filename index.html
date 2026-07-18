@@ -198,9 +198,9 @@ body {
     text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); 
 }
 
-/* 右側輕鐵優化：獨立欄位排版 */
+/* 右側輕鐵優化：靠右緊湊排版 */
 .lrt-no { font-size: 3.2vh; font-weight: bold; color: #FF9900; width: 12%; }
-.dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 28%; }
+.dest-lrt { font-size: 3.2vh; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 38%; }
 .mins-lrt { 
     font-size: 3.4vh; 
     font-weight: bold; 
@@ -208,16 +208,16 @@ body {
     color: #FFCC00; 
     text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); 
     text-align: right; 
-    width: 24%; 
+    width: 26%; /* 調整寬度並配合右側，讓它向右靠近 */
 }
 .time-lrt { 
-    font-size: 3.6vh; /* 稍微放大一點 */
-    font-weight: bold; 
+    font-size: 2.5vh; /* 縮細字體 */
+    font-weight: normal; 
     font-family: monospace; 
-    color: #00FF33; /* 維持原本顏色 */
-    text-shadow: 0 0 10px rgba(0, 255, 51, 0.8); 
+    color: #888888; /* 改回與巴士一樣的暗灰色 */
+    text-shadow: none; /* 移除發光特效 */
     text-align: right; 
-    width: 28%; 
+    width: 16%; 
 }
 
 /* 巴士優化：橫向一體化排版樣式 */
@@ -386,7 +386,7 @@ function formatIsoTo24H(isoString) {
 }
 
 // ==========================================
-// 右邊上方：輕鐵 天慈站 (拆分獨立雙欄位 + 10秒過期清除)
+// 右邊上方：輕鐵 天慈站
 // ==========================================
 function renderRealLrtPIDS() {
     var listContainer = document.getElementById('lrt-flat-list');
@@ -405,7 +405,6 @@ function renderRealLrtPIDS() {
                 expireTime = nowTime + (train.eta * 60000);
             }
             
-            // 到達/預定時間過後 10秒 內清除
             if (nowTime >= (expireTime + 10000)) {
                 continue; 
             }
@@ -448,7 +447,6 @@ function renderRealLrtPIDS() {
                 finalDest = "--";
             }
 
-            // 拆分為獨立的 .mins-lrt 與 .time-lrt 欄位，且取消括號
             htmlString += '<div class="train-row" style="height:12.5%;">' +
                 '<div class="seq">' + (i + 1) + '</div>' +
                 '<div class="lrt-no">' + train.route + '</div>' +
@@ -619,7 +617,7 @@ function loadAllBusSchedules() {
     // 2. B1 API
     loadB1PerfectSchedule();
 
-    // 3. A37 API (聚星樓第 14 站)
+    // 3. A37 API
     var urlA37 = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/A37/1';
     var xhrA37 = new XMLHttpRequest();
     xhrA37.open('GET', urlA37, true);
