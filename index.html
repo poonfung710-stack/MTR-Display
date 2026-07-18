@@ -339,9 +339,11 @@ var cachedBusData = {
     "B1": []
 };
 
-// 【核心錨定技術變數】：用來動態認證並鎖定 B1 在天祐苑專屬的實體站牌 ID
-var b1TinYiuStopIds = [];
-var b1StopChecked = {};
+// ==================================================
+// 【核心硬核配置參數】完全對齊 276A 固定過濾邏輯
+// ==================================================
+var B1_FILTER_DIR = "O";                       // 往落馬洲方向
+var B1_FILTER_SEQS = [13, 14, 15];             // 覆蓋常規與特別班次在天祐苑的序列範圍號
 
 function updateClock() {
     var clockEl = document.getElementById('clock');
@@ -496,7 +498,7 @@ loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
 // ==========================================
-// 右邊下方：九巴雙路線（100% 仿照 276A 基礎精準對齊核心）
+// 右邊下方：九巴雙路線（純淨、無動態盲區高爆發渲染）
 // ==========================================
 function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     var validEtas = [];
@@ -549,13 +551,13 @@ function renderRealBusPIDS() {
     var nowTime = Date.now();
     var htmlString = '';
     
-    // 【第一列】：276A (絕對精準硬編碼)
+    // 【第一列】：276A 固定站點渲染
     htmlString += generateBusRowHtml(1, "276A", cachedBusData["276A"], nowTime);
 
-    // 【第二列】：B1 (智慧動態解鎖專屬硬體碼)
+    // 【第二列】：B1 固定站點渲染
     htmlString += generateBusRowHtml(2, "B1", cachedBusData["B1"], nowTime);
 
-    // 【第三列】：留空面板
+    // 【第三列】：留空占位面板
     htmlString += '<div class="train-row" style="height:33.3%;">' +
         '<div class="seq">3</div>' +
         '<div class="bus-route-no-medium" style="color:#444;">--</div>' +
@@ -568,7 +570,7 @@ function renderRealBusPIDS() {
 }
 
 function loadAllBusSchedules() {
-    // 1. 完全保留 276A 的成功擷取程式碼
+    // 1. 276A 成功程式碼（完美保留）
     var url276A = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/276A/1';
     var xhr276A = new XMLHttpRequest();
     xhr276A.open('GET', url276A, true);
@@ -595,11 +597,11 @@ function loadAllBusSchedules() {
     };
     xhr276A.send();
 
-    // 2. 調用 B1 專屬優化檢索
-    loadB1SmartSchedule();
+    // 2. B1 全新改版：與 276A 邏輯 100% 同步的固定過濾法
+    loadB1FixedSchedule();
 }
 
-function loadB1SmartSchedule() {
+function loadB1FixedSchedule() {
     var urlB1 = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/B1/1';
     var xhrB1 = new XMLHttpRequest();
     xhrB1.open('GET', urlB1, true);
@@ -609,20 +611,20 @@ function loadB1SmartSchedule() {
                 var json = JSON.parse(xhrB1.responseText);
                 if (json && json.data) {
                     var filteredB1 = [];
+                    var debugLogged = 0;
                     
                     for (var i = 0; i < json.data.length; i++) {
                         var item = json.data[i];
-                        
-                        // 【關鍵學習步驟】：如果此站點尚未核對過官方名稱，送去背景查詢
-                        if (item.dir === "O" && item.stop && !b1StopChecked[item.stop]) {
-                            b1StopChecked[item.stop] = true;
-                            checkB1StopTrueName(item.stop);
-                        }
-
                         var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
                         
-                        // 【仿照 276A 核心邏輯】：精確比對。一旦該站牌 ID 被官方數據庫認證為「天祐苑」，就 100% 採信
-                        if (item.dir === "O" && b1TinYiuStopIds.indexOf(item.stop) !== -1 && item.eta && !isCancelled) {
+                        // 【實時主控台除錯監聽】：每輪抓取前5條，讓你可以按 F12 隨時掌握九巴 API 底層即時傳回的變量
+                        if (debugLogged < 5 && item.eta) {
+                            console.log("[B1 實時數據診斷] 方向(dir): " + item.dir + " | 站點序號(seq): " + item.seq + " | 終點站: " + item.dest_tc + " | 站牌ID: " + item.stop);
+                            debugLogged++;
+                        }
+
+                        // 【核心固定條件對齊】：比照 276A。只認固定方向(O)與指定的天祐苑序列組合號，排除所有模糊比對
+                        if (item.dir === B1_FILTER_DIR && B1_FILTER_SEQS.indexOf(Number(item.seq)) !== -1 && item.eta && !isCancelled) {
                             filteredB1.push(item);
                         }
                     }
@@ -632,40 +634,14 @@ function loadB1SmartSchedule() {
                     cachedBusData["B1"] = filteredB1;
                 }
             } catch (e) {
-                console.error("B1 API 解析錯誤:", e);
+                console.error("B1 固定站點 API 解析錯誤:", e);
             }
         }
     };
     xhrB1.send();
 }
 
-// 用於背景自動核對 KMB 官方註冊站名，徹底解決站牌 ID 錯位問題
-function checkB1StopTrueName(stopId) {
-    var url = 'https://data.etabus.gov.hk/v1/transport/kmb/stop/' + stopId;
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            try {
-                var res = JSON.parse(xhr.responseText);
-                if (res && res.data && res.data.name_tc) {
-                    // 100% 辨識官方中文站牌名「天祐苑」
-                    if (res.data.name_tc.indexOf("天祐苑") !== -1) {
-                        if (b1TinYiuStopIds.indexOf(stopId) === -1) {
-                            b1TinYiuStopIds.push(stopId);
-                            console.log("🎯 B1 天祐苑專屬站牌解鎖成功！唯一硬體碼: " + stopId);
-                            loadB1SmartSchedule(); // 立即重新對齊刷新，無需等待下一輪循環
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error("車站註冊名解析出錯:", e);
-            }
-        }
-    };
-    xhr.send();
-}
-
+// 首次加載與定時循環
 loadAllBusSchedules();
 setInterval(loadAllBusSchedules, 10000);
 
