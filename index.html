@@ -23,7 +23,7 @@ body {
     box-sizing: border-box;
 }
 
-/* 頂部資訊列 (字體大小不變) */
+/* 頂部資訊列 */
 .header-bar {
     position: absolute;
     top: 2%;
@@ -38,7 +38,7 @@ body {
     position: absolute;
     left: 0;
     bottom: 5px;
-    font-size: 3.8vw; /* 維持不變 */
+    font-size: 3.8vw; 
     font-weight: bold;
     color: #00FF33;
     font-family: monospace; 
@@ -50,13 +50,13 @@ body {
     position: absolute;
     right: 0;
     bottom: 5px;
-    font-size: 3.5vw; /* 維持不變 */
+    font-size: 3.5vw; 
     font-weight: bold;
     color: #FFFFFF; 
     line-height: 1.2; 
 }
 
-/* 主要內容區域 (大小不變) */
+/* 主要內容區域 */
 .main-content {
     position: absolute;
     top: 12%;   
@@ -66,7 +66,7 @@ body {
     box-sizing: border-box;
 }
 
-/* 左右分欄 (大小不變) */
+/* 左右分欄 */
 .left-col {
     position: absolute;
     left: 0;
@@ -81,7 +81,7 @@ body {
     height: 100%;
 }
 
-/* 所有面板絕對定位 (大小不變) */
+/* 所有面板絕對定位 */
 .mtr-panel-1 {
     position: absolute;
     top: 0;
@@ -120,7 +120,7 @@ body {
 }
 
 .direction-title {
-    font-size: 2.5vw; /* 標題字體維持不變，作為對比基準 */
+    font-size: 2.5vw; /* 屯馬綫及其他標題字體堅守 2.5vw 不變 */
     font-weight: bold;
     margin-bottom: 5px;
     padding-left: 10px;
@@ -167,7 +167,7 @@ body {
     border-bottom: none;
 }
 
-/* 序號字體 (縮小至 1.6vw，明顯小於標題 2.5vw) */
+/* 序號字體 */
 .seq {
     font-size: 1.6vw; 
     color: #666666;
@@ -175,10 +175,11 @@ body {
 }
 
 /* ==========================================
-   左側港鐵屯馬綫資訊字體（縮小且調整剩餘分鐘位置）
+   【本次修改項目】左側港鐵屯馬綫資訊字體稍為放大
+   （放大後依然小於標題的 2.5vw）
    ========================================== */
 .left-col .dest-mtr { 
-    font-size: 2.3vw; /* 縮小至 2.3vw，小於標題 2.5vw */
+    font-size: 2.4vw; /* 從 2.3vw 稍為放大至 2.4vw，更飽滿 */
     color: #FFFFFF; 
     font-weight: bold; 
     width: 38%; 
@@ -186,17 +187,17 @@ body {
     overflow: hidden; 
 }
 .left-col .countdown-mtr { 
-    font-size: 2.1vw; /* 縮小至 2.1vw */
+    font-size: 2.3vw; /* 從 2.1vw 稍為放大至 2.3vw，保持可讀性 */
     font-weight: bold; 
     font-family: monospace; 
     color: #FFCC00; 
     text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); 
-    text-align: left; /* 改為靠左，並調整寬度與右邊界，使其向左移 */
+    text-align: left; 
     width: 34%; 
     padding-left: 2%;
 }
 .left-col .time-mtr { 
-    font-size: 2.3vw; /* 縮小至 2.3vw */
+    font-size: 2.4vw; /* 從 2.3vw 稍為放大至 2.4vw */
     font-weight: bold; 
     font-family: monospace; 
     text-align: right; 
@@ -206,7 +207,7 @@ body {
 }
 
 /* ==========================================
-   右側輕鐵欄位字體（全數縮小至 2.5vw 以下）
+   右側輕鐵欄位字體（維持原狀）
    ========================================== */
 .lrt-no { font-size: 2.1vw; font-weight: bold; color: #FF9900; width: 14%; }
 .dest-lrt { font-size: 2.1vw; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 36%; }
@@ -228,7 +229,7 @@ body {
 }
 
 /* ==========================================
-   巴士橫向排版字體（全數縮小至 2.5vw 以下）
+   巴士橫向排版字體（維持原狀）
    ========================================== */
 .bus-route-no-medium {
     font-size: 2.2vw; 
