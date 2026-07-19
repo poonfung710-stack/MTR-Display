@@ -215,8 +215,9 @@ body {
     text-align: right; 
     width: 28%; 
 }
+/* 經理：此處已放大字體大小至 1.9vw，低於剩餘時間的 2.1vw */
 .time-lrt { 
-    font-size: 1.7vw; 
+    font-size: 1.9vw; 
     font-family: monospace; 
     color: #888888; 
     text-align: right; 
@@ -422,7 +423,6 @@ function renderMtrDirection(dataArray, elementId, nowTime) {
             
             if (train.time) {
                 var trainTargetTime = new Date(train.time.replace(/-/g, "/")).getTime();
-                // 核心修改：到站（預定時間）超過 10 秒 (10000ms)，強制將此班次移除消失
                 if (nowTime >= (trainTargetTime + 10000)) {
                     continue; 
                 }
@@ -511,7 +511,6 @@ function renderRealLrtPIDS() {
                 expireTime = nowTime + (train.eta * 60000);
             }
             
-            // 核心修改：到站 / 顯示為 0 分鐘（到達）後，超過 10 秒 (10000ms)，強制將此班次移除
             if (nowTime >= (expireTime + 10000)) {
                 continue; 
             }
@@ -636,7 +635,6 @@ function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     if (rawEtas && rawEtas.length > 0) {
         for (var k = 0; k < rawEtas.length; k++) {
             var itemTime = new Date(rawEtas[k].eta).getTime();
-            // 核心修改：巴士到達（預定時間）超過 10 秒 (10000ms)，強制將該班次剔除
             if (nowTime >= (itemTime + 10000)) {
                 continue; 
             }
