@@ -347,7 +347,6 @@ var cachedLrtData = [];
 var cachedBusData = { "276A": [], "B1": [], "A37": [], "269D": [] };
 var cachedMtrData = { UP: [], DOWN: [] }; 
 
-// 優化：updateClock 現在純粹更新時間，不再每秒強制重繪資訊版
 function updateClock() {
     var clockEl = document.getElementById('clock');
     if (!clockEl) return;
@@ -409,6 +408,7 @@ function formatMtrTime(trainObj, nowTime) {
     return { dest: destName, time: timeDisplay, countdown: countdownText };
 }
 
+// 優化：平滑渲染邏輯。不提早清除快取資料，API 拿到什麼就直接畫出來，保留最多 4 班。
 function renderMtrDirection(dataArray, elementId, nowTime) {
     var container = document.getElementById(elementId);
     if (!container) return;
@@ -417,13 +417,7 @@ function renderMtrDirection(dataArray, elementId, nowTime) {
     if (dataArray && dataArray.length > 0) {
         for (var k = 0; k < dataArray.length; k++) {
             var train = dataArray[k];
-            
-            if (train.time) {
-                var trainTargetTime = new Date(train.time.replace(/-/g, "/")).getTime();
-                if (nowTime >= (trainTargetTime + 10000)) {
-                    continue; 
-                }
-            }
+            // 改進：取消過於嚴格的 10 秒過濾清除，交給下一次 API Fetch 直接覆蓋更新即可，防止空窗闪烁
             validTrains.push(train);
         }
     }
@@ -466,19 +460,14 @@ function loadMtrSchedule() {
             try {
                 var json = JSON.parse(xhr.responseText);
                 if (!json || !json.data) {
-                    cachedMtrData.UP = [];
-                    cachedMtrData.DOWN = [];
                     return;
                 }
                 var data = json.data[mtrLine + '-' + mtrStation];
                 if (data) {
                     cachedMtrData.UP = data.UP || [];
                     cachedMtrData.DOWN = data.DOWN || [];
-                } else {
-                    cachedMtrData.UP = [];
-                    cachedMtrData.DOWN = [];
                 }
-                renderRealMtrPIDS(); // 經理：API 回傳成功時才刷新畫面，間隔精確鎖定 10 秒
+                renderRealMtrPIDS(); 
             } catch (e) {
                 console.error("MTR API Parse Error", e);
             }
@@ -498,16 +487,6 @@ function renderRealLrtPIDS() {
     if (cachedLrtData && cachedLrtData.length > 0) {
         for (var k = 0; k < cachedLrtData.length; k++) {
             var train = cachedLrtData[k];
-            var expireTime = nowTime + 999999; 
-            if (train.absTimestamp) {
-                expireTime = train.absTimestamp;
-            } else if (train.eta !== 999) {
-                expireTime = nowTime + (train.eta * 60000);
-            }
-            
-            if (nowTime >= (expireTime + 10000)) {
-                continue; 
-            }
             validTrains.push(train);
         }
     }
@@ -611,7 +590,7 @@ function loadLrtSchedule() {
                 }
                 combinedTrains.sort(function(a, b) { return a.eta - b.eta; });
                 cachedLrtData = combinedTrains;
-                renderRealLrtPIDS(); // 經理：API 回傳成功時才刷新畫面，間隔精確鎖定 10 秒
+                renderRealLrtPIDS(); 
             } catch (e) {
                 console.error("輕鐵 API 解析錯誤:", e);
             }
@@ -625,10 +604,6 @@ function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     var validEtas = [];
     if (rawEtas && rawEtas.length > 0) {
         for (var k = 0; k < rawEtas.length; k++) {
-            var itemTime = new Date(rawEtas[k].eta).getTime();
-            if (nowTime >= (itemTime + 10000)) {
-                continue; 
-            }
             validEtas.push(rawEtas[k]);
         }
     }
@@ -682,12 +657,11 @@ function renderRealBusPIDS() {
     listContainer.innerHTML = htmlString;
 }
 
-// 追蹤巴士 API 載入狀態，全數載入後才一次過刷新畫面
 var busLoadedCount = 0;
 function checkAndRenderBus() {
     busLoadedCount++;
     if (busLoadedCount >= 4) {
-        renderRealBusPIDS(); // 經理：4 條路線全部讀取完畢才渲染畫面，精確對齊 10 秒
+        renderRealBusPIDS(); 
         busLoadedCount = 0; 
     }
 }
@@ -836,7 +810,7 @@ function loadAllBusSchedules() {
     xhr269D.send();
 }
 
-// 核心定時器初始化 (精確鎖定每 10 秒刷新一次 API 與畫面)
+// 核心定時器初始化 (精確鎖定每 10 秒)
 loadMtrSchedule();
 loadLrtSchedule();
 loadAllBusSchedules();
