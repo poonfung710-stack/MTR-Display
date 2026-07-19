@@ -344,7 +344,7 @@ function padZero(num) {
 }
 
 var cachedLrtData = [];
-// 已將 269D 更換為 B2P
+// 包含 276A, B1, A37, B2P 四條路線
 var cachedBusData = { "276A": [], "B1": [], "A37": [], "B2P": [] };
 var cachedMtrData = { UP: [], DOWN: [] }; 
 
@@ -651,7 +651,7 @@ function renderRealBusPIDS() {
     htmlString += generateBusRowHtml(1, "276A", cachedBusData["276A"], nowTime);
     htmlString += generateBusRowHtml(2, "B1", cachedBusData["B1"], nowTime);
     htmlString += generateBusRowHtml(3, "A37", cachedBusData["A37"], nowTime);
-    htmlString += generateBusRowHtml(4, "B2P", cachedBusData["B2P"], nowTime); // 已更新為 B2P
+    htmlString += generateBusRowHtml(4, "B2P", cachedBusData["B2P"], nowTime);
 
     listContainer.innerHTML = htmlString;
 }
@@ -782,7 +782,7 @@ function loadAllBusSchedules() {
     };
     xhrA37.send();
 
-    // B2P (天耀邨耀民樓) - 完完整整參考 B1/A37 的擷取過濾邏輯
+    // B2P (天耀邨耀民樓)
     var urlB2P = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/B2P/1';
     var xhrB2P = new XMLHttpRequest();
     xhrB2P.open('GET', urlB2P, true);
@@ -795,10 +795,10 @@ function loadAllBusSchedules() {
                         var filteredB2P = [];
                         var targetStopId = "";
                         
-                        // 1. 鎖定耀民樓車站（假設從天慈往深圳灣方向 (O)，耀民樓約為第 4 站）
+                        // 1. 鎖定往深圳灣方向 ("O") 的第 8 個車站 (天耀邨耀民樓)
                         for (var i = 0; i < json.data.length; i++) {
                             var item = json.data[i];
-                            if (item.dir === "O" && item.seq == 4) { 
+                            if (item.dir === "O" && item.seq == 8) { 
                                 targetStopId = item.stop; 
                                 break; 
                             }
@@ -812,7 +812,7 @@ function loadAllBusSchedules() {
                                 if (targetStopId) {
                                     if (item.stop === targetStopId) filteredB2P.push(item);
                                 } else {
-                                    if (item.dir === "O" && item.seq == 4) filteredB2P.push(item);
+                                    if (item.dir === "O" && item.seq == 8) filteredB2P.push(item);
                                 }
                             }
                         }
