@@ -344,8 +344,7 @@ function padZero(num) {
 }
 
 var cachedLrtData = [];
-// 包含 276A, B1, A37, B2P 四條路線
-var cachedBusData = { "276A": [], "B1": [], "A37": [], "B2P": [] };
+var cachedBusData = { "276A": [], "B1": [], "A37": [], "269D": [] };
 var cachedMtrData = { UP: [], DOWN: [] }; 
 
 function updateClock() {
@@ -409,6 +408,7 @@ function formatMtrTime(trainObj, nowTime) {
     return { dest: destName, time: timeDisplay, countdown: countdownText };
 }
 
+// 優化：平滑渲染邏輯。不提早清除快取資料，API 拿到什麼就直接畫出來，保留最多 4 班。
 function renderMtrDirection(dataArray, elementId, nowTime) {
     var container = document.getElementById(elementId);
     if (!container) return;
@@ -417,6 +417,7 @@ function renderMtrDirection(dataArray, elementId, nowTime) {
     if (dataArray && dataArray.length > 0) {
         for (var k = 0; k < dataArray.length; k++) {
             var train = dataArray[k];
+            // 改進：取消過於嚴格的 10 秒過濾清除，交給下一次 API Fetch 直接覆蓋更新即可，防止空窗闪烁
             validTrains.push(train);
         }
     }
@@ -651,7 +652,7 @@ function renderRealBusPIDS() {
     htmlString += generateBusRowHtml(1, "276A", cachedBusData["276A"], nowTime);
     htmlString += generateBusRowHtml(2, "B1", cachedBusData["B1"], nowTime);
     htmlString += generateBusRowHtml(3, "A37", cachedBusData["A37"], nowTime);
-    htmlString += generateBusRowHtml(4, "B2P", cachedBusData["B2P"], nowTime);
+    htmlString += generateBusRowHtml(4, "269D", cachedBusData["269D"], nowTime);
 
     listContainer.innerHTML = htmlString;
 }
@@ -782,63 +783,31 @@ function loadAllBusSchedules() {
     };
     xhrA37.send();
 
-    // B2P (天耀邨耀民樓)
-    var urlB2P = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/B2P/1';
-    var xhrB2P = new XMLHttpRequest();
-    xhrB2P.open('GET', urlB2P, true);
-    xhrB2P.onreadystatechange = function() {
-        if (xhrB2P.readyState === 4) {
-            if (xhrB2P.status === 200) {
+    // 269D
+    var url269D = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/269D/1';
+    var xhr269D = new XMLHttpRequest();
+    xhr269D.open('GET', url269D, true);
+    xhr269D.onreadystatechange = function() {
+        if (xhr269D.readyState === 4) {
+            if (xhr269D.status === 200) {
                 try {
-                    var json = JSON.parse(xhrB2P.responseText);
+                    var json = JSON.parse(xhr269D.responseText);
                     if (json && json.data) {
-                        var filteredB2P = [];
-                        var targetStopId = "";
-                        
-                        // 1. 鎖定往深圳灣方向 ("O") 的第 8 個車站 (天耀邨耀民樓)
-                        for (var i = 0; i < json.data.length; i++) {
-                            var item = json.data[i];
-                            if (item.dir === "O" && item.seq == 8) { 
-                                targetStopId = item.stop; 
-                                break; 
-                            }
-                        }
-                        
-                        // 2. 篩選該站點的有效班次
+                        var etas = [];
                         for (var i = 0; i < json.data.length; i++) {
                             var item = json.data[i];
                             var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
-                            if (item.eta && !isCancelled) {
-                                if (targetStopId) {
-                                    if (item.stop === targetStopId) filteredB2P.push(item);
-                                } else {
-                                    if (item.dir === "O" && item.seq == 8) filteredB2P.push(item);
-                                }
-                            }
+                            if (item.dir === "I" && item.eta && !isCancelled) { etas.push(item); }
                         }
-                        
-                        // 3. 依照時間先後排序
-                        filteredB2P.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
-                        
-                        // 4. 過濾重複時間，精準提取 3 班車
-                        var finalB2P = [];
-                        var seenTimes = {};
-                        for (var j = 0; j < filteredB2P.length; j++) {
-                            var bItem = filteredB2P[j];
-                            var timeString = formatIsoTo24H(bItem.eta);
-                            if (!seenTimes[timeString]) { 
-                                seenTimes[timeString] = true; 
-                                finalB2P.push(bItem); 
-                            }
-                        }
-                        cachedBusData["B2P"] = finalB2P.slice(0, 3);
+                        etas.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
+                        cachedBusData["269D"] = etas.slice(0, 3);
                     }
-                } catch (e) { console.error("B2P API 解析錯誤:", e); }
+                } catch (e) { console.error("269D API 解析錯誤:", e); }
             }
             checkAndRenderBus();
         }
     };
-    xhrB2P.send();
+    xhr269D.send();
 }
 
 // 核心定時器初始化 (精確鎖定每 10 秒)
