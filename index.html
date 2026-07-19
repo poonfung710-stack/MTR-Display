@@ -38,7 +38,7 @@ body {
     position: absolute;
     left: 0;
     bottom: 5px;
-    font-size: 3.8vw; /* 頂部時間微調縮小 */
+    font-size: 3.8vw; 
     font-weight: bold;
     color: #00FF33;
     font-family: monospace; 
@@ -50,7 +50,7 @@ body {
     position: absolute;
     right: 0;
     bottom: 5px;
-    font-size: 3.5vw; /* 標題文字縮小 */
+    font-size: 3.5vw; 
     font-weight: bold;
     color: #FFFFFF; 
     line-height: 1.2; 
@@ -74,10 +74,11 @@ body {
     height: 100%;
 }
 
+/* 右側分欄：微調寬度至 47%（避免左側字體放大後擠壓到邊距） */
 .right-col {
     position: absolute;
     right: 0;
-    width: 48%;
+    width: 47%;
     height: 100%;
 }
 
@@ -120,7 +121,7 @@ body {
 }
 
 .direction-title {
-    font-size: 2.5vw; /* 群組標題縮小，讓版面看起來更精緻 */
+    font-size: 2.5vw; 
     font-weight: bold;
     margin-bottom: 5px;
     padding-left: 10px;
@@ -133,7 +134,7 @@ body {
 /* 列表容器 */
 .train-list-container {
     position: absolute;
-    top: 40px; /* 隨標題縮小調低頂部留白 */
+    top: 40px; 
     bottom: 10px;
     left: 15px;
     right: 15px;
@@ -168,40 +169,42 @@ body {
 }
 
 .seq {
-    font-size: 1.8vw; /* 序號縮小 */
+    font-size: 1.8vw; 
     color: #666666;
     width: 8%;
 }
 
-/* 左側港鐵字體微調（精簡整齊版） */
+/* ==========================================
+   左側港鐵屯馬綫字體（依經理要求：單獨放大）
+   ========================================== */
 .left-col .dest-mtr { 
-    font-size: 2.6vw; 
+    font-size: 3.4vw; /* 從 2.6vw 放大至 3.4vw */
     color: #FFFFFF; 
     font-weight: bold; 
-    width: 35%; 
+    width: 38%; 
     white-space: nowrap; 
     overflow: hidden; 
 }
 .left-col .countdown-mtr { 
-    font-size: 2.2vw; 
+    font-size: 2.8vw; /* 從 2.2vw 放大至 2.8vw */
     font-weight: bold; 
     font-family: monospace; 
     color: #FFCC00; 
     text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); 
     text-align: right; 
-    width: 25%; 
+    width: 28%; 
 }
 .left-col .time-mtr { 
-    font-size: 2.6vw; 
+    font-size: 3.4vw; /* 從 2.6vw 放大至 3.4vw */
     font-weight: bold; 
     font-family: monospace; 
     text-align: right; 
-    width: 32%; 
+    width: 26%; 
     color: #00FF33; 
     text-shadow: 0 0 10px rgba(0, 255, 51, 0.8); 
 }
 
-/* 右側輕鐵欄位字體微調 */
+/* 右側輕鐵欄位字體（維持精緻原樣） */
 .lrt-no { font-size: 2.0vw; font-weight: bold; color: #FF9900; width: 12%; }
 .dest-lrt { font-size: 2.0vw; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 38%; }
 .mins-lrt { 
@@ -221,7 +224,7 @@ body {
     width: 16%; 
 }
 
-/* 巴士橫向排版字體微調 */
+/* 巴士橫向排版字體（維持精緻原樣） */
 .bus-route-no-medium {
     font-size: 2.0vw; 
     font-weight: bold;
@@ -750,9 +753,9 @@ function loadAllBusSchedules() {
                         var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
                         if (item.eta && !isCancelled) {
                             if (targetStopId) {
-                                if (item.stop === targetStopId) filteredA37.push(item);
+                                if (item.stop === targetStopId) filteredB1.push(item);
                             } else {
-                                if (item.dir === "O" && item.seq == 14) filteredA37.push(item);
+                                if (item.dir === "O" && item.seq == 14) filteredB1.push(item);
                             }
                         }
                     }
