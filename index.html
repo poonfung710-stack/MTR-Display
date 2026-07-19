@@ -23,7 +23,7 @@ body {
     box-sizing: border-box;
 }
 
-/* 頂部資訊列：改用百分比定位，避免 vh 誤差 */
+/* 頂部資訊列 */
 .header-bar {
     position: absolute;
     top: 2%;
@@ -38,7 +38,7 @@ body {
     position: absolute;
     left: 0;
     bottom: 5px;
-    font-size: 5vw; /* 改用依據寬度縮放的 vw，在舊設備上渲染更穩定 */
+    font-size: 3.8vw; /* 頂部時間微調縮小 */
     font-weight: bold;
     color: #00FF33;
     font-family: monospace; 
@@ -50,23 +50,23 @@ body {
     position: absolute;
     right: 0;
     bottom: 5px;
-    font-size: 5vw; 
+    font-size: 3.5vw; /* 標題文字縮小 */
     font-weight: bold;
     color: #FFFFFF; 
     line-height: 1.2; 
 }
 
-/* 主要內容區域：用絕對定位框出剩下所有的可用空間 */
+/* 主要內容區域 */
 .main-content {
     position: absolute;
-    top: 12%;   /* 避開頂部 2%空隙 + 8%面板 + 2%間距 */
-    bottom: 2%; /* 距離螢幕最底部牢牢鎖定留 2% 空間，絕不超出 */
+    top: 12%;   
+    bottom: 2%; 
     left: 2%;
     right: 2%;
     box-sizing: border-box;
 }
 
-/* 左右分欄：絕對定位，各佔 48% 寬度 */
+/* 左右分欄 */
 .left-col {
     position: absolute;
     left: 0;
@@ -81,12 +81,7 @@ body {
     height: 100%;
 }
 
-/* 
-  所有面板改用【絕對定位】上下拉開。
-  不再依賴 flex 垂直分配，徹底根除 iOS 9 底部被切掉、無法顯示的問題！
-*/
-
-/* 左側港鐵面板1 (頂部 0% 到 48.5% 高度) */
+/* 所有面板絕對定位 */
 .mtr-panel-1 {
     position: absolute;
     top: 0;
@@ -94,7 +89,6 @@ body {
     width: 100%;
 }
 
-/* 左側港鐵面板2 (底部拉回 48.5% 高度)，中間自動留出 3% 當作間距 */
 .mtr-panel-2 {
     position: absolute;
     bottom: 0;
@@ -102,7 +96,6 @@ body {
     width: 100%;
 }
 
-/* 右側輕鐵面板 (頂部 0% 到 61% 高度) */
 .lrt-panel {
     position: absolute;
     top: 0;
@@ -110,7 +103,6 @@ body {
     width: 100%;
 }
 
-/* 右側巴士面板 (底部拉回 36% 高度)，中間同樣留 3% 間距。總高 61 + 3 + 36 = 100% 完美與左邊對齊！ */
 .bus-panel {
     position: absolute;
     bottom: 0;
@@ -128,20 +120,20 @@ body {
 }
 
 .direction-title {
-    font-size: 3.5vw; 
+    font-size: 2.5vw; /* 群組標題縮小，讓版面看起來更精緻 */
     font-weight: bold;
     margin-bottom: 5px;
     padding-left: 10px;
     line-height: 1.2;
 }
-.title-mtr { color: #B29A6F; border-left: 8px solid #947A4D; }
-.title-lrt { color: #FF9900; border-left: 8px solid #FF9900; }
-.title-bus { color: #FF3366; border-left: 8px solid #FF3366; } 
+.title-mtr { color: #B29A6F; border-left: 6px solid #947A4D; }
+.title-lrt { color: #FF9900; border-left: 6px solid #FF9900; }
+.title-bus { color: #FF3366; border-left: 6px solid #FF3366; } 
 
-/* 列表容器：改用絕對定位填滿剩餘的面板空間 */
+/* 列表容器 */
 .train-list-container {
     position: absolute;
-    top: 50px; /* 留出標題位置 */
+    top: 40px; /* 隨標題縮小調低頂部留白 */
     bottom: 10px;
     left: 15px;
     right: 15px;
@@ -169,21 +161,21 @@ body {
     box-sizing: border-box;
     -webkit-box-flex: 1;
     -webkit-flex: 1;
-    flex: 1; /* 讓行均分剩餘高度 */
+    flex: 1; 
 }
 .train-row:last-child {
     border-bottom: none;
 }
 
 .seq {
-    font-size: 2.5vw;
+    font-size: 1.8vw; /* 序號縮小 */
     color: #666666;
     width: 8%;
 }
 
-/* 左側港鐵字體與欄位佈局 */
+/* 左側港鐵字體微調（精簡整齊版） */
 .left-col .dest-mtr { 
-    font-size: 3.8vw; 
+    font-size: 2.6vw; 
     color: #FFFFFF; 
     font-weight: bold; 
     width: 35%; 
@@ -191,47 +183,47 @@ body {
     overflow: hidden; 
 }
 .left-col .countdown-mtr { 
-    font-size: 3.2vw; 
-    font-weight: bold; 
-    font-family: monospace; 
-    color: #FFCC00; 
-    text-shadow: 0 0 12px rgba(255, 204, 0, 0.8); 
-    text-align: right; 
-    width: 25%; 
-}
-.left-col .time-mtr { 
-    font-size: 3.8vw; 
-    font-weight: bold; 
-    font-family: monospace; 
-    text-align: right; 
-    width: 32%; 
-    color: #00FF33; 
-    text-shadow: 0 0 12px rgba(0, 255, 51, 0.8); 
-}
-
-/* 右側輕鐵欄位排版 */
-.lrt-no { font-size: 2.8vw; font-weight: bold; color: #FF9900; width: 12%; }
-.dest-lrt { font-size: 2.8vw; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 38%; }
-.mins-lrt { 
-    font-size: 3vw; 
+    font-size: 2.2vw; 
     font-weight: bold; 
     font-family: monospace; 
     color: #FFCC00; 
     text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); 
     text-align: right; 
+    width: 25%; 
+}
+.left-col .time-mtr { 
+    font-size: 2.6vw; 
+    font-weight: bold; 
+    font-family: monospace; 
+    text-align: right; 
+    width: 32%; 
+    color: #00FF33; 
+    text-shadow: 0 0 10px rgba(0, 255, 51, 0.8); 
+}
+
+/* 右側輕鐵欄位字體微調 */
+.lrt-no { font-size: 2.0vw; font-weight: bold; color: #FF9900; width: 12%; }
+.dest-lrt { font-size: 2.0vw; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 38%; }
+.mins-lrt { 
+    font-size: 2.2vw; 
+    font-weight: bold; 
+    font-family: monospace; 
+    color: #FFCC00; 
+    text-shadow: 0 0 8px rgba(255, 204, 0, 0.8); 
+    text-align: right; 
     width: 26%; 
 }
 .time-lrt { 
-    font-size: 2.2vw; 
+    font-size: 1.6vw; 
     font-family: monospace; 
     color: #888888; 
     text-align: right; 
     width: 16%; 
 }
 
-/* 巴士橫向排版樣式 */
+/* 巴士橫向排版字體微調 */
 .bus-route-no-medium {
-    font-size: 2.8vw; 
+    font-size: 2.0vw; 
     font-weight: bold;
     color: #FF3366;
     width: 16%;
@@ -263,22 +255,22 @@ body {
     padding-right: 4px;
 }
 .bus-mins-inline {
-    font-size: 2.5vw; 
+    font-size: 1.8vw; 
     font-weight: bold;
     font-family: monospace;
     color: #FF99CC;
-    text-shadow: 0 0 8px rgba(255, 51, 102, 0.8);
+    text-shadow: 0 0 6px rgba(255, 51, 102, 0.8);
     white-space: nowrap;
 }
 .bus-real-inline {
-    font-size: 2vw; 
+    font-size: 1.5vw; 
     color: #888888; 
     font-family: monospace;
-    margin-left: 6px;
+    margin-left: 4px;
     white-space: nowrap;
 }
 .bus-empty-msg-large {
-    font-size: 2.8vw;
+    font-size: 2.0vw;
     color: #444444;
 }
 
@@ -348,12 +340,10 @@ function padZero(num) {
     return num < 10 ? '0' + num : num;
 }
 
-// 全局數據快取
 var cachedLrtData = [];
 var cachedBusData = { "276A": [], "B1": [], "A37": [], "269D": [] };
 var cachedMtrData = { UP: [], DOWN: [] }; 
 
-// 每秒驅動時鐘與全螢幕渲染刷新
 function updateClock() {
     var clockEl = document.getElementById('clock');
     if (!clockEl) return;
@@ -383,9 +373,7 @@ function formatIsoTo24H(isoString) {
     return padZero(date.getHours()) + ":" + padZero(date.getMinutes());
 }
 
-// ==========================================
-// 左邊：港鐵屯馬綫動態刷新與渲染
-// ==========================================
+// 港鐵處理
 function formatMtrTime(trainObj, nowTime) {
     if (!trainObj) return null;
     var ttnt = parseInt(trainObj.ttnt, 10);
@@ -508,9 +496,7 @@ function loadMtrSchedule() {
 loadMtrSchedule();
 setInterval(loadMtrSchedule, 10000);
 
-// ==========================================
-// 右邊上方：輕鐵 天慈站
-// ==========================================
+// 輕鐵處理
 function renderRealLrtPIDS() {
     var listContainer = document.getElementById('lrt-flat-list');
     if (!listContainer) return;
@@ -646,9 +632,7 @@ function loadLrtSchedule() {
 loadLrtSchedule();
 setInterval(loadLrtSchedule, 10000);
 
-// ==========================================
-// 右邊下方：巴士四路線動態刷新
-// ==========================================
+// 巴士處理
 function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     var validEtas = [];
     if (rawEtas && rawEtas.length > 0) {
@@ -711,7 +695,7 @@ function renderRealBusPIDS() {
 }
 
 function loadAllBusSchedules() {
-    // 276A API
+    // 276A
     var url276A = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/276A/1';
     var xhr276A = new XMLHttpRequest();
     xhr276A.open('GET', url276A, true);
@@ -738,10 +722,10 @@ function loadAllBusSchedules() {
     };
     xhr276A.send();
 
-    // B1 API
+    // B1
     loadB1PerfectSchedule();
 
-    // A37 API
+    // A37
     var urlA37 = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/A37/1';
     var xhrA37 = new XMLHttpRequest();
     xhrA37.open('GET', urlA37, true);
@@ -794,7 +778,7 @@ function loadAllBusSchedules() {
     };
     xhrA37.send();
 
-    // 269D API
+    // 269D
     var url269D = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/269D/1';
     var xhr269D = new XMLHttpRequest();
     xhr269D.open('GET', url269D, true);
