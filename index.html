@@ -120,7 +120,7 @@ body {
 }
 
 .direction-title {
-    font-size: 2.5vw; /* 屯馬綫及其他標題字體堅守 2.5vw 不變 */
+    font-size: 2.5vw; 
     font-weight: bold;
     margin-bottom: 5px;
     padding-left: 10px;
@@ -174,12 +174,9 @@ body {
     width: 8%;
 }
 
-/* ==========================================
-   【本次修改項目】左側港鐵屯馬綫資訊字體稍為放大
-   （放大後依然小於標題的 2.5vw）
-   ========================================== */
+/* 左側港鐵屯馬綫資訊字體 */
 .left-col .dest-mtr { 
-    font-size: 2.4vw; /* 從 2.3vw 稍為放大至 2.4vw，更飽滿 */
+    font-size: 2.4vw; 
     color: #FFFFFF; 
     font-weight: bold; 
     width: 38%; 
@@ -187,7 +184,7 @@ body {
     overflow: hidden; 
 }
 .left-col .countdown-mtr { 
-    font-size: 2.3vw; /* 從 2.1vw 稍為放大至 2.3vw，保持可讀性 */
+    font-size: 2.3vw; 
     font-weight: bold; 
     font-family: monospace; 
     color: #FFCC00; 
@@ -197,7 +194,7 @@ body {
     padding-left: 2%;
 }
 .left-col .time-mtr { 
-    font-size: 2.4vw; /* 從 2.3vw 稍為放大至 2.4vw */
+    font-size: 2.4vw; 
     font-weight: bold; 
     font-family: monospace; 
     text-align: right; 
@@ -206,9 +203,7 @@ body {
     text-shadow: 0 0 10px rgba(0, 255, 51, 0.8); 
 }
 
-/* ==========================================
-   右側輕鐵欄位字體（維持原狀）
-   ========================================== */
+/* 右側輕鐵欄位字體 */
 .lrt-no { font-size: 2.1vw; font-weight: bold; color: #FF9900; width: 14%; }
 .dest-lrt { font-size: 2.1vw; color: #FFFFFF; font-weight: bold; white-space: nowrap; overflow: hidden; width: 36%; }
 .mins-lrt { 
@@ -228,9 +223,7 @@ body {
     width: 14%; 
 }
 
-/* ==========================================
-   巴士橫向排版字體（維持原狀）
-   ========================================== */
+/* 巴士橫向排版字體 */
 .bus-route-no-medium {
     font-size: 2.2vw; 
     font-weight: bold;
@@ -426,15 +419,10 @@ function renderMtrDirection(dataArray, elementId, nowTime) {
     if (dataArray && dataArray.length > 0) {
         for (var k = 0; k < dataArray.length; k++) {
             var train = dataArray[k];
-            var ttnt = parseInt(train.ttnt, 10);
-            
-            if (ttnt === 0 || ttnt === 1) {
-                validTrains.push(train);
-                continue;
-            }
             
             if (train.time) {
                 var trainTargetTime = new Date(train.time.replace(/-/g, "/")).getTime();
+                // 核心修改：到站（預定時間）超過 10 秒 (10000ms)，強制將此班次移除消失
                 if (nowTime >= (trainTargetTime + 10000)) {
                     continue; 
                 }
@@ -523,6 +511,7 @@ function renderRealLrtPIDS() {
                 expireTime = nowTime + (train.eta * 60000);
             }
             
+            // 核心修改：到站 / 顯示為 0 分鐘（到達）後，超過 10 秒 (10000ms)，強制將此班次移除
             if (nowTime >= (expireTime + 10000)) {
                 continue; 
             }
@@ -647,6 +636,7 @@ function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     if (rawEtas && rawEtas.length > 0) {
         for (var k = 0; k < rawEtas.length; k++) {
             var itemTime = new Date(rawEtas[k].eta).getTime();
+            // 核心修改：巴士到達（預定時間）超過 10 秒 (10000ms)，強制將該班次剔除
             if (nowTime >= (itemTime + 10000)) {
                 continue; 
             }
@@ -759,9 +749,9 @@ function loadAllBusSchedules() {
                         var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
                         if (item.eta && !isCancelled) {
                             if (targetStopId) {
-                                if (item.stop === targetStopId) filteredB1.push(item);
+                                if (item.stop === targetStopId) filteredA37.push(item);
                             } else {
-                                if (item.dir === "O" && item.seq == 14) filteredB1.push(item);
+                                if (item.dir === "O" && item.seq == 14) filteredA37.push(item);
                             }
                         }
                     }
