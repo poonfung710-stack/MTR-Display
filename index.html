@@ -174,31 +174,32 @@ body {
     width: 8%;
 }
 
-/* 左側港鐵屯馬綫資訊字體 */
+/* 經理：此處已優化港鐵欄位分配比例，徹底解決「正在駛入/即將抵達」下沉問題 */
 .left-col .dest-mtr { 
     font-size: 2.4vw; 
     color: #FFFFFF; 
     font-weight: bold; 
-    width: 38%; 
+    width: 35%; /* 由 38% 調減至 35%，釋放空間 */
     white-space: nowrap; 
     overflow: hidden; 
 }
 .left-col .countdown-mtr { 
     font-size: 2.3vw; 
     font-weight: bold; 
-    font-family: monospace; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; /* 確保非等寬中文字體渲染正常 */
     color: #FFCC00; 
     text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); 
     text-align: left; 
-    width: 34%; 
-    padding-left: 2%;
+    width: 41%; /* 由 34% 擴大至 41%，給予 4 個中文字充足空間 */
+    padding-left: 1%;
+    white-space: nowrap; /* 強制不換行 */
 }
 .left-col .time-mtr { 
     font-size: 2.4vw; 
     font-weight: bold; 
     font-family: monospace; 
     text-align: right; 
-    width: 20%; 
+    width: 16%; /* 由 20% 微調至 16%，總和保持對齊 */
     color: #00FF33; 
     text-shadow: 0 0 10px rgba(0, 255, 51, 0.8); 
 }
@@ -215,7 +216,6 @@ body {
     text-align: right; 
     width: 28%; 
 }
-/* 經理：此處已放大字體大小至 1.9vw，低於剩餘時間的 2.1vw */
 .time-lrt { 
     font-size: 1.9vw; 
     font-family: monospace; 
@@ -384,11 +384,11 @@ function formatMtrTime(trainObj, nowTime) {
     var countdownText = ""; 
 
     if (ttnt === 0) {
-        timeDisplay = '<span class="status-flash">正在駛入</span>';
-        countdownText = ""; 
+        countdownText = '<span class="status-flash">正在駛入</span>';
+        timeDisplay = ""; 
     } else if (ttnt === 1) {
-        timeDisplay = '<span class="status-flash">即將抵達</span>';
-        countdownText = ""; 
+        countdownText = '<span class="status-flash">即將抵達</span>';
+        timeDisplay = ""; 
     } else {
         if (trainObj.time) {
             timeDisplay = trainObj.time.substring(11, 16); 
