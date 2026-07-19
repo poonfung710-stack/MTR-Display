@@ -174,32 +174,32 @@ body {
     width: 8%;
 }
 
-/* 經理：此處已優化港鐵欄位分配比例，徹底解決「正在駛入/即將抵達」下沉問題 */
+/* 港鐵欄位分配比例 */
 .left-col .dest-mtr { 
     font-size: 2.4vw; 
     color: #FFFFFF; 
     font-weight: bold; 
-    width: 35%; /* 由 38% 調減至 35%，釋放空間 */
+    width: 35%; 
     white-space: nowrap; 
     overflow: hidden; 
 }
 .left-col .countdown-mtr { 
     font-size: 2.3vw; 
     font-weight: bold; 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; /* 確保非等寬中文字體渲染正常 */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; 
     color: #FFCC00; 
     text-shadow: 0 0 10px rgba(255, 204, 0, 0.8); 
     text-align: left; 
-    width: 41%; /* 由 34% 擴大至 41%，給予 4 個中文字充足空間 */
+    width: 41%; 
     padding-left: 1%;
-    white-space: nowrap; /* 強制不換行 */
+    white-space: nowrap; 
 }
 .left-col .time-mtr { 
     font-size: 2.4vw; 
     font-weight: bold; 
     font-family: monospace; 
     text-align: right; 
-    width: 16%; /* 由 20% 微調至 16%，總和保持對齊 */
+    width: 16%; 
     color: #00FF33; 
     text-shadow: 0 0 10px rgba(0, 255, 51, 0.8); 
 }
@@ -347,6 +347,7 @@ var cachedLrtData = [];
 var cachedBusData = { "276A": [], "B1": [], "A37": [], "269D": [] };
 var cachedMtrData = { UP: [], DOWN: [] }; 
 
+// 優化：updateClock 現在純粹更新時間，不再每秒強制重繪資訊版
 function updateClock() {
     var clockEl = document.getElementById('clock');
     if (!clockEl) return;
@@ -355,10 +356,6 @@ function updateClock() {
     var minutes = padZero(now.getMinutes());
     var seconds = padZero(now.getSeconds());
     clockEl.innerText = hours + ':' + minutes + ':' + seconds;
-    
-    renderRealMtrPIDS(); 
-    renderRealLrtPIDS();
-    renderRealBusPIDS();
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -481,7 +478,7 @@ function loadMtrSchedule() {
                     cachedMtrData.UP = [];
                     cachedMtrData.DOWN = [];
                 }
-                renderRealMtrPIDS();
+                renderRealMtrPIDS(); // 經理：API 回傳成功時才刷新畫面，間隔精確鎖定 10 秒
             } catch (e) {
                 console.error("MTR API Parse Error", e);
             }
@@ -489,9 +486,6 @@ function loadMtrSchedule() {
     };
     xhr.send();
 }
-
-loadMtrSchedule();
-setInterval(loadMtrSchedule, 10000);
 
 // 輕鐵處理
 function renderRealLrtPIDS() {
@@ -617,7 +611,7 @@ function loadLrtSchedule() {
                 }
                 combinedTrains.sort(function(a, b) { return a.eta - b.eta; });
                 cachedLrtData = combinedTrains;
-                renderRealLrtPIDS();
+                renderRealLrtPIDS(); // 經理：API 回傳成功時才刷新畫面，間隔精確鎖定 10 秒
             } catch (e) {
                 console.error("輕鐵 API 解析錯誤:", e);
             }
@@ -625,9 +619,6 @@ function loadLrtSchedule() {
     };
     xhr.send();
 }
-
-loadLrtSchedule();
-setInterval(loadLrtSchedule, 10000);
 
 // 巴士處理
 function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
@@ -691,86 +682,129 @@ function renderRealBusPIDS() {
     listContainer.innerHTML = htmlString;
 }
 
+// 追蹤巴士 API 載入狀態，全數載入後才一次過刷新畫面
+var busLoadedCount = 0;
+function checkAndRenderBus() {
+    busLoadedCount++;
+    if (busLoadedCount >= 4) {
+        renderRealBusPIDS(); // 經理：4 條路線全部讀取完畢才渲染畫面，精確對齊 10 秒
+        busLoadedCount = 0; 
+    }
+}
+
 function loadAllBusSchedules() {
     // 276A
     var url276A = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/276A/1';
     var xhr276A = new XMLHttpRequest();
     xhr276A.open('GET', url276A, true);
     xhr276A.onreadystatechange = function() {
-        if (xhr276A.readyState === 4 && xhr276A.status === 200) {
-            try {
-                var json = JSON.parse(xhr276A.responseText);
-                if (json && json.data) {
-                    var etas = [];
-                    for (var i = 0; i < json.data.length; i++) {
-                        var item = json.data[i];
-                        var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
-                        if (item.dir === "O" && item.seq == 9 && item.eta && !isCancelled) {
-                            etas.push(item);
+        if (xhr276A.readyState === 4) {
+            if (xhr276A.status === 200) {
+                try {
+                    var json = JSON.parse(xhr276A.responseText);
+                    if (json && json.data) {
+                        var etas = [];
+                        for (var i = 0; i < json.data.length; i++) {
+                            var item = json.data[i];
+                            var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
+                            if (item.dir === "O" && item.seq == 9 && item.eta && !isCancelled) {
+                                etas.push(item);
+                            }
                         }
+                        etas.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
+                        cachedBusData["276A"] = etas;
                     }
-                    etas.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
-                    cachedBusData["276A"] = etas;
-                }
-            } catch (e) {
-                console.error("276A API 解析錯誤:", e);
+                } catch (e) { console.error("276A API 解析錯誤:", e); }
             }
+            checkAndRenderBus();
         }
     };
     xhr276A.send();
 
     // B1
-    loadB1PerfectSchedule();
+    var urlB1 = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/B1/1';
+    var xhrB1 = new XMLHttpRequest();
+    xhrB1.open('GET', urlB1, true);
+    xhrB1.onreadystatechange = function() {
+        if (xhrB1.readyState === 4) {
+            if (xhrB1.status === 200) {
+                try {
+                    var json = JSON.parse(xhrB1.responseText);
+                    if (json && json.data) {
+                        var filteredB1 = [];
+                        var targetStopId = "";
+                        for (var i = 0; i < json.data.length; i++) {
+                            var item = json.data[i];
+                            if (item.dir === "O" && item.seq == 4) { targetStopId = item.stop; break; }
+                        }
+                        for (var i = 0; i < json.data.length; i++) {
+                            var item = json.data[i];
+                            var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
+                            if (item.eta && !isCancelled) {
+                                if (targetStopId) {
+                                    if (item.stop === targetStopId) filteredB1.push(item);
+                                } else {
+                                    if (item.dir === "O" && item.seq == 4) filteredB1.push(item);
+                                }
+                            }
+                        }
+                        filteredB1.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
+                        var finalB1 = [];
+                        var seenTimes = {};
+                        for (var j = 0; j < filteredB1.length; j++) {
+                            var bItem = filteredB1[j];
+                            var timeString = formatIsoTo24H(bItem.eta);
+                            if (!seenTimes[timeString]) { seenTimes[timeString] = true; finalB1.push(bItem); }
+                        }
+                        cachedBusData["B1"] = finalB1.slice(0, 3);
+                    }
+                } catch (e) { console.error("B1 API 解析錯誤:", e); }
+            }
+            checkAndRenderBus();
+        }
+    };
+    xhrB1.send();
 
     // A37
     var urlA37 = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/A37/1';
     var xhrA37 = new XMLHttpRequest();
     xhrA37.open('GET', urlA37, true);
     xhrA37.onreadystatechange = function() {
-        if (xhrA37.readyState === 4 && xhrA37.status === 200) {
-            try {
-                var json = JSON.parse(xhrA37.responseText);
-                if (json && json.data) {
-                    var filteredA37 = [];
-                    var targetStopId = "";
-                    
-                    for (var i = 0; i < json.data.length; i++) {
-                        var item = json.data[i];
-                        if (item.dir === "O" && item.seq == 14) {
-                            targetStopId = item.stop; 
-                            break;
+        if (xhrA37.readyState === 4) {
+            if (xhrA37.status === 200) {
+                try {
+                    var json = JSON.parse(xhrA37.responseText);
+                    if (json && json.data) {
+                        var filteredA37 = [];
+                        var targetStopId = "";
+                        for (var i = 0; i < json.data.length; i++) {
+                            var item = json.data[i];
+                            if (item.dir === "O" && item.seq == 14) { targetStopId = item.stop; break; }
                         }
-                    }
-
-                    for (var i = 0; i < json.data.length; i++) {
-                        var item = json.data[i];
-                        var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
-                        if (item.eta && !isCancelled) {
-                            if (targetStopId) {
-                                if (item.stop === targetStopId) filteredA37.push(item);
-                            } else {
-                                if (item.dir === "O" && item.seq == 14) filteredA37.push(item);
+                        for (var i = 0; i < json.data.length; i++) {
+                            var item = json.data[i];
+                            var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
+                            if (item.eta && !isCancelled) {
+                                if (targetStopId) {
+                                    if (item.stop === targetStopId) filteredA37.push(item);
+                                } else {
+                                    if (item.dir === "O" && item.seq == 14) filteredA37.push(item);
+                                }
                             }
                         }
-                    }
-
-                    filteredA37.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
-                    
-                    var finalA37 = [];
-                    var seenTimes = {};
-                    for (var j = 0; j < filteredA37.length; j++) {
-                        var aItem = filteredA37[j];
-                        var timeString = formatIsoTo24H(aItem.eta);
-                        if (!seenTimes[timeString]) {
-                            seenTimes[timeString] = true;
-                            finalA37.push(aItem);
+                        filteredA37.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
+                        var finalA37 = [];
+                        var seenTimes = {};
+                        for (var j = 0; j < filteredA37.length; j++) {
+                            var aItem = filteredA37[j];
+                            var timeString = formatIsoTo24H(aItem.eta);
+                            if (!seenTimes[timeString]) { seenTimes[timeString] = true; finalA37.push(aItem); }
                         }
+                        cachedBusData["A37"] = finalA37.slice(0, 3);
                     }
-                    cachedBusData["A37"] = finalA37.slice(0, 3);
-                }
-            } catch (e) {
-                console.error("A37 API 解析錯誤:", e);
+                } catch (e) { console.error("A37 API 解析錯誤:", e); }
             }
+            checkAndRenderBus();
         }
     };
     xhrA37.send();
@@ -780,84 +814,35 @@ function loadAllBusSchedules() {
     var xhr269D = new XMLHttpRequest();
     xhr269D.open('GET', url269D, true);
     xhr269D.onreadystatechange = function() {
-        if (xhr269D.readyState === 4 && xhr269D.status === 200) {
-            try {
-                var json = JSON.parse(xhr269D.responseText);
-                if (json && json.data) {
-                    var etas = [];
-                    for (var i = 0; i < json.data.length; i++) {
-                        var item = json.data[i];
-                        var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
-                        if (item.dir === "I" && item.eta && !isCancelled) {
-                            etas.push(item);
+        if (xhr269D.readyState === 4) {
+            if (xhr269D.status === 200) {
+                try {
+                    var json = JSON.parse(xhr269D.responseText);
+                    if (json && json.data) {
+                        var etas = [];
+                        for (var i = 0; i < json.data.length; i++) {
+                            var item = json.data[i];
+                            var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
+                            if (item.dir === "I" && item.eta && !isCancelled) { etas.push(item); }
                         }
+                        etas.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
+                        cachedBusData["269D"] = etas.slice(0, 3);
                     }
-                    etas.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
-                    cachedBusData["269D"] = etas.slice(0, 3);
-                }
-            } catch (e) {
-                console.error("269D API 解析錯誤:", e);
+                } catch (e) { console.error("269D API 解析錯誤:", e); }
             }
+            checkAndRenderBus();
         }
     };
     xhr269D.send();
 }
 
-function loadB1PerfectSchedule() {
-    var urlB1 = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/B1/1';
-    var xhrB1 = new XMLHttpRequest();
-    xhrB1.open('GET', urlB1, true);
-    xhrB1.onreadystatechange = function() {
-        if (xhrB1.readyState === 4 && xhrB1.status === 200) {
-            try {
-                var json = JSON.parse(xhrB1.responseText);
-                if (json && json.data) {
-                    var filteredB1 = [];
-                    var targetStopId = "";
-                    
-                    for (var i = 0; i < json.data.length; i++) {
-                        var item = json.data[i];
-                        if (item.dir === "O" && item.seq == 4) {
-                            targetStopId = item.stop; 
-                            break;
-                        }
-                    }
-
-                    for (var i = 0; i < json.data.length; i++) {
-                        var item = json.data[i];
-                        var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
-                        if (item.eta && !isCancelled) {
-                            if (targetStopId) {
-                                if (item.stop === targetStopId) filteredB1.push(item);
-                            } else {
-                                if (item.dir === "O" && item.seq == 4) filteredB1.push(item);
-                            }
-                        }
-                    }
-
-                    filteredB1.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
-                    
-                    var finalB1 = [];
-                    var seenTimes = {};
-                    for (var j = 0; j < filteredB1.length; j++) {
-                        var bItem = filteredB1[j];
-                        var timeString = formatIsoTo24H(bItem.eta);
-                        if (!seenTimes[timeString]) {
-                            seenTimes[timeString] = true;
-                            finalB1.push(bItem);
-                        }
-                    }
-                    cachedBusData["B1"] = finalB1.slice(0, 3);
-                }
-            } catch (e) {
-                console.error("B1 API 解析錯誤:", e);
-            }
-        }
-    };
-    xhrB1.send();
-}
-
+// 核心定時器初始化 (精確鎖定每 10 秒刷新一次 API 與畫面)
+loadMtrSchedule();
+loadLrtSchedule();
 loadAllBusSchedules();
+
+setInterval(loadMtrSchedule, 10000);
+setInterval(loadLrtSchedule, 10000);
 setInterval(loadAllBusSchedules, 10000);
 </script>
 
