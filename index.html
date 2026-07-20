@@ -224,7 +224,7 @@ body {
     width: 14%; 
 }
 
-/* 巴士橫向排版字體 */
+/* 巴士橫向排版字體與獨立欄位設定 */
 .bus-route-no-medium {
     font-size: 2.2vw; 
     font-weight: bold;
@@ -253,9 +253,10 @@ body {
     -webkit-flex-direction: row;
     flex-direction: row;
     align-items: center; 
-    justify-content: flex-end;
+    justify-content: space-between; /* 分開左右獨立欄位 */
     box-sizing: border-box;
-    padding-right: 4px;
+    padding-left: 2px;
+    padding-right: 6px;
 }
 .bus-mins-inline {
     font-size: 2.0vw; 
@@ -264,13 +265,16 @@ body {
     color: #FF99CC;
     text-shadow: 0 0 6px rgba(255, 51, 102, 0.8);
     white-space: nowrap;
+    text-align: left;
+    flex: 1;
 }
 .bus-real-inline {
-    font-size: 1.5vw; 
+    font-size: 1.8vw; /* 放大但小於 2.0vw */
     color: #888888; 
     font-family: monospace;
-    margin-left: 4px;
     white-space: nowrap;
+    text-align: right;
+    margin-left: 4px;
 }
 .bus-empty-msg-large {
     font-size: 2.0vw; 
@@ -600,7 +604,7 @@ function loadLrtSchedule() {
     xhr.send();
 }
 
-// 巴士處理
+// 巴士處理 (已將倒數分鐘與真實時間劃分為獨立欄位)
 function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     var validEtas = [];
     if (rawEtas && rawEtas.length > 0) {
@@ -628,13 +632,13 @@ function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
                 var timeText = formatIsoTo24H(busItem.eta);
                 
                 html += '<div class="bus-time-inline-block">';
-                html += '  <span class="bus-mins-inline">' + minsText + '</span>';
-                html += '  <span class="bus-real-inline">' + timeText + '</span>';
+                html += '  <div class="bus-mins-inline">' + minsText + '</div>';
+                html += '  <div class="bus-real-inline">' + timeText + '</div>';
                 html += '</div>';
             } else {
                 html += '<div class="bus-time-inline-block">';
-                html += '  <span class="bus-mins-inline">--</span>';
-                html += '  <span class="bus-real-inline">--:--</span>';
+                html += '  <div class="bus-mins-inline">--</div>';
+                html += '  <div class="bus-real-inline">--:--</div>';
                 html += '</div>';
             }
         }
@@ -773,7 +777,7 @@ function fetchB2PEta() {
 }
 
 function loadAllBusSchedules() {
-    // 276A（已修改為與 B1/A37 相同的雙重鎖定及去重邏輯）
+    // 276A
     var url276A = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/276A/1';
     var xhr276A = new XMLHttpRequest();
     xhr276A.open('GET', url276A, true);
@@ -785,12 +789,10 @@ function loadAllBusSchedules() {
                     if (json && json.data) {
                         var filtered276A = [];
                         var targetStopId = "";
-                        // 第一圈：尋找第 9 站 (天祐苑) 的車站 ID
                         for (var i = 0; i < json.data.length; i++) {
                             var item = json.data[i];
                             if (item.dir === "O" && item.seq == 9) { targetStopId = item.stop; break; }
                         }
-                        // 第二圈：根據車站 ID 進行過濾
                         for (var i = 0; i < json.data.length; i++) {
                             var item = json.data[i];
                             var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
@@ -803,7 +805,6 @@ function loadAllBusSchedules() {
                             }
                         }
                         filtered276A.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
-                        // 第三圈：剔除重複時間
                         var final276A = [];
                         var seenTimes = {};
                         for (var j = 0; j < filtered276A.length; j++) {
