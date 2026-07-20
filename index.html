@@ -253,10 +253,10 @@ body {
     -webkit-flex-direction: row;
     flex-direction: row;
     align-items: center; 
-    justify-content: space-between; /* 分開左右獨立欄位 */
+    justify-content: flex-start; /* 讓真實時間緊靠剩餘時間 */
     box-sizing: border-box;
     padding-left: 2px;
-    padding-right: 6px;
+    padding-right: 2px;
 }
 .bus-mins-inline {
     font-size: 2.0vw; 
@@ -266,15 +266,14 @@ body {
     text-shadow: 0 0 6px rgba(255, 51, 102, 0.8);
     white-space: nowrap;
     text-align: left;
-    flex: 1;
 }
 .bus-real-inline {
-    font-size: 1.8vw; /* 放大但小於 2.0vw */
+    font-size: 1.7vw; /* 已修改為 1.7vw */
     color: #888888; 
     font-family: monospace;
     white-space: nowrap;
-    text-align: right;
-    margin-left: 4px;
+    text-align: left;
+    margin-left: 6px; /* 控制與左邊剩餘時間的距離 */
 }
 .bus-empty-msg-large {
     font-size: 2.0vw; 
@@ -604,7 +603,7 @@ function loadLrtSchedule() {
     xhr.send();
 }
 
-// 巴士處理 (已將倒數分鐘與真實時間劃分為獨立欄位)
+// 巴士處理
 function generateBusRowHtml(seqNumber, routeName, rawEtas, nowTime) {
     var validEtas = [];
     if (rawEtas && rawEtas.length > 0) {
