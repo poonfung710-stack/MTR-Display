@@ -34,28 +34,25 @@ body {
     box-sizing: border-box;
 }
 
-/* 1. 即時時間 (霓虹青色 #00F5D4) */
 .real-time {
     position: absolute;
     left: 0;
     bottom: 5px;
     font-size: 3.8vw; 
     font-weight: bold;
-    color: #00F5D4;
+    color: #00FF33;
     font-family: monospace; 
-    text-shadow: 0 0 12px rgba(0, 245, 212, 0.7);
+    text-shadow: 0 0 12px rgba(0, 255, 51, 0.7);
     line-height: 1.2; 
 }
 
-/* 2. 修改：標題 (柔和冰藍色 #E0F7FA) */
 .station-title {
     position: absolute;
     right: 0;
     bottom: 5px;
     font-size: 3.5vw; 
     font-weight: bold;
-    color: #E0F7FA; 
-    text-shadow: 0 0 10px rgba(224, 247, 250, 0.4);
+    color: #FFFFFF; 
     line-height: 1.2; 
 }
 
@@ -256,7 +253,7 @@ body {
     -webkit-flex-direction: row;
     flex-direction: row;
     align-items: center; 
-    justify-content: flex-start;
+    justify-content: flex-start; /* 讓真實時間緊靠剩餘時間 */
     box-sizing: border-box;
     padding-left: 2px;
     padding-right: 2px;
@@ -271,12 +268,12 @@ body {
     text-align: left;
 }
 .bus-real-inline {
-    font-size: 1.7vw;
+    font-size: 1.7vw; /* 已修改為 1.7vw */
     color: #888888; 
     font-family: monospace;
     white-space: nowrap;
     text-align: left;
-    margin-left: 6px;
+    margin-left: 6px; /* 控制與左邊剩餘時間的距離 */
 }
 .bus-empty-msg-large {
     font-size: 2.0vw; 
@@ -926,4 +923,3 @@ setInterval(loadAllBusSchedules, 10000);
 </script>
 
 </body>
-</html>
