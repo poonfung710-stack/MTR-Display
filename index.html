@@ -344,7 +344,8 @@ function padZero(num) {
 }
 
 var cachedLrtData = [];
-var cachedBusData = { "276A": [], "B1": [], "A37": [], "269D": [] };
+// 將 269D 改為 B2P
+var cachedBusData = { "276A": [], "B1": [], "A37": [], "B2P": [] };
 var cachedMtrData = { UP: [], DOWN: [] }; 
 
 function updateClock() {
@@ -417,7 +418,6 @@ function renderMtrDirection(dataArray, elementId, nowTime) {
     if (dataArray && dataArray.length > 0) {
         for (var k = 0; k < dataArray.length; k++) {
             var train = dataArray[k];
-            // 改進：取消過於嚴格的 10 秒過濾清除，交給下一次 API Fetch 直接覆蓋更新即可，防止空窗闪烁
             validTrains.push(train);
         }
     }
@@ -652,7 +652,8 @@ function renderRealBusPIDS() {
     htmlString += generateBusRowHtml(1, "276A", cachedBusData["276A"], nowTime);
     htmlString += generateBusRowHtml(2, "B1", cachedBusData["B1"], nowTime);
     htmlString += generateBusRowHtml(3, "A37", cachedBusData["A37"], nowTime);
-    htmlString += generateBusRowHtml(4, "269D", cachedBusData["269D"], nowTime);
+    // 將第4項修改為 B2P
+    htmlString += generateBusRowHtml(4, "B2P", cachedBusData["B2P"], nowTime);
 
     listContainer.innerHTML = htmlString;
 }
@@ -665,6 +666,111 @@ function checkAndRenderBus() {
         busLoadedCount = 0; 
     }
 }
+
+// 嶼巴 (NLB) B2P 專屬 API 處理函數
+var nlbB2P_RouteId = null;
+var nlbB2P_StopId = null;
+
+function loadB2P_NLB() {
+    if (!nlbB2P_RouteId || !nlbB2P_StopId) {
+        // 第一步：獲取路線 ID (配對往深圳灣口岸的 B2P)
+        var xhrRoute = new XMLHttpRequest();
+        xhrRoute.open('GET', 'https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list', true);
+        xhrRoute.onreadystatechange = function() {
+            if (xhrRoute.readyState === 4) {
+                if (xhrRoute.status === 200) {
+                    try {
+                        var json = JSON.parse(xhrRoute.responseText);
+                        if (json && json.routes) {
+                            for (var i = 0; i < json.routes.length; i++) {
+                                var r = json.routes[i];
+                                if (r.routeNo === 'B2P' && r.routeName_c.indexOf('深圳灣') !== -1) {
+                                    nlbB2P_RouteId = r.routeId;
+                                    break;
+                                }
+                            }
+                        }
+                    } catch(e) { console.error("NLB Route API 解析錯誤:", e); }
+                }
+                if (nlbB2P_RouteId) {
+                    fetchNLBStop();
+                } else {
+                    checkAndRenderBus(); 
+                }
+            }
+        };
+        xhrRoute.send();
+    } else {
+        // 如果已經拿到 ID，直接拿 ETA
+        fetchNLBEta();
+    }
+}
+
+function fetchNLBStop() {
+    // 第二步：獲取車站 ID (配對天耀邨耀民樓 或 第 8 個站)
+    var xhrStop = new XMLHttpRequest();
+    xhrStop.open('GET', 'https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=' + nlbB2P_RouteId, true);
+    xhrStop.onreadystatechange = function() {
+        if (xhrStop.readyState === 4) {
+            if (xhrStop.status === 200) {
+                try {
+                    var json = JSON.parse(xhrStop.responseText);
+                    if (json && json.stops) {
+                        for (var i = 0; i < json.stops.length; i++) {
+                            // 搜尋車站名是否包含「耀民」
+                            if (json.stops[i].stopName_c.indexOf('耀民') !== -1) {
+                                nlbB2P_StopId = json.stops[i].stopId;
+                                break;
+                            }
+                        }
+                        // 如果名字不符，強制獲取第 8 個站 (index 為 7)
+                        if (!nlbB2P_StopId && json.stops.length >= 8) {
+                            nlbB2P_StopId = json.stops[7].stopId;
+                        }
+                    }
+                } catch(e) { console.error("NLB Stop API 解析錯誤:", e); }
+            }
+            if (nlbB2P_StopId) {
+                fetchNLBEta();
+            } else {
+                checkAndRenderBus();
+            }
+        }
+    };
+    xhrStop.send();
+}
+
+function fetchNLBEta() {
+    // 第三步：拿取 ETA 並寫入快取
+    var xhrEta = new XMLHttpRequest();
+    xhrEta.open('GET', 'https://rt.data.gov.hk/v2/transport/nlb/eta.php?action=eta&routeId=' + nlbB2P_RouteId + '&stopId=' + nlbB2P_StopId, true);
+    xhrEta.onreadystatechange = function() {
+        if (xhrEta.readyState === 4) {
+            if (xhrEta.status === 200) {
+                try {
+                    var json = JSON.parse(xhrEta.responseText);
+                    var etas = [];
+                    if (json && json.estimatedArrivals) {
+                        for (var i = 0; i < json.estimatedArrivals.length; i++) {
+                            var item = json.estimatedArrivals[i];
+                            var timeStr = item.estimatedArrivalTime; // 格式: "2023-10-15 14:30:00"
+                            if (timeStr) {
+                                // 轉換為 ISO 格式以確保所有瀏覽器兼容 Date 運算
+                                var isoFormatted = timeStr.replace(' ', 'T') + '+08:00';
+                                etas.push({ eta: isoFormatted }); 
+                            }
+                        }
+                    }
+                    etas.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
+                    cachedBusData["B2P"] = etas.slice(0, 3);
+                } catch(e) { console.error("NLB ETA API 解析錯誤:", e); }
+            }
+            checkAndRenderBus(); 
+        }
+    };
+    xhrEta.send();
+}
+
 
 function loadAllBusSchedules() {
     // 276A
@@ -783,31 +889,8 @@ function loadAllBusSchedules() {
     };
     xhrA37.send();
 
-    // 269D
-    var url269D = 'https://data.etabus.gov.hk/v1/transport/kmb/route-eta/269D/1';
-    var xhr269D = new XMLHttpRequest();
-    xhr269D.open('GET', url269D, true);
-    xhr269D.onreadystatechange = function() {
-        if (xhr269D.readyState === 4) {
-            if (xhr269D.status === 200) {
-                try {
-                    var json = JSON.parse(xhr269D.responseText);
-                    if (json && json.data) {
-                        var etas = [];
-                        for (var i = 0; i < json.data.length; i++) {
-                            var item = json.data[i];
-                            var isCancelled = item.rmk_tc && item.rmk_tc.indexOf('取消') !== -1;
-                            if (item.dir === "I" && item.eta && !isCancelled) { etas.push(item); }
-                        }
-                        etas.sort(function(a, b) { return new Date(a.eta) - new Date(b.eta); });
-                        cachedBusData["269D"] = etas.slice(0, 3);
-                    }
-                } catch (e) { console.error("269D API 解析錯誤:", e); }
-            }
-            checkAndRenderBus();
-        }
-    };
-    xhr269D.send();
+    // 啟動 B2P 嶼巴數據獲取
+    loadB2P_NLB();
 }
 
 // 核心定時器初始化 (精確鎖定每 10 秒)
